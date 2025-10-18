@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../components/navbar.dart';
 import '../components/header.dart';
 import '../components/alert_card.dart';
-import '../utils/Colors.dart'; // ✅ Make sure this path matches your actual file location
+import '../utils/Colors.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'maintenance.dart';
@@ -45,53 +45,8 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  final List<Map<String, dynamic>> _alerts = [
-    {
-      'title': 'Overheating Detected',
-      'machine': 'VB-0001',
-      'location': 'Barangay 171',
-      'time': '5 minutes ago',
-      'status': 'Critical',
-      'color': AppColors.criticalRed,
-      'icon': Icons.error_outline,
-    },
-    {
-      'title': 'Low Oil Level',
-      'machine': 'VB-0002',
-      'location': 'Barangay 171',
-      'time': '5 minutes ago',
-      'status': 'Warning',
-      'color': AppColors.warningYellow,
-      'icon': Icons.warning_amber_rounded,
-    },
-    {
-      'title': 'Battery Replacement',
-      'machine': 'VB-0001',
-      'location': 'Barangay 171',
-      'time': '2 days ago',
-      'status': 'Resolved',
-      'color': AppColors.resolvedGreen,
-      'icon': Icons.check_circle_outline,
-    },
-    {
-      'title': 'Filter Replacement Required',
-      'machine': 'VB-0001',
-      'location': 'Barangay 171',
-      'time': '2 days ago',
-      'status': 'Resolved',
-      'color': AppColors.resolvedGreen,
-      'icon': Icons.check_circle_outline,
-    },
-    {
-      'title': 'Filter Replacement Required',
-      'machine': 'VB-0002',
-      'location': 'Barangay 171',
-      'time': '4 days ago',
-      'status': 'Resolved',
-      'color': AppColors.resolvedGreen,
-      'icon': Icons.check_circle_outline,
-    },
-  ];
+  // Alerts list (empty initially)
+  final List<Map<String, dynamic>> _alerts = [];
 
   List<Map<String, dynamic>> get _filteredAlerts {
     switch (_selectedTab) {
@@ -199,7 +154,7 @@ class _AlertsPageState extends State<AlertsPage> {
                       child: _filteredAlerts.isEmpty
                           ? const Center(
                               child: Text(
-                                'No alerts found.',
+                                'No alerts detected.',
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                 ),
