@@ -3,8 +3,15 @@ import '../utils/colors.dart';
 
 class AddMaintenanceModal extends StatefulWidget {
   final Function(Map<String, dynamic>) onAdd;
+  final Map<String, dynamic>? initialData;
+  final bool isEdit;
 
-  const AddMaintenanceModal({super.key, required this.onAdd});
+  const AddMaintenanceModal({
+    super.key,
+    required this.onAdd,
+    this.initialData,
+    this.isEdit = false,
+  });
 
   @override
   State<AddMaintenanceModal> createState() => _AddMaintenanceModalState();
@@ -14,7 +21,7 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
   final _formKey = GlobalKey<FormState>();
 
   String? _maintenanceType;
-  String? _machine = 'VB-0001'; // Auto-select VB-0001
+  String? _machine = 'VB-0001';
   String? _priority;
   DateTime? _scheduledDate;
 
@@ -27,6 +34,18 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
 
   final List<String> _machines = ['VB-0001'];
   final List<String> _priorities = ['High', 'Medium', 'Low'];
+
+  @override
+  void initState() {
+    super.initState();
+    // If editing, populate fields with initial data
+    if (widget.isEdit && widget.initialData != null) {
+      _maintenanceType = widget.initialData!['title'];
+      _machine = widget.initialData!['machineId'];
+      _priority = widget.initialData!['priority'];
+      _scheduledDate = widget.initialData!['scheduledDate'];
+    }
+  }
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -56,9 +75,21 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      // Check if date is selected
+      if (_scheduledDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select a scheduled date'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+
       final priorityColor = switch (_priority) {
         'High' => Colors.red,
-        'Low' => Colors.blue,
+        'Low' => AppColors.darkGreen,
         _ => const Color(0xFFFFD700),
       };
 
@@ -134,9 +165,9 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
   }
 
   Widget _buildHeader() {
-    return const Text(
-      'Schedule New Maintenance',
-      style: TextStyle(
+    return Text(
+      widget.isEdit ? 'Edit Maintenance' : 'Schedule New Maintenance',
+      style: const TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: Color(0xFF333333),
@@ -198,7 +229,19 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel(label),
+        Row(
+          children: [
+            _buildLabel(label),
+            const Text(
+              ' *',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
         InkWell(
           onTap: onTap,

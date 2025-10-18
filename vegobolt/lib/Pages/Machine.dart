@@ -42,183 +42,188 @@ class MachinePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      body: Column(
-        children: [
-          const Header(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Machine',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const Header(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Machine',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Control your VEGOBOLT station remotely',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Control your VEGOBOLT station remotely',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
-                  // Machine Card
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBackground,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'VB-001',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
+                    // Machine Card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'VB-001',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Barangay 171',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: AppColors.warningYellow,
                                   ),
                                 ),
-                                Text(
-                                  'Barangay 171',
+                                child: const Text(
+                                  'Maintenance',
                                   style: TextStyle(
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.warningYellow,
+                                    fontSize: 12,
                                   ),
                                 ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
                               ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: AppColors.warningYellow,
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Oil Tank
+                          _buildProgressRow(
+                            icon: Icons.local_gas_station,
+                            label: "Oil Tank",
+                            value: 1.0,
+                            color: AppColors.primaryGreen,
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Battery
+                          _buildProgressRow(
+                            icon: Icons.battery_full,
+                            label: "Battery",
+                            value: 0.15,
+                            color: AppColors.criticalRed,
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Temperature & Filter
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: _buildTextRow(
+                                  Icons.thermostat,
+                                  "Temperature: 96°C",
                                 ),
                               ),
-                              child: const Text(
-                                'Maintenance',
-                                style: TextStyle(
-                                  color: AppColors.warningYellow,
-                                  fontSize: 12,
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildTextRow(
+                                  Icons.filter_alt,
+                                  "Filter: 30%",
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Oil Tank
-                        _buildProgressRow(
-                          icon: Icons.local_gas_station,
-                          label: "Oil Tank",
-                          value: 1.0,
-                          color: AppColors.primaryGreen,
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Battery
-                        _buildProgressRow(
-                          icon: Icons.battery_full,
-                          label: "Battery",
-                          value: 0.15,
-                          color: AppColors.criticalRed,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Temperature & Filter
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: _buildTextRow(
-                                Icons.thermostat,
-                                "Temperature: 96°C",
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildTextRow(
-                                Icons.filter_alt,
-                                "Filter: 30%",
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Buttons
-                  MachineControlButton(
-                    label: 'Restart Station',
-                    icon: Icons.restart_alt,
-                    color: AppColors.darkGreen,
-                    onPressed: () {},
-                  ),
-                  const SizedBox(height: 12),
-                  MachineControlButton(
-                    label: 'Shutdown Station',
-                    icon: Icons.power_settings_new,
-                    color: AppColors.criticalRed,
-                    onPressed: () {},
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  const Text(
-                    'Scheduled Maintenance',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                    // Buttons
+                    MachineControlButton(
+                      label: 'Restart Station',
+                      icon: Icons.restart_alt,
+                      color: AppColors.darkGreen,
+                      onPressed: () {},
                     ),
-                  ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 12),
+                    MachineControlButton(
+                      label: 'Shutdown Station',
+                      icon: Icons.power_settings_new,
+                      color: AppColors.criticalRed,
+                      onPressed: () {},
+                    ),
 
-                  _buildMaintenanceCard(
-                    title: "Oil Refill",
-                    level: "High",
-                    color: AppColors.criticalRed,
-                  ),
-                  _buildMaintenanceCard(
-                    title: "Filter Replacement",
-                    level: "High",
-                    color: AppColors.criticalRed,
-                  ),
-                  _buildMaintenanceCard(
-                    title: "Battery Replacement",
-                    level: "Medium",
-                    color: AppColors.warningYellow,
-                  ),
-                ],
+                    const SizedBox(height: 20),
+
+                    const Text(
+                      'Scheduled Maintenance',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildMaintenanceCard(
+                      title: "Oil Refill",
+                      level: "High",
+                      color: AppColors.criticalRed,
+                    ),
+                    _buildMaintenanceCard(
+                      title: "Filter Replacement",
+                      level: "High",
+                      color: AppColors.criticalRed,
+                    ),
+                    _buildMaintenanceCard(
+                      title: "Battery Replacement",
+                      level: "Medium",
+                      color: AppColors.warningYellow,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: NavBar(
         currentIndex: 1,

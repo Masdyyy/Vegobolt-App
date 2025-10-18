@@ -42,71 +42,73 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      body: Column(
-        children: [
-          const Header(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Dashboard',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+      body: SafeArea( // ✅ ensures even top spacing like AlertsPage
+        child: Column(
+          children: [
+            const Header(), // 🟢 consistent header
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dashboard',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Monitor your VegoBolt system',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Monitor your VegoBolt system',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 16),
 
-                  // Machine Status Section
-                  _buildSectionHeader('Machine Status'),
-                  const SizedBox(height: 12),
-                  _buildMachineStatusCard(context),
-                  const SizedBox(height: 20),
+                    // 🧭 Machine Status Section
+                    _buildSectionHeader('Machine Status'),
+                    const SizedBox(height: 12),
+                    _buildMachineStatusCard(context),
+                    const SizedBox(height: 20),
 
-                  // Recent Alerts Section
-                  _buildSectionHeader('Recent Alert'),
-                  const SizedBox(height: 12),
-                  AlertCard(
-                    title: 'Overheating Detected',
-                    machine: 'VB-0001',
-                    location: 'Barangay 171',
-                    time: '5 minutes ago',
-                    status: 'Critical',
-                    statusColor: AppColors.criticalRed,
-                    icon: Icons.error_outline,
-                  ),
-                  AlertCard(
-                    title: 'Low Oil Level',
-                    machine: 'VB-0002',
-                    location: 'Barangay 171',
-                    time: '5 minutes ago',
-                    status: 'Warning',
-                    statusColor: AppColors.warningYellow,
-                    icon: Icons.warning_amber_rounded,
-                  ),
-                  AlertCard(
-                    title: 'Battery Replacement',
-                    machine: 'VB-0001',
-                    location: 'Barangay 171',
-                    time: '2 days ago',
-                    status: 'Resolved',
-                    statusColor: AppColors.resolvedGreen,
-                    icon: Icons.check_circle_outline,
-                  ),
-                ],
+                    // 🔔 Recent Alerts Section
+                    _buildSectionHeader('Recent Alert'),
+                    const SizedBox(height: 12),
+                    AlertCard(
+                      title: 'Overheating Detected',
+                      machine: 'VB-0001',
+                      location: 'Barangay 171',
+                      time: '5 minutes ago',
+                      status: 'Critical',
+                      statusColor: AppColors.criticalRed,
+                      icon: Icons.error_outline,
+                    ),
+                    AlertCard(
+                      title: 'Low Oil Level',
+                      machine: 'VB-0002',
+                      location: 'Barangay 171',
+                      time: '5 minutes ago',
+                      status: 'Warning',
+                      statusColor: AppColors.warningYellow,
+                      icon: Icons.warning_amber_rounded,
+                    ),
+                    AlertCard(
+                      title: 'Battery Replacement',
+                      machine: 'VB-0001',
+                      location: 'Barangay 171',
+                      time: '2 days ago',
+                      status: 'Resolved',
+                      statusColor: AppColors.resolvedGreen,
+                      icon: Icons.check_circle_outline,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: NavBar(
         currentIndex: 0,
@@ -115,6 +117,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
+  // 🧩 Section Header
   Widget _buildSectionHeader(String title) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -137,6 +140,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
+  // ⚙️ Machine Status Card
   Widget _buildMachineStatusCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -177,10 +181,7 @@ class DashboardPage extends StatelessWidget {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.primaryGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -294,6 +295,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
+  // 📊 Progress Row
   Widget _buildProgressRow({
     required IconData icon,
     required String label,
