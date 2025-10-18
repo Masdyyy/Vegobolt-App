@@ -154,7 +154,7 @@ class _MachinePageState extends State<MachinePage> {
                         _buildProgressRow(
                           icon: Icons.local_gas_station,
                           label: "Oil Tank",
-                          value: 1.0,
+                          value: 0,
                           color: AppColors.primaryGreen,
                         ),
                         const SizedBox(height: 8),
@@ -163,7 +163,7 @@ class _MachinePageState extends State<MachinePage> {
                         _buildProgressRow(
                           icon: Icons.battery_full,
                           label: "Battery",
-                          value: 0.15,
+                          value: 0,
                           color: AppColors.criticalRed,
                         ),
                         const SizedBox(height: 12),
