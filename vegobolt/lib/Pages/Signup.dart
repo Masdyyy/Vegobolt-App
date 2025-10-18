@@ -265,7 +265,7 @@ class _SignupPageState extends State<SignupPage> {
                   buildCounter: (_, {required currentLength, maxLength, required isFocused}) => null, // Hide counter
                   decoration: InputDecoration(
                     hintText: 'Full Name',
-                    helperText: 'Ex. First Name, Last Name, Middle Initial (Optional)',
+                    helperText: 'Ex. Last Name, First Name, Middle Name (Optional)',
                     helperStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     prefixIcon: Icon(Icons.person_outline, color: Colors.grey[700]),
