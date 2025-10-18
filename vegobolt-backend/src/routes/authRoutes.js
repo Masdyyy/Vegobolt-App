@@ -1,0 +1,48 @@
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/authController');
+const { authenticateToken } = require('../middleware/authMiddleware');
+
+/**
+ * @route   POST /api/auth/register
+ * @desc    Register a new user
+ * @access  Public
+ */
+router.post('/register', authController.register);
+
+/**
+ * @route   POST /api/auth/login
+ * @desc    Login user and get token
+ * @access  Public
+ */
+router.post('/login', authController.login);
+
+/**
+ * @route   POST /api/auth/verify
+ * @desc    Verify Firebase ID token
+ * @access  Public
+ */
+router.post('/verify', authController.verifyToken);
+
+/**
+ * @route   GET /api/auth/profile
+ * @desc    Get current user profile
+ * @access  Private (requires authentication)
+ */
+router.get('/profile', authenticateToken, authController.getProfile);
+
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Logout user
+ * @access  Private (requires authentication)
+ */
+router.post('/logout', authenticateToken, authController.logout);
+
+/**
+ * @route   POST /api/auth/password-reset
+ * @desc    Request password reset
+ * @access  Public
+ */
+router.post('/password-reset', authController.requestPasswordReset);
+
+module.exports = router;
