@@ -533,16 +533,19 @@ class _LoginPageState extends State<LoginPage> {
                         "Don't have an account? ",
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(context, '/signup');
-                        },
-                        child: const Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            color: Color(0xFF5A6B47), // Dark olive green
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/signup');
+                          },
+                          child: const Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              color: Color(0xFF5A6B47), // Dark olive green
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ),
