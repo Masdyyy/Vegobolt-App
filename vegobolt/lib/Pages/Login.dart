@@ -1,8 +1,6 @@
-import 'dart:convert';
-
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,6 +14,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _secureStorage = const FlutterSecureStorage();
+  final _authService = AuthService();
 
   bool _isPasswordVisible = false;
   bool _isLoading = false;
@@ -56,12 +55,6 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  String _hashPassword(String password, String salt) {
-    final bytes = utf8.encode(password + salt);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
-
   Future<void> _setRememberedEmail(String? email, bool remember) async {
     try {
       if (remember && email != null && email.isNotEmpty) {
@@ -85,47 +78,45 @@ class _LoginPageState extends State<LoginPage> {
     final password = _passwordController.text;
 
     try {
-      // Read stored salt and hash for this email
-      final salt = await _secureStorage.read(key: 'user:$email:salt');
-      final storedHash = await _secureStorage.read(key: 'user:$email:hash');
+      // Call backend API to login
+      final result = await _authService.login(email, password);
 
-      // Small delay to mimic I/O/processing latency (optional)
-      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
 
-      if (salt == null || storedHash == null) {
-        // No account found
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No account found for that email. Please sign up.')),
-          );
-        }
-        return;
-      }
-
-      final computedHash = _hashPassword(password, salt);
-
-      if (computedHash == storedHash) {
+      if (result['success'] == true) {
         // Successful login
         // Persist remember-me preference (store or delete email)
         await _setRememberedEmail(email, _rememberMe);
 
-        if (mounted) {
-          // Clear sensitive fields
-          _passwordController.clear();
-          Navigator.pushReplacementNamed(context, '/dashboard');
-        }
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Login successful'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Clear sensitive fields
+        _passwordController.clear();
+
+        // Navigate to dashboard
+        Navigator.pushReplacementNamed(context, '/dashboard');
       } else {
-        // Incorrect password
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Incorrect password. Please try again.')),
-          );
-        }
+        // Login failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Login failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: $e')),
+          SnackBar(
+            content: Text('Login error: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

@@ -15,9 +15,9 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS middleware (optional, uncomment if needed)
-// const cors = require('cors');
-// app.use(cors());
+// CORS middleware - Enable for mobile app access
+const cors = require('cors');
+app.use(cors());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -48,10 +48,11 @@ connectDB();
 
 // Start the server
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, 'localhost', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is running on port ${PORT}`);
     console.log(`📍 Health check: http://localhost:${PORT}/health`);
     console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
+    console.log(`📱 Mobile access: http://10.0.2.2:${PORT} (Android Emulator)`);
 });
 
 server.on('error', (error) => {
