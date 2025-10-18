@@ -8,11 +8,18 @@ import 'alerts.dart';
 import 'maintenance.dart';
 import 'settings.dart';
 
-class MachinePage extends StatelessWidget {
+class MachinePage extends StatefulWidget {
   const MachinePage({super.key});
 
-  void _onNavTap(BuildContext context, int index) {
-    if (index == 1) return; // already in Machine page
+  @override
+  State<MachinePage> createState() => _MachinePageState();
+}
+
+class _MachinePageState extends State<MachinePage> {
+  List<Map<String, dynamic>> scheduledMaintenanceItems = [];
+
+  void _onNavTap(BuildContext context, int index) async {
+    if (index == 1) return;
 
     Widget destination;
     switch (index) {
@@ -23,8 +30,22 @@ class MachinePage extends StatelessWidget {
         destination = const AlertsPage();
         break;
       case 3:
-        destination = const MaintenancePage();
-        break;
+        // Pass current items to maintenance page and get updated items back
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MaintenancePage(
+              initialScheduledItems: scheduledMaintenanceItems,
+            ),
+          ),
+        );
+        // Update items if we received data back
+        if (result != null && result is List<Map<String, dynamic>>) {
+          setState(() {
+            scheduledMaintenanceItems = result;
+          });
+        }
+        return; // Don't use pushReplacement for maintenance page
       case 4:
         destination = const SettingsPage();
         break;
@@ -42,188 +63,193 @@ class MachinePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const Header(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Machine',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
+      body: Column(
+        children: [
+          const Header(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Machine',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Control your VEGOBOLT station remotely',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Control your VEGOBOLT station remotely',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
 
-                    // Machine Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardBackground,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'VB-001',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Barangay 171',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: AppColors.warningYellow,
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Maintenance',
+                  // Machine Card
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'VB-001',
                                   style: TextStyle(
-                                    color: AppColors.warningYellow,
-                                    fontSize: 12,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
+                                Text(
+                                  'Barangay 171',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Oil Tank
-                          _buildProgressRow(
-                            icon: Icons.local_gas_station,
-                            label: "Oil Tank",
-                            value: 1.0,
-                            color: AppColors.primaryGreen,
-                          ),
-                          const SizedBox(height: 8),
-
-                          // Battery
-                          _buildProgressRow(
-                            icon: Icons.battery_full,
-                            label: "Battery",
-                            value: 0.15,
-                            color: AppColors.criticalRed,
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Temperature & Filter
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: _buildTextRow(
-                                  Icons.thermostat,
-                                  "Temperature: 96°C",
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppColors.warningYellow,
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildTextRow(
-                                  Icons.filter_alt,
-                                  "Filter: 30%",
+                              child: const Text(
+                                'Maintenance',
+                                style: TextStyle(
+                                  color: AppColors.warningYellow,
+                                  fontSize: 12,
                                 ),
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Oil Tank
+                        _buildProgressRow(
+                          icon: Icons.local_gas_station,
+                          label: "Oil Tank",
+                          value: 1.0,
+                          color: AppColors.primaryGreen,
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Battery
+                        _buildProgressRow(
+                          icon: Icons.battery_full,
+                          label: "Battery",
+                          value: 0.15,
+                          color: AppColors.criticalRed,
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Temperature & Filter
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: _buildTextRow(
+                                Icons.thermostat,
+                                "Temperature: 96°C",
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildTextRow(
+                                Icons.filter_alt,
+                                "Filter: 30%",
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Buttons
+                  MachineControlButton(
+                    label: 'Restart Station',
+                    icon: Icons.restart_alt,
+                    color: AppColors.darkGreen,
+                    onPressed: () {},
+                  ),
+                  const SizedBox(height: 12),
+                  MachineControlButton(
+                    label: 'Shutdown Station',
+                    icon: Icons.power_settings_new,
+                    color: AppColors.criticalRed,
+                    onPressed: () {},
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    'Scheduled Maintenance',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Display maintenance items or empty state
+                  if (scheduledMaintenanceItems.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.0),
+                        child: Text(
+                          'No scheduled maintenance',
+                          style: TextStyle(
+                            color: Color(0xFF808080),
+                            fontSize: 16,
                           ),
-                        ],
+                        ),
+                      ),
+                    )
+                  else
+                    ...scheduledMaintenanceItems.map(
+                      (item) => _buildMaintenanceCard(
+                        title: item['title'],
+                        machineId: item['machineId'],
+                        location: item['location'],
+                        scheduledDate: item['scheduledDate'],
+                        priority: item['priority'],
+                        priorityColor: item['priorityColor'],
                       ),
                     ),
-
-                    const SizedBox(height: 16),
-
-                    // Buttons
-                    MachineControlButton(
-                      label: 'Restart Station',
-                      icon: Icons.restart_alt,
-                      color: AppColors.darkGreen,
-                      onPressed: () {},
-                    ),
-                    const SizedBox(height: 12),
-                    MachineControlButton(
-                      label: 'Shutdown Station',
-                      icon: Icons.power_settings_new,
-                      color: AppColors.criticalRed,
-                      onPressed: () {},
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    const Text(
-                      'Scheduled Maintenance',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    _buildMaintenanceCard(
-                      title: "Oil Refill",
-                      level: "High",
-                      color: AppColors.criticalRed,
-                    ),
-                    _buildMaintenanceCard(
-                      title: "Filter Replacement",
-                      level: "High",
-                      color: AppColors.criticalRed,
-                    ),
-                    _buildMaintenanceCard(
-                      title: "Battery Replacement",
-                      level: "Medium",
-                      color: AppColors.warningYellow,
-                    ),
-                  ],
-                ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: NavBar(
         currentIndex: 1,
@@ -311,8 +337,11 @@ class MachinePage extends StatelessWidget {
 
   Widget _buildMaintenanceCard({
     required String title,
-    required String level,
-    required Color color,
+    required String machineId,
+    required String location,
+    required DateTime? scheduledDate,
+    required String priority,
+    required Color priorityColor,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -348,34 +377,46 @@ class MachinePage extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  color: priorityColor,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  level,
-                  style: TextStyle(color: color, fontSize: 12),
+                  priority,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
-            "VB-001 - Barangay 171",
-            style: TextStyle(color: AppColors.textSecondary),
+          Text(
+            '$machineId • $location',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 4),
           Row(
-            children: const [
-              Icon(Icons.access_time, size: 14, color: AppColors.textLight),
-              SizedBox(width: 4),
-              Text(
-                '5 minutes ago',
-                style: TextStyle(color: AppColors.textLight),
+            children: [
+              const Icon(
+                Icons.calendar_today,
+                size: 14,
+                color: AppColors.textLight,
               ),
-              SizedBox(width: 12),
-              Icon(Icons.person, size: 14, color: AppColors.textLight),
-              SizedBox(width: 4),
-              Text('John Lorezo', style: TextStyle(color: AppColors.textLight)),
+              const SizedBox(width: 4),
+              Text(
+                scheduledDate != null
+                    ? '${scheduledDate.month.toString().padLeft(2, '0')}/${scheduledDate.day.toString().padLeft(2, '0')}/${scheduledDate.year}'
+                    : 'Not scheduled',
+                style: const TextStyle(
+                  color: AppColors.textLight,
+                  fontSize: 12,
+                ),
+              ),
             ],
           ),
         ],

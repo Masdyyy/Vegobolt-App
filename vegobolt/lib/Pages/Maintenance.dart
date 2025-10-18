@@ -4,12 +4,13 @@ import '../components/header.dart';
 import '../components/add_maintenance_modal.dart';
 import '../utils/colors.dart';
 import 'dashboard.dart';
-import 'machine.dart';
 import 'alerts.dart';
 import 'settings.dart';
 
 class MaintenancePage extends StatefulWidget {
-  const MaintenancePage({super.key});
+  final List<Map<String, dynamic>>? initialScheduledItems;
+
+  const MaintenancePage({super.key, this.initialScheduledItems});
 
   @override
   State<MaintenancePage> createState() => _MaintenancePageState();
@@ -20,33 +21,8 @@ class _MaintenancePageState extends State<MaintenancePage>
   late TabController _tabController;
   bool _isHovering = false;
 
-  // Scheduled maintenance items
-  List<Map<String, dynamic>> scheduledItems = [
-    {
-      'title': 'Oil Refill',
-      'machineId': 'VB-0001',
-      'location': 'Sarangay 171',
-      'scheduledDate': DateTime(2025, 10, 18),
-      'priority': 'High',
-      'priorityColor': Colors.red,
-    },
-    {
-      'title': 'Filter Replacement',
-      'machineId': 'VB-0001',
-      'location': 'Sarangay 171',
-      'scheduledDate': DateTime(2025, 10, 21),
-      'priority': 'High',
-      'priorityColor': Colors.red,
-    },
-    {
-      'title': 'Battery replacement',
-      'machineId': 'VB-0001',
-      'location': 'Sarangay 171',
-      'scheduledDate': DateTime(2025, 10, 24),
-      'priority': 'Medium',
-      'priorityColor': const Color(0xFFFFD700),
-    },
-  ];
+  // Scheduled maintenance items (empty initially)
+  late List<Map<String, dynamic>> scheduledItems;
 
   // History items
   List<Map<String, dynamic>> historyItems = [];
@@ -55,6 +31,8 @@ class _MaintenancePageState extends State<MaintenancePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // Initialize with items from machine page if provided, otherwise empty
+    scheduledItems = widget.initialScheduledItems ?? [];
   }
 
   @override
@@ -75,59 +53,75 @@ class _MaintenancePageState extends State<MaintenancePage>
     });
   }
 
-  Future<void> _rescheduleItem(Map<String, dynamic> item) async {
-    final now = DateTime.now();
-    final currentDate = item['scheduledDate'] as DateTime?;
-
-    final picked = await showDatePicker(
+  void _editItem(Map<String, dynamic> item) {
+    showDialog(
       context: context,
-      initialDate: currentDate ?? now,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primaryGreen,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      builder: (context) => AddMaintenanceModal(
+        isEdit: true,
+        initialData: item,
+        onAdd: (updatedData) {
+          setState(() {
+            // Find and update the item
+            final index = scheduledItems.indexOf(item);
+            if (index != -1) {
+              scheduledItems[index] = updatedData;
+            }
+          });
+        },
+      ),
     );
+  }
 
-    if (picked != null) {
-      setState(() {
-        item['scheduledDate'] = picked;
-      });
-
-      // Show confirmation message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Maintenance rescheduled to ${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}/${picked.year}',
-            ),
-            backgroundColor: AppColors.primaryGreen,
-            duration: const Duration(seconds: 2),
+  void _deleteItem(Map<String, dynamic> item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Maintenance'),
+        content: const Text(
+          'Are you sure you want to delete this maintenance item?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-        );
-      }
-    }
+          TextButton(
+            onPressed: () {
+              setState(() {
+                scheduledItems.remove(item);
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Maintenance item deleted'),
+                  backgroundColor: AppColors.criticalRed,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppColors.criticalRed),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onNavTap(BuildContext context, int index) {
     if (index == 3) return; // already in Maintenance page
 
+    // If navigating to Machine page, pop with the updated scheduled items
+    if (index == 1) {
+      Navigator.pop(context, scheduledItems);
+      return;
+    }
+
     Widget destination;
     switch (index) {
       case 0:
         destination = const DashboardPage();
-        break;
-      case 1:
-        destination = const MachinePage();
         break;
       case 2:
         destination = const AlertsPage();
@@ -303,8 +297,9 @@ class _MaintenancePageState extends State<MaintenancePage>
           scheduledDate: item['scheduledDate'],
           priority: item['priority'],
           priorityColor: item['priorityColor'],
-          onReschedule: () => _rescheduleItem(item),
+          onEdit: () => _editItem(item),
           onResolve: () => _resolveItem(item),
+          onDelete: () => _deleteItem(item),
           isHistory: false,
         );
       },
@@ -343,8 +338,9 @@ class _MaintenancePageState extends State<MaintenancePage>
     required DateTime? scheduledDate,
     required String priority,
     required Color priorityColor,
-    required VoidCallback onReschedule,
+    required VoidCallback onEdit,
     required VoidCallback onResolve,
+    required VoidCallback onDelete,
     required bool isHistory,
   }) {
     return Container(
@@ -367,31 +363,50 @@ class _MaintenancePageState extends State<MaintenancePage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF333333),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: priorityColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              Expanded(
                 child: Text(
-                  priority,
+                  title,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xFF333333),
                   ),
                 ),
+              ),
+              Row(
+                children: [
+                  InkWell(
+                    onTap: onDelete,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        color: AppColors.criticalRed,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: priorityColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      priority,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -422,7 +437,7 @@ class _MaintenancePageState extends State<MaintenancePage>
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: onReschedule,
+                  onPressed: onEdit,
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.grey[400]!, width: 1),
                     shape: RoundedRectangleBorder(
@@ -431,7 +446,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: const Text(
-                    'Reschedule',
+                    'Edit',
                     style: TextStyle(
                       color: Color(0xFF5A6B47),
                       fontWeight: FontWeight.w600,
