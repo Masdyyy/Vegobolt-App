@@ -1,10 +1,6 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/auth_service.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -19,6 +15,8 @@ class _SignupPageState extends State<SignupPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _authService = AuthService();
+  
   bool _isPasswordVisible = false;
   bool _isConfirmVisible = false;
   bool _isLoading = false;
@@ -26,9 +24,6 @@ class _SignupPageState extends State<SignupPage> {
 
   // Add autovalidate mode for real-time validation after first submit
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
-
-  // Secure storage for storing salted+hashed password (demo only)
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   @override
   void dispose() {
@@ -47,8 +42,8 @@ class _SignupPageState extends State<SignupPage> {
 
     List<String> errors = [];
 
-    if (value.length < 8) {
-      errors.add('at least 8 characters');
+    if (value.length < 6) {
+      errors.add('at least 6 characters');
     }
     if (!RegExp(r'[A-Z]').hasMatch(value)) {
       errors.add('1 uppercase letter');
@@ -59,28 +54,12 @@ class _SignupPageState extends State<SignupPage> {
     if (!RegExp(r'[0-9]').hasMatch(value)) {
       errors.add('1 number');
     }
-    // include a broader set of special characters for safety
-    if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-+=\[\]\\\/]').hasMatch(value)) {
-      errors.add('1 special character');
-    }
 
     if (errors.isNotEmpty) {
       return 'Password must have: ${errors.join(', ')}';
     }
 
     return null;
-  }
-
-  String _generateSalt([int length = 16]) {
-    final rng = Random.secure();
-    final bytes = List<int>.generate(length, (_) => rng.nextInt(256));
-    return base64UrlEncode(bytes);
-  }
-
-  String _hashPassword(String password, String salt) {
-    final bytes = utf8.encode(password + salt);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
   }
 
   Future<void> _handleSignup() async {
@@ -102,47 +81,47 @@ class _SignupPageState extends State<SignupPage> {
 
     try {
       final email = _emailController.text.trim().toLowerCase();
-      final name = _nameController.text.trim();
+      final displayName = _nameController.text.trim();
       final password = _passwordController.text;
 
-      // Check if user already exists (by email)
-      final existingHash = await _secureStorage.read(key: 'user:$email:hash');
-      if (existingHash != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('An account with that email already exists. Try logging in.')),
-        );
-        return;
-      }
-
-      // Generate salt and store salted hash (demo only)
-      final salt = _generateSalt();
-      final hash = _hashPassword(password, salt);
-
-      await _secureStorage.write(key: 'user:$email:salt', value: salt);
-      await _secureStorage.write(key: 'user:$email:hash', value: hash);
-      await _secureStorage.write(key: 'user:$email:name', value: name);
-
-      // Small delay to mimic I/O
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Call backend API to register
+      final result = await _authService.register(email, password, displayName);
 
       if (!mounted) return;
 
-      // Clear sensitive fields
-      _passwordController.clear();
-      _confirmPasswordController.clear();
+      if (result['success'] == true) {
+        // Clear sensitive fields
+        _passwordController.clear();
+        _confirmPasswordController.clear();
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created successfully! Please log in.')),
-      );
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Account created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
 
-      // Navigate to login
-      Navigator.pushReplacementNamed(context, '/login');
+        // Navigate to dashboard (user is already logged in after registration)
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        // Registration failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Signup failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } catch (e) {
-      // Generic error handling
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Signup failed: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Signup error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

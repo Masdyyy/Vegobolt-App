@@ -1,0 +1,48 @@
+// Quick Test Guide - Copy & Paste Ready
+
+// 1. START BACKEND (in terminal)
+cd c:\Users\CABUDSAN\Documents\GitHub\Vegobolt-App\vegobolt-backend
+node src/app.js
+// OR
+.\start-server.bat
+
+// 2. RUN FLUTTER APP (in new terminal)
+cd c:\Users\CABUDSAN\Documents\GitHub\Vegobolt-App\vegobolt
+flutter run
+
+// 3. TEST CREDENTIALS
+// Registration Test:
+Name: Test User
+Email: test@vegobolt.com
+Password: Test123
+
+// Login Test (after registration):
+Email: test@vegobolt.com
+Password: Test123
+
+// 4. VERIFY DATABASE (optional)
+cd c:\Users\CABUDSAN\Documents\GitHub\Vegobolt-App\vegobolt-backend
+node view-database.js
+
+// 5. CHANGE API URL (if needed)
+// File: vegobolt/lib/utils/api_config.dart
+// Line 12: static const String baseUrl = 'http://10.0.2.2:3000';
+
+// Android Emulator → http://10.0.2.2:3000
+// iOS Simulator → http://localhost:3000  
+// Physical Device → http://YOUR_IP:3000
+
+// 6. CHECK BACKEND HEALTH
+// In browser or terminal:
+curl http://localhost:3000/health
+// Should return: {"success":true,"message":"Server is running"}
+
+// 7. CLEAR APP DATA (if needed to reset)
+// Android: Settings → Apps → Vegobolt → Storage → Clear Data
+// iOS: Uninstall and reinstall app
+
+// 8. DEBUG TIPS
+// - Check terminal for backend logs
+// - Check Flutter debug console for API responses
+// - Ensure firewall allows port 3000
+// - Device and computer must be on same WiFi (for physical device)
