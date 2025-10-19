@@ -40,6 +40,39 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
+  // Shared input decoration to keep animation and styling consistent
+  InputDecoration _buildInputDecoration({
+    required String hint,
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+    String? helperText,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      helperText: helperText,
+      hintStyle: TextStyle(color: Colors.grey[500]),
+      prefixIcon: prefixIcon != null
+          ? Icon(prefixIcon, color: Colors.grey[700])
+          : null,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        borderSide: BorderSide(color: Color(0xFF5A6B47), width: 2),
+      ),
+    );
+  }
+
   // Password validation function that shows all requirements
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
@@ -253,35 +286,7 @@ class _SignupPageState extends State<SignupPage> {
                       child: TextFormField(
                         controller: _firstNameController,
                         textCapitalization: TextCapitalization.words,
-                        decoration: InputDecoration(
-                          hintText: 'First Name',
-                          hintStyle: TextStyle(color: Colors.grey[500]),
-                          prefixIcon: Icon(
-                            Icons.person_outline,
-                            color: Colors.grey[700],
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: const Color(0xFF5A6B47).withOpacity(0.6),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: const Color(0xFF5A6B47).withOpacity(0.6),
-                            ),
-                          ),
-                          focusedBorder: const OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(12)),
-                            borderSide: BorderSide(
-                              color: Color(0xFF5A6B47),
-                              width: 2,
-                            ),
-                          ),
-                        ),
+                        decoration: _buildInputDecoration(hint: 'First Name'),
                         validator: (v) {
                           final value = v?.trim() ?? '';
                           if (value.isEmpty)
@@ -298,35 +303,7 @@ class _SignupPageState extends State<SignupPage> {
                       child: TextFormField(
                         controller: _lastNameController,
                         textCapitalization: TextCapitalization.words,
-                        decoration: InputDecoration(
-                          hintText: 'Last Name',
-                          hintStyle: TextStyle(color: Colors.grey[500]),
-                          prefixIcon: Icon(
-                            Icons.person_outline,
-                            color: Colors.grey[700],
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: const Color(0xFF5A6B47).withOpacity(0.6),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: const Color(0xFF5A6B47).withOpacity(0.6),
-                            ),
-                          ),
-                          focusedBorder: const OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(12)),
-                            borderSide: BorderSide(
-                              color: Color(0xFF5A6B47),
-                              width: 2,
-                            ),
-                          ),
-                        ),
+                        decoration: _buildInputDecoration(hint: 'Last Name'),
                         validator: (v) {
                           final value = v?.trim() ?? '';
                           if (value.isEmpty)
@@ -345,34 +322,9 @@ class _SignupPageState extends State<SignupPage> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: 'Email Address',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(
-                      Icons.email_outlined,
-                      color: Colors.grey[700],
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withOpacity(0.6),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withOpacity(0.6),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                      borderSide: BorderSide(
-                        color: Color(0xFF5A6B47),
-                        width: 2,
-                      ),
-                    ),
+                  decoration: _buildInputDecoration(
+                    hint: 'Email Address',
+                    prefixIcon: Icons.email_outlined,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty)
@@ -390,13 +342,9 @@ class _SignupPageState extends State<SignupPage> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(
-                      Icons.lock_outline,
-                      color: Colors.grey[700],
-                    ),
+                  decoration: _buildInputDecoration(
+                    hint: 'Password',
+                    prefixIcon: Icons.lock_outline,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isPasswordVisible
@@ -408,27 +356,6 @@ class _SignupPageState extends State<SignupPage> {
                         () => _isPasswordVisible = !_isPasswordVisible,
                       ),
                     ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withOpacity(0.6),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withOpacity(0.6),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                      borderSide: BorderSide(
-                        color: Color(0xFF5A6B47),
-                        width: 2,
-                      ),
-                    ),
                   ),
                   validator: _validatePassword,
                 ),
@@ -436,13 +363,9 @@ class _SignupPageState extends State<SignupPage> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: !_isConfirmVisible,
-                  decoration: InputDecoration(
-                    hintText: 'Confirm Password',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(
-                      Icons.lock_outline,
-                      color: Colors.grey[700],
-                    ),
+                  decoration: _buildInputDecoration(
+                    hint: 'Confirm Password',
+                    prefixIcon: Icons.lock_outline,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isConfirmVisible
@@ -452,27 +375,6 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                       onPressed: () => setState(
                         () => _isConfirmVisible = !_isConfirmVisible,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withOpacity(0.6),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withOpacity(0.6),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                      borderSide: BorderSide(
-                        color: Color(0xFF5A6B47),
-                        width: 2,
                       ),
                     ),
                   ),
@@ -491,34 +393,9 @@ class _SignupPageState extends State<SignupPage> {
                 TextFormField(
                   controller: _staffController,
                   readOnly: true,
-                  decoration: InputDecoration(
-                    hintText: 'Staff',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(
-                      Icons.badge_outlined,
-                      color: Colors.grey[700],
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withOpacity(0.6),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withOpacity(0.6),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                      borderSide: BorderSide(
-                        color: Color(0xFF5A6B47),
-                        width: 2,
-                      ),
-                    ),
+                  decoration: _buildInputDecoration(
+                    hint: 'Staff',
+                    prefixIcon: Icons.badge_outlined,
                   ),
                 ),
 
@@ -527,34 +404,9 @@ class _SignupPageState extends State<SignupPage> {
                 // Machine Key field
                 TextFormField(
                   controller: _machineKeyController,
-                  decoration: InputDecoration(
-                    hintText: 'Machine Key',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(
-                      Icons.vpn_key_outlined,
-                      color: Colors.grey[700],
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withOpacity(0.6),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withOpacity(0.6),
-                      ),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                      borderSide: BorderSide(
-                        color: Color(0xFF5A6B47),
-                        width: 2,
-                      ),
-                    ),
+                  decoration: _buildInputDecoration(
+                    hint: 'Machine Key',
+                    prefixIcon: Icons.vpn_key_outlined,
                   ),
                   validator: (v) {
                     final value = v?.trim() ?? '';
