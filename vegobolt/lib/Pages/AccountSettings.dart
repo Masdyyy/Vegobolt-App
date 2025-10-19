@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../components/navbar.dart';
+import '../components/admin_navbar.dart';
 import '../components/header.dart';
 import '../utils/colors.dart';
 import 'dashboard.dart';
@@ -9,7 +10,8 @@ import 'maintenance.dart';
 import 'settings.dart';
 
 class AccountSettingsPage extends StatefulWidget {
-  const AccountSettingsPage({super.key});
+  final bool isAdmin;
+  const AccountSettingsPage({super.key, this.isAdmin = false});
   @override
   State<AccountSettingsPage> createState() => _AccountSettingsPageState();
 }
@@ -17,16 +19,16 @@ class AccountSettingsPage extends StatefulWidget {
 class _AccountSettingsPageState extends State<AccountSettingsPage> {
   final _formKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
-  
+
   // Profile Information Controllers
   final _emailController = TextEditingController();
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
-  
+
   // Password Controllers
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
-  
+
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
 
@@ -41,6 +43,17 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   }
 
   void _onNavTap(BuildContext context, int i) {
+    // For admin users
+    if (widget.isAdmin) {
+      if (i == 0) {
+        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+      } else if (i == 1) {
+        Navigator.pushReplacementNamed(context, '/admin-settings');
+      }
+      return;
+    }
+
+    // For regular users
     if (i == 4) {
       Navigator.pushReplacement(
         context,
@@ -113,7 +126,56 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
       );
       _currentPasswordController.clear();
       _newPasswordController.clear();
+      Navigator.pop(context);
     }
+  }
+
+  void _showForgotPasswordOption() {
+    final emailController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Forgot Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Enter your email address and we will send you a link to reset your password.',
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email Address',
+                hintText: 'Enter your email',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Password reset link sent to your email'),
+                  backgroundColor: AppColors.primaryGreen,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+            ),
+            child: const Text('Send Link'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -133,7 +195,10 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          color: AppColors.textPrimary,
+                        ),
                         onPressed: () => Navigator.pop(context),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -151,15 +216,19 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Manage your profile and security',
-                    style: TextStyle(color: AppColors.textSecondary),
+                  Text(
+                    widget.isAdmin
+                        ? 'Manage your security'
+                        : 'Manage your profile and security',
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 24),
 
-                  // PROFILE INFORMATION CARD
-                  _buildProfileSection(),
-                  const SizedBox(height: 24),
+                  // PROFILE INFORMATION CARD (Only for regular users)
+                  if (!widget.isAdmin) ...[
+                    _buildProfileSection(),
+                    const SizedBox(height: 24),
+                  ],
 
                   // SECURITY CARD
                   _buildSecuritySection(),
@@ -169,10 +238,12 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
           ),
         ],
       ),
-      bottomNavigationBar: NavBar(
-        currentIndex: 4,
-        onTap: (i) => _onNavTap(context, i),
-      ),
+      bottomNavigationBar: widget.isAdmin
+          ? AdminNavBar(
+              currentIndex: 1, // Settings tab for admin
+              onTap: (i) => _onNavTap(context, i),
+            )
+          : NavBar(currentIndex: 4, onTap: (i) => _onNavTap(context, i)),
     );
   }
 
@@ -185,7 +256,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.shadowColor,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -226,17 +297,23 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: AppColors.borderColor),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: AppColors.borderColor),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryGreen,
+                    width: 2,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -269,17 +346,23 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: AppColors.borderColor),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: AppColors.borderColor),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryGreen,
+                    width: 2,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -309,17 +392,23 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: AppColors.borderColor),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: AppColors.borderColor),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryGreen,
+                    width: 2,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -371,174 +460,183 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.shadowColor,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Form(
-        key: _passwordFormKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Security',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Security',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 12),
+          ),
+          const SizedBox(height: 16),
 
-            // Change Password Header
-            const Text(
-              'Change Password',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'When you change your password, we keep you logged in to this device but may logged out from other devices.',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Current Password
-            const Text(
-              'Current Password *',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _currentPasswordController,
-              obscureText: _obscureCurrentPassword,
-              decoration: InputDecoration(
-                hintText: 'Enter Current Password',
-                hintStyle: const TextStyle(color: AppColors.textLight),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureCurrentPassword ? Icons.visibility_off : Icons.visibility,
-                    color: AppColors.textSecondary,
+          // Show password fields directly for all users
+          Form(
+            key: _passwordFormKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Current Password',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureCurrentPassword = !_obscureCurrentPassword;
-                    });
-                  },
                 ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your current password';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // New Password
-            const Text(
-              'New Password *',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _newPasswordController,
-              obscureText: _obscureNewPassword,
-              decoration: InputDecoration(
-                hintText: 'Enter New Password',
-                hintStyle: const TextStyle(color: AppColors.textLight),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
-                    color: AppColors.textSecondary,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureNewPassword = !_obscureNewPassword;
-                    });
-                  },
-                ),
-              ),
-              validator: _validatePassword,
-            ),
-            const SizedBox(height: 20),
-
-            // Save Password Button
-            Align(
-              alignment: Alignment.centerRight,
-              child: SizedBox(
-                width: 160,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _currentPasswordController,
+                  obscureText: _obscureCurrentPassword,
+                  decoration: InputDecoration(
+                    hintText: 'Enter current password',
+                    hintStyle: const TextStyle(color: AppColors.textLight),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.borderColor),
                     ),
-                    elevation: 0,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryGreen,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureCurrentPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: AppColors.textSecondary,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureCurrentPassword = !_obscureCurrentPassword;
+                        });
+                      },
+                    ),
                   ),
-                  onPressed: _savePassword,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your current password';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'New Password',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _newPasswordController,
+                  obscureText: _obscureNewPassword,
+                  decoration: InputDecoration(
+                    hintText: 'Enter new password',
+                    hintStyle: const TextStyle(color: AppColors.textLight),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryGreen,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureNewPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: AppColors.textSecondary,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureNewPassword = !_obscureNewPassword;
+                        });
+                      },
+                    ),
+                  ),
+                  validator: _validatePassword,
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _showForgotPasswordOption,
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
                   child: const Text(
-                    'Save Password',
+                    'Forgot your password?',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryGreen,
+                      fontSize: 14,
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: SizedBox(
+                    width: 160,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: _savePassword,
+                      child: const Text(
+                        'Save Password',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

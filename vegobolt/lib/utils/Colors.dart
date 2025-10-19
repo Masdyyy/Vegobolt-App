@@ -14,4 +14,10 @@ class AppColors {
   static const Color textPrimary = Color(0xFF2C3E50);
   static const Color textSecondary = Color(0xFF7F8C8D);
   static const Color textLight = Color(0xFFBDC3C7);
+
+  // Additional UI colors
+  static const Color borderColor = Color(0xFFE0E0E0);
+  static const Color shadowColor = Color(
+    0x0D000000,
+  ); // Colors.black.withOpacity(0.05)
 }

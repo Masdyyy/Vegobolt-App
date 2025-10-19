@@ -88,6 +88,11 @@ class _LoginPageState extends State<LoginPage> {
         // Persist remember-me preference (store or delete email)
         await _setRememberedEmail(email, _rememberMe);
 
+        // Debug: Check what we're getting
+        print('🔍 DEBUG - Login result: $result');
+        print('🔍 DEBUG - isAdmin value: ${result['isAdmin']}');
+        print('🔍 DEBUG - isAdmin type: ${result['isAdmin'].runtimeType}');
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -99,8 +104,21 @@ class _LoginPageState extends State<LoginPage> {
         // Clear sensitive fields
         _passwordController.clear();
 
-        // Navigate to dashboard
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        // Navigate based on admin status
+        final isAdmin = result['isAdmin'] ?? false;
+        print(
+          '🔍 DEBUG - Final isAdmin: $isAdmin (type: ${isAdmin.runtimeType})',
+        );
+
+        if (isAdmin) {
+          print('✅ Routing to ADMIN dashboard');
+          // Route to admin dashboard
+          Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        } else {
+          print('❌ Routing to REGULAR dashboard');
+          // Route to regular dashboard
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        }
       } else {
         // Login failed
         ScaffoldMessenger.of(context).showSnackBar(
@@ -174,7 +192,8 @@ class _LoginPageState extends State<LoginPage> {
                                   // stroke paint:
                                   foreground: Paint()
                                     ..style = PaintingStyle.stroke
-                                    ..strokeWidth = 3.2 // increase to make heavier
+                                    ..strokeWidth =
+                                        3.2 // increase to make heavier
                                     ..color = const Color(0xFF5A6B47),
                                   letterSpacing: -1.8,
                                 ),
@@ -316,7 +335,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: Colors.grey[700],
                       ),
                       onPressed: () {
@@ -379,8 +400,13 @@ class _LoginPageState extends State<LoginPage> {
                               await _setRememberedEmail(null, false);
                             } else {
                               // if user checks, save current email immediately (if any)
-                              final currentEmail = _emailController.text.trim().toLowerCase();
-                              await _setRememberedEmail(currentEmail.isNotEmpty ? currentEmail : null, true);
+                              final currentEmail = _emailController.text
+                                  .trim()
+                                  .toLowerCase();
+                              await _setRememberedEmail(
+                                currentEmail.isNotEmpty ? currentEmail : null,
+                                true,
+                              );
                             }
                           },
                           activeColor: const Color(0xFF5A6B47),
@@ -469,7 +495,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 20), // reduced spacing here
-
                 // Google Login Button
                 SizedBox(
                   height: 56,
@@ -513,7 +538,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 16), // smaller gap to the sign-up row
-
                 // Sign Up Link (moved up a bit and given a small bottom padding)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),

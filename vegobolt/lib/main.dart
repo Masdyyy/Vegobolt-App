@@ -11,6 +11,8 @@ import 'Pages/forgetpassword.dart';
 import 'Pages/signup.dart';
 import 'Pages/HelpSupport.dart';
 import 'Pages/AccountSettings.dart';
+import 'Pages/admin/admin_dashboard.dart';
+import 'Pages/admin/admin_settings.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,6 +34,9 @@ class MyApp extends StatelessWidget {
       '/settings': (context) => const SettingsPage(),
       '/helpsupport': (context) => const HelpSupportPage(),
       '/accountsettings': (context) => const AccountSettingsPage(),
+      '/account-settings': (context) => const AccountSettingsPage(),
+      '/admin-dashboard': (context) => const AdminDashboardPage(),
+      '/admin-settings': (context) => const AdminSettingsPage(),
     };
     return MaterialApp(
       debugShowCheckedModeBanner: false,

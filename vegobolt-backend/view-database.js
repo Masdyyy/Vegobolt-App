@@ -48,6 +48,8 @@ async function viewDatabase() {
                 console.log(`      User ID: ${user._id}`);
                 console.log(`      Firebase UID: ${user.firebaseUid}`);
                 console.log(`      Active: ${user.isActive}`);
+                console.log(`      Admin: ${user.isAdmin || false}`);
+                console.log(`      Email Verified: ${user.isEmailVerified}`);
                 console.log(`      Created: ${user.createdAt.toISOString()}`);
                 console.log(`      Updated: ${user.updatedAt.toISOString()}\n`);
             });
