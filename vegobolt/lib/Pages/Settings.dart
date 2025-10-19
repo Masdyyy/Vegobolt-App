@@ -80,7 +80,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   // MACHINE CONTROL
                   _buildExpandableCard(
                     title: 'Machine Control',
-                    subtitle: 'Control your VEGOBOLT station remotely',
                     icon: Icons.settings_outlined,
                     expanded: _isMachineExpanded,
                     onExpand: (v) => setState(() => _isMachineExpanded = v),
@@ -105,7 +104,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   // NOTIFICATION SETTINGS
                   _buildExpandableCard(
                     title: 'Notification Settings',
-                    subtitle: 'Manage notification preferences',
                     icon: Icons.notifications_none_outlined,
                     expanded: _isNotifExpanded,
                     onExpand: (v) => setState(() => _isNotifExpanded = v),
@@ -186,7 +184,6 @@ class _SettingsPageState extends State<SettingsPage> {
   // 🔧 Reusable widgets
   Widget _buildExpandableCard({
     required String title,
-    required String subtitle,
     required IconData icon,
     required bool expanded,
     required Function(bool) onExpand,
@@ -216,16 +213,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ],
           ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              subtitle,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
+          subtitle: null,
           trailing: Icon(
             expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
             color: AppColors.textSecondary,
@@ -233,7 +221,8 @@ class _SettingsPageState extends State<SettingsPage> {
           onExpansionChanged: onExpand,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              // remove vertical gap between title and content
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
               child: Column(children: children),
             ),
           ],
