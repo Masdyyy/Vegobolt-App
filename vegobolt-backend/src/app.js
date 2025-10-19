@@ -48,8 +48,11 @@ app.use((req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB (initialize on startup)
+// For serverless, connection will be cached and reused
+if (process.env.NODE_ENV !== 'production') {
+    connectDB();
+}
 
 // Start the server (only in development, not on Vercel)
 if (process.env.NODE_ENV !== 'production') {

@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { generateToken, verifyToken: verifyJWT } = require('../services/jwtService');
 const { generateVerificationToken, sendVerificationEmail } = require('../services/emailService');
+const connectDB = require('../config/mongodb');
 
 /**
  * Register a new user with email and password
@@ -10,6 +11,9 @@ const { generateVerificationToken, sendVerificationEmail } = require('../service
 const register = async (req, res, next) => {
     console.log('🔵 Registration request received:', req.body);
     try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
         const { email, password, displayName } = req.body;
         console.log('🔵 Parsed data:', { email, displayName, hasPassword: !!password });
 
@@ -100,6 +104,9 @@ const register = async (req, res, next) => {
  */
 const login = async (req, res) => {
     try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
         const { email, password } = req.body;
 
         // Validate input
