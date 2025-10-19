@@ -124,21 +124,46 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void _handleGoogleLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
 
-    // Simulate Google login process
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Call Google login from auth service
+      final result = await _authService.loginWithGoogle();
 
-    setState(() {
-      _isLoading = false;
-    });
+      if (!mounted) return;
 
-    // Navigate to dashboard
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      if (result['success'] == true) {
+        // Successful Google login
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Google login successful'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate to dashboard
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        // Google login failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Google login failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google login error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

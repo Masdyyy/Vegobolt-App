@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: false, // Optional for Google auth users
     },
     displayName: {
         type: String,
@@ -24,6 +24,16 @@ const userSchema = new mongoose.Schema({
     profilePicture: {
         type: String,
         default: null,
+    },
+    authProvider: {
+        type: String,
+        enum: ['email', 'google'],
+        default: 'email',
+    },
+    googleId: {
+        type: String,
+        default: null,
+        sparse: true, // Allows null values but enforces uniqueness when not null
     },
     isActive: {
         type: Boolean,

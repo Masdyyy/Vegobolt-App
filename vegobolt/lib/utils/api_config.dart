@@ -14,7 +14,7 @@ class ApiConfig {
   
   // Toggle between production and development
   // Set to true for production, false for local testing
-  static const bool useProduction = true;
+  static const bool useProduction = false;
   
   // Automatically detect platform and use correct URL
   static String get baseUrl {

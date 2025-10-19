@@ -59,4 +59,11 @@ router.post('/logout', authenticateToken, authController.logout);
  */
 router.post('/password-reset', authController.requestPasswordReset);
 
+/**
+ * @route   POST /api/auth/google
+ * @desc    Login/Register with Google
+ * @access  Public
+ */
+router.post('/google', authController.googleLogin);
+
 module.exports = router;

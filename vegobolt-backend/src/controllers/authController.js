@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { generateToken, verifyToken: verifyJWT } = require('../services/jwtService');
 const { generateVerificationToken, sendVerificationEmail } = require('../services/emailService');
+const { verifyGoogleToken } = require('../services/googleAuthService');
 const connectDB = require('../config/mongodb');
 
 /**
@@ -643,6 +644,183 @@ const requestPasswordReset = async (req, res) => {
     }
 };
 
+/**
+ * Google Login/Register
+ * Authenticates user with Google ID token or access token (for web)
+ */
+const googleLogin = async (req, res) => {
+    console.log('🔵 Google login request received');
+    try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+
+        const { idToken, accessToken, email, displayName, photoUrl, googleId } = req.body;
+
+        // For web: if access token and user info provided, skip Google verification
+        if (accessToken && email && googleId) {
+            console.log('🌐 Web-based Google login with access token');
+            
+            // Check if user already exists
+            let user = await User.findByEmail(email);
+
+            if (user) {
+                // Existing user
+                console.log('✅ Existing user found:', user.email);
+
+                // Update Google info
+                if (!user.googleId && googleId) {
+                    user.googleId = googleId;
+                    user.authProvider = 'google';
+                }
+
+                // Update profile picture
+                if (!user.profilePicture && photoUrl) {
+                    user.profilePicture = photoUrl;
+                }
+
+                // Update display name if needed
+                if (displayName && (!user.displayName || user.displayName === email)) {
+                    user.displayName = displayName;
+                }
+
+                // Mark email as verified for Google users
+                user.isEmailVerified = true;
+                user.emailVerificationToken = null;
+                user.emailVerificationExpires = null;
+
+                await user.save();
+            } else {
+                // New user
+                console.log('✅ Creating new user via Google (web):', email);
+
+                user = await User.createUser({
+                    email: email,
+                    displayName: displayName || email.split('@')[0],
+                    profilePicture: photoUrl,
+                    googleId: googleId,
+                    authProvider: 'google',
+                    isEmailVerified: true,
+                    isActive: true,
+                });
+
+                console.log('✅ New user created successfully');
+            }
+
+            // Generate JWT token
+            const token = generateToken(user);
+
+            return res.status(200).json({
+                success: true,
+                message: 'Google login successful',
+                data: {
+                    user: {
+                        id: user._id,
+                        email: user.email,
+                        displayName: user.displayName,
+                        profilePicture: user.profilePicture,
+                        authProvider: user.authProvider,
+                        isEmailVerified: user.isEmailVerified,
+                    },
+                    token: token,
+                }
+            });
+        }
+
+        // Traditional mobile flow with ID token
+        if (!idToken) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide Google ID token or access token with user info'
+            });
+        }
+
+        // Verify Google token
+        let googleUser;
+        try {
+            googleUser = await verifyGoogleToken(idToken);
+            console.log('✅ Google token verified:', googleUser.email);
+        } catch (error) {
+            console.error('❌ Google token verification failed:', error);
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid Google token',
+                error: error.message
+            });
+        }
+
+        // Check if user already exists
+        let user = await User.findByEmail(googleUser.email);
+
+        if (user) {
+            // Existing user - update Google info if needed
+            console.log('✅ Existing user found:', user.email);
+
+            // Update Google ID if not set
+            if (!user.googleId && googleUser.googleId) {
+                user.googleId = googleUser.googleId;
+                user.authProvider = 'google';
+            }
+
+            // Update profile picture if not set
+            if (!user.profilePicture && googleUser.profilePicture) {
+                user.profilePicture = googleUser.profilePicture;
+            }
+
+            // Mark email as verified for Google users
+            if (!user.isEmailVerified && googleUser.emailVerified) {
+                user.isEmailVerified = true;
+                user.emailVerificationToken = null;
+                user.emailVerificationExpires = null;
+            }
+
+            await user.save();
+        } else {
+            // New user - create account
+            console.log('✅ Creating new user via Google:', googleUser.email);
+
+            user = await User.createUser({
+                email: googleUser.email,
+                displayName: googleUser.displayName,
+                profilePicture: googleUser.profilePicture,
+                googleId: googleUser.googleId,
+                authProvider: 'google',
+                isEmailVerified: googleUser.emailVerified, // Trust Google's verification
+                isActive: true,
+            });
+
+            console.log('✅ New user created successfully');
+        }
+
+        // Generate JWT token
+        const token = generateToken(user);
+
+        res.status(200).json({
+            success: true,
+            message: 'Google login successful',
+            data: {
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    displayName: user.displayName,
+                    profilePicture: user.profilePicture,
+                    authProvider: user.authProvider,
+                    isEmailVerified: user.isEmailVerified,
+                },
+                token: token,
+                isNewUser: !user.createdAt || (Date.now() - user.createdAt < 1000),
+            }
+        });
+
+    } catch (error) {
+        console.error('Google login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error during Google login',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -651,5 +829,6 @@ module.exports = {
     resendVerificationEmail,
     getProfile,
     logout,
-    requestPasswordReset
+    requestPasswordReset,
+    googleLogin
 };
