@@ -15,9 +15,14 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS middleware - Enable for mobile app access
+// CORS middleware - Enable for mobile app and web access
 const cors = require('cors');
-app.use(cors());
+app.use(cors({
+    origin: '*', // Allow all origins (for development and production)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
