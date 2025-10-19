@@ -6,7 +6,7 @@ class MachineStatusCard extends StatelessWidget {
   final String location;
   final String statusText;
   final Color statusColor;
-  final double oilValue; // 0.0 - 1.0
+  final double tankLevel; // 0.0 - 1.0
   final double batteryValue; // 0.0 - 1.0
   final int temperatureC;
 
@@ -16,13 +16,30 @@ class MachineStatusCard extends StatelessWidget {
     required this.location,
     this.statusText = 'Active',
     this.statusColor = AppColors.primaryGreen,
-    this.oilValue = 0,
-    this.batteryValue = 0,
+    this.tankLevel = 0.0,
+    this.batteryValue = 0.0,
     this.temperatureC = 0,
   });
 
+  // Determine textual status of tank
+  String getTankStatus(double value) {
+    if (value >= 0.9) return 'Full';
+    if (value <= 0.2) return 'Low';
+    return 'Normal';
+  }
+
+  // Determine color based on tank level
+  Color getTankColor(double value) {
+    if (value >= 0.9) return AppColors.primaryGreen;
+    if (value <= 0.2) return AppColors.criticalRed;
+    return AppColors.warningYellow;
+  }
+
   @override
   Widget build(BuildContext context) {
+    String tankStatus = getTankStatus(tankLevel);
+    Color tankColor = getTankColor(tankLevel);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -39,6 +56,7 @@ class MachineStatusCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -68,7 +86,7 @@ class MachineStatusCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: statusColor),
-                  color: statusColor.withValues(alpha: 0.0),
+                  color: statusColor.withOpacity(0.1),
                 ),
                 child: Text(
                   statusText,
@@ -91,25 +109,74 @@ class MachineStatusCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Oil Tank
-          _buildProgressRow(
-            icon: Icons.local_gas_station,
-            label: 'Oil Tank',
-            value: oilValue,
-            color: AppColors.primaryGreen,
+          // 🟩 Tank Status
+          Row(
+            children: [
+              const Icon(
+                Icons.local_gas_station,
+                color: AppColors.primaryGreen,
+                size: 20,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Tank Status',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          tankStatus,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: tankColor,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    LinearProgressIndicator(
+                      value: tankLevel.clamp(0.0, 1.0),
+                      color: tankColor,
+                      backgroundColor: tankColor.withOpacity(0.2),
+                      minHeight: 6,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tank Level: ${(tankLevel * 100).round()}%',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+
           const SizedBox(height: 12),
 
-          // Battery
+          // 🔋 Battery
           _buildProgressRow(
             icon: Icons.battery_full,
             label: 'Battery',
             value: batteryValue,
-            color: AppColors.criticalRed,
+            color: AppColors.primaryGreen,
           ),
           const SizedBox(height: 12),
 
-          // Temperature
+          // 🌡 Temperature
           Row(
             children: [
               const Icon(
@@ -128,7 +195,7 @@ class MachineStatusCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '${temperatureC}°C',
+                '$temperatureC°C',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -142,13 +209,14 @@ class MachineStatusCard extends StatelessWidget {
     );
   }
 
+  /// Shared progress row for things like battery
   Widget _buildProgressRow({
     required IconData icon,
     required String label,
     required double value,
     required Color color,
   }) {
-    int percent = (value * 100).round();
+    int percent = (value * 100).round().clamp(0, 100);
     Color percentColor;
 
     if (percent < 20) {
@@ -179,7 +247,7 @@ class MachineStatusCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${percent}%',
+                    '$percent%',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -190,9 +258,9 @@ class MachineStatusCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               LinearProgressIndicator(
-                value: value,
+                value: value.clamp(0.0, 1.0),
                 color: color,
-                backgroundColor: color.withValues(alpha: 0.2),
+                backgroundColor: color.withOpacity(0.2),
                 minHeight: 6,
                 borderRadius: BorderRadius.circular(4),
               ),

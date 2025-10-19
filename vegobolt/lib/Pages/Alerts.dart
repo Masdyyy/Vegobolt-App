@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:async';
+import 'package:intl/intl.dart';
 import '../components/navbar.dart';
 import '../components/header.dart';
 import '../components/alert_card.dart';
-import '../utils/Colors.dart';
+import '../utils/colors.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'maintenance.dart';
@@ -17,10 +21,111 @@ class AlertsPage extends StatefulWidget {
 
 class _AlertsPageState extends State<AlertsPage> {
   int _selectedTab = 0;
+  List<dynamic> _alerts = [];
+  bool _isLoading = true;
+  Timer? _pollTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAlerts();
+    // Auto-refresh every 5 seconds so alerts show without switching pages
+    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted) return;
+      fetchAlerts();
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> fetchAlerts() async {
+    try {
+      // We now derive alerts from the latest tank status
+      // Only show an alert when the tank is FULL (critical)
+      final baseUrl = _getBaseUrl();
+      final response = await http.get(Uri.parse('$baseUrl/api/tank/status'));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        final String status = (data['status'] ?? '').toString();
+        final int level = int.tryParse('${data['level'] ?? 0}') ?? 0;
+        final String timeIso =
+            (data['createdAt'] ?? DateTime.now().toIso8601String()).toString();
+
+        // Build a single alert only when FULL
+        final List<dynamic> derivedAlerts =
+            (status.toLowerCase() == 'full' || level >= 90)
+            ? [
+                {
+                  'title': 'Tank Full',
+                  'machine': 'VB-0001',
+                  'location': '-',
+                  'time': timeIso,
+                  'status': 'Critical',
+                },
+              ]
+            : [];
+
+        if (!mounted) return;
+        setState(() {
+          _alerts = derivedAlerts;
+          _isLoading = false;
+        });
+        debugPrint('✅ Derived alerts: ${_alerts.length}');
+      } else {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        debugPrint('❌ Error: Status ${response.statusCode}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      debugPrint('❌ Error fetching alerts: $e');
+    }
+  }
+
+  String _getBaseUrl() {
+    // Change this based on your setup:
+    // - 'web': Use localhost (Chrome/Web)
+    // - 'emulator': Use 10.0.2.2 (Android Emulator)
+    // - 'device': Use your PC's IP (192.168.100.28)
+    // - 'ios': Use localhost (iOS Simulator)
+    const mode = 'device'; // 👈 CHANGE THIS!
+
+    switch (mode) {
+      case 'web':
+        return 'http://localhost:3000'; // For Chrome/Web
+      case 'emulator':
+        return 'http://10.0.2.2:3000';
+      case 'device':
+        return 'http://192.168.100.28:3000'; // Your PC's IP
+      case 'ios':
+        return 'http://localhost:3000';
+      default:
+        return 'http://localhost:3000';
+    }
+  }
+
+  List<dynamic> get _filteredAlerts {
+    switch (_selectedTab) {
+      case 1:
+        return _alerts.where((a) => a['status'] == 'Critical').toList();
+      case 2:
+        return _alerts.where((a) => a['status'] == 'Warning').toList();
+      case 3:
+        return _alerts.where((a) => a['status'] == 'Resolved').toList();
+      default:
+        return _alerts;
+    }
+  }
 
   void _onNavTap(BuildContext context, int index) {
     if (index == 2) return;
-
     Widget destination;
     switch (index) {
       case 0:
@@ -45,22 +150,6 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  // Alerts list (empty initially)
-  final List<Map<String, dynamic>> _alerts = [];
-
-  List<Map<String, dynamic>> get _filteredAlerts {
-    switch (_selectedTab) {
-      case 1:
-        return _alerts.where((a) => a['status'] == 'Critical').toList();
-      case 2:
-        return _alerts.where((a) => a['status'] == 'Warning').toList();
-      case 3:
-        return _alerts.where((a) => a['status'] == 'Resolved').toList();
-      default:
-        return _alerts;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,82 +163,35 @@ class _AlertsPageState extends State<AlertsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Header(),
-
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Alerts',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Monitor system notifications',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      'Alerts',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                    const SizedBox(height: 12),
-
-                    // Search bar
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search alerts...',
-                        hintStyle: const TextStyle(color: AppColors.textLight),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: AppColors.textSecondary,
-                        ),
-                        filled: true,
-                        fillColor: AppColors.cardBackground,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Monitor system notifications',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
                       ),
                     ),
                     const SizedBox(height: 12),
-
-                    // 🟨 Tabs
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.textLight,
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          _buildTab(0, 'All', isFirst: true),
-                          _buildTab(1, 'Critical'),
-                          _buildTab(2, 'Warning'),
-                          _buildTab(3, 'Resolved', isLast: true),
-                        ],
-                      ),
-                    ),
+                    _buildTabs(),
                     const SizedBox(height: 12),
-
-                    // 📋 Alert List
                     Expanded(
-                      child: _filteredAlerts.isEmpty
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _filteredAlerts.isEmpty
                           ? const Center(
                               child: Text(
                                 'No alerts detected.',
@@ -163,13 +205,13 @@ class _AlertsPageState extends State<AlertsPage> {
                               itemBuilder: (context, index) {
                                 final alert = _filteredAlerts[index];
                                 return AlertCard(
-                                  title: alert['title'],
-                                  machine: alert['machine'],
-                                  location: alert['location'],
-                                  time: alert['time'],
-                                  status: alert['status'],
-                                  statusColor: alert['color'],
-                                  icon: alert['icon'],
+                                  title: alert['title'] ?? 'No title',
+                                  machine: alert['machine'] ?? 'Unknown',
+                                  location: alert['location'] ?? '-',
+                                  time: _formatTime(alert['time'] ?? ''),
+                                  status: alert['status'] ?? '',
+                                  statusColor: _getStatusColor(alert['status']),
+                                  icon: Icons.warning_amber_rounded,
                                 );
                               },
                             ),
@@ -184,35 +226,65 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  Widget _buildTab(
-    int index,
-    String text, {
-    bool isFirst = false,
-    bool isLast = false,
-  }) {
-    final isActive = _selectedTab == index;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _selectedTab = index),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isActive ? AppColors.warningYellow : Colors.white,
-            border: Border(right: BorderSide(color: AppColors.textLight)),
-            borderRadius: BorderRadius.horizontal(
-              left: isFirst ? const Radius.circular(8) : Radius.zero,
-              right: isLast ? const Radius.circular(8) : Radius.zero,
+  String _formatTime(String isoTime) {
+    if (isoTime.isEmpty) return '-';
+    try {
+      final dateTime = DateTime.parse(isoTime);
+      return DateFormat('MMM dd, yyyy hh:mm a').format(dateTime);
+    } catch (e) {
+      return isoTime;
+    }
+  }
+
+  Color _getStatusColor(String? status) {
+    switch (status) {
+      case 'Critical':
+        return Colors.red;
+      case 'Warning':
+        return Colors.orange;
+      case 'Resolved':
+        return Colors.green;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  Widget _buildTabs() {
+    final List<String> tabs = ['All', 'Critical', 'Warning', 'Resolved'];
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.textLight),
+      ),
+      child: Row(
+        children: List.generate(tabs.length, (index) {
+          final isActive = _selectedTab == index;
+          return Expanded(
+            child: InkWell(
+              onTap: () => setState(() => _selectedTab = index),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.warningYellow : Colors.white,
+                  borderRadius: BorderRadius.horizontal(
+                    left: index == 0 ? const Radius.circular(8) : Radius.zero,
+                    right: index == tabs.length - 1
+                        ? const Radius.circular(8)
+                        : Radius.zero,
+                  ),
+                ),
+                child: Text(
+                  tabs[index],
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isActive ? Colors.white : AppColors.textSecondary,
+                  ),
+                ),
+              ),
             ),
-          ),
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Text(
-            text,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isActive ? Colors.white : AppColors.textSecondary,
-            ),
-          ),
-        ),
+          );
+        }),
       ),
     );
   }

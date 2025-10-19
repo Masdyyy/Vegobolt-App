@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../components/navbar.dart';
 import '../components/header.dart';
 import '../components/machine_control_button.dart';
@@ -18,6 +21,75 @@ class MachinePage extends StatefulWidget {
 
 class _MachinePageState extends State<MachinePage> {
   List<Map<String, dynamic>> scheduledMaintenanceItems = [];
+
+  // Live data (same approach as Dashboard)
+  double tankLevel = 0.0;
+  double batteryValue = 0.0;
+  int temperatureC = 0;
+  bool isLoading = true;
+  Timer? _pollTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchTankData();
+    // Auto-refresh every 5 seconds
+    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted) return;
+      fetchTankData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  // Match Dashboard's base URL logic
+  String _getBaseUrl() {
+    const mode = 'device'; // For Android device testing
+    switch (mode) {
+      case 'web':
+        return 'http://localhost:3000';
+      case 'emulator':
+        return 'http://10.0.2.2:3000';
+      case 'device':
+        return 'http://192.168.100.28:3000';
+      case 'ios':
+        return 'http://localhost:3000';
+      default:
+        return 'http://localhost:3000';
+    }
+  }
+
+  Future<void> fetchTankData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${_getBaseUrl()}/api/tank/status'),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final int level = int.tryParse('${data['level'] ?? 0}') ?? 0;
+        final int temperature =
+            int.tryParse('${data['temperature'] ?? 0}') ?? 0;
+        final int battery = int.tryParse('${data['batteryLevel'] ?? 0}') ?? 0;
+        if (!mounted) return;
+        setState(() {
+          tankLevel = (level.clamp(0, 100)) / 100.0;
+          batteryValue = (battery.clamp(0, 100)) / 100.0;
+          temperatureC = temperature;
+          isLoading = false;
+        });
+      } else {
+        if (!mounted) return;
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => isLoading = false);
+    }
+  }
 
   void _onNavTap(BuildContext context, int index) async {
     if (index == 1) return;
@@ -88,15 +160,15 @@ class _MachinePageState extends State<MachinePage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Machine Card
-                  const MachineStatusCard(
+                  // ✅ Live Machine Card (same data as Dashboard)
+                  MachineStatusCard(
                     machineId: 'VB-001',
                     location: 'Barangay 171',
                     statusText: 'Maintenance',
                     statusColor: AppColors.warningYellow,
-                    oilValue: 0,
-                    batteryValue: 0,
-                    temperatureC: 0,
+                    tankLevel: tankLevel,
+                    batteryValue: batteryValue,
+                    temperatureC: temperatureC,
                   ),
 
                   const SizedBox(height: 16),
@@ -165,10 +237,6 @@ class _MachinePageState extends State<MachinePage> {
       ),
     );
   }
-
-  // _buildProgressRow removed — now provided by shared MachineStatusCard
-
-  // (Removed _buildTextRow helper; temperature row uses inline layout now.)
 
   Widget _buildMaintenanceCard({
     required String title,
