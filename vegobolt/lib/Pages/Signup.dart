@@ -11,12 +11,15 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _staffController = TextEditingController(text: 'Staff');
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _machineKeyController = TextEditingController();
   final _authService = AuthService();
-  
+
   bool _isPasswordVisible = false;
   bool _isConfirmVisible = false;
   bool _isLoading = false;
@@ -27,11 +30,47 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _staffController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _machineKeyController.dispose();
     super.dispose();
+  }
+
+  // Shared input decoration to keep animation and styling consistent
+  InputDecoration _buildInputDecoration({
+    required String hint,
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+    String? helperText,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      helperText: helperText,
+      hintStyle: TextStyle(color: Colors.grey[500]),
+      prefixIcon: prefixIcon != null
+          ? Icon(prefixIcon, color: Colors.grey[700])
+          : null,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        borderSide: BorderSide(color: Color(0xFF5A6B47), width: 2),
+      ),
+    );
   }
 
   // Password validation function that shows all requirements
@@ -81,7 +120,12 @@ class _SignupPageState extends State<SignupPage> {
 
     try {
       final email = _emailController.text.trim().toLowerCase();
-      final displayName = _nameController.text.trim();
+      final firstName = _firstNameController.text.trim();
+      final lastName = _lastNameController.text.trim();
+      final displayName = [
+        firstName,
+        lastName,
+      ].where((s) => s.isNotEmpty).join(' ').trim();
       final password = _passwordController.text;
 
       // Call backend API to register
@@ -235,72 +279,61 @@ class _SignupPageState extends State<SignupPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // 🔹 UPDATED FULL NAME FIELD WITH CHARACTER LIMIT
-                TextFormField(
-                  controller: _nameController,
-                  textCapitalization: TextCapitalization.words,
-                  maxLength: 50, // Limit to 50 characters
-                  maxLengthEnforcement: MaxLengthEnforcement.enforced, // Stop typing at limit
-                  buildCounter: (_, {required currentLength, maxLength, required isFocused}) => null, // Hide counter
-                  decoration: InputDecoration(
-                    hintText: 'Full Name',
-                    helperText: 'Ex. Last Name, First Name, Middle Name (Optional)',
-                    helperStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(Icons.person_outline, color: Colors.grey[700]),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
+                // First Name and Last Name fields (split Full Name)
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _firstNameController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _buildInputDecoration(hint: 'First Name'),
+                        validator: (v) {
+                          final value = v?.trim() ?? '';
+                          if (value.isEmpty)
+                            return 'Please enter your first name';
+                          final nameRegex = RegExp(r"^[A-Za-z'-]+$");
+                          if (!nameRegex.hasMatch(value))
+                            return 'Invalid first name';
+                          return null;
+                        },
+                      ),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _lastNameController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _buildInputDecoration(hint: 'Last Name'),
+                        validator: (v) {
+                          final value = v?.trim() ?? '';
+                          if (value.isEmpty)
+                            return 'Please enter your last name';
+                          final nameRegex = RegExp(r"^[A-Za-z'-]+$");
+                          if (!nameRegex.hasMatch(value))
+                            return 'Invalid last name';
+                          return null;
+                        },
+                      ),
                     ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                      borderSide: BorderSide(color: Color(0xFF5A6B47), width: 2),
-                    ),
-                  ),
-                  validator: (v) {
-                    final value = v?.trim() ?? '';
-                    if (value.isEmpty) return 'Please enter your name';
-                    final nameRegex = RegExp(r"^[A-Za-z\s'-]+$");
-                    if (!nameRegex.hasMatch(value)) {
-                      return 'Name can only contain letters, spaces, hyphens or apostrophes';
-                    }
-                    return null;
-                  },
+                  ],
                 ),
 
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: 'Email Address',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(Icons.email_outlined, color: Colors.grey[700]),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                      borderSide: BorderSide(color: Color(0xFF5A6B47), width: 2),
-                    ),
+                  decoration: _buildInputDecoration(
+                    hint: 'Email Address',
+                    prefixIcon: Icons.email_outlined,
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter your email';
-                    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                    if (!emailRegex.hasMatch(value)) return 'Please enter a valid email';
+                    if (value == null || value.isEmpty)
+                      return 'Please enter your email';
+                    final emailRegex = RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    );
+                    if (!emailRegex.hasMatch(value))
+                      return 'Please enter a valid email';
                     return null;
                   },
                 ),
@@ -309,27 +342,19 @@ class _SignupPageState extends State<SignupPage> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[700]),
+                  decoration: _buildInputDecoration(
+                    hint: 'Password',
+                    prefixIcon: Icons.lock_outline,
                     suffixIcon: IconButton(
-                      icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey[700]),
-                      onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                      borderSide: BorderSide(color: Color(0xFF5A6B47), width: 2),
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Colors.grey[700],
+                      ),
+                      onPressed: () => setState(
+                        () => _isPasswordVisible = !_isPasswordVisible,
+                      ),
                     ),
                   ),
                   validator: _validatePassword,
@@ -338,32 +363,57 @@ class _SignupPageState extends State<SignupPage> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: !_isConfirmVisible,
-                  decoration: InputDecoration(
-                    hintText: 'Confirm Password',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[700]),
+                  decoration: _buildInputDecoration(
+                    hint: 'Confirm Password',
+                    prefixIcon: Icons.lock_outline,
                     suffixIcon: IconButton(
-                      icon: Icon(_isConfirmVisible ? Icons.visibility : Icons.visibility_off, color: Colors.grey[700]),
-                      onPressed: () => setState(() => _isConfirmVisible = !_isConfirmVisible),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: const Color(0xFF5A6B47).withOpacity(0.6)),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                      borderSide: BorderSide(color: Color(0xFF5A6B47), width: 2),
+                      icon: Icon(
+                        _isConfirmVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Colors.grey[700],
+                      ),
+                      onPressed: () => setState(
+                        () => _isConfirmVisible = !_isConfirmVisible,
+                      ),
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Please confirm your password';
-                    if (v != _passwordController.text) return 'Passwords do not match';
+                    if (v == null || v.isEmpty)
+                      return 'Please confirm your password';
+                    if (v != _passwordController.text)
+                      return 'Passwords do not match';
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                // Read-only Staff field (auto-filled)
+                TextFormField(
+                  controller: _staffController,
+                  readOnly: true,
+                  decoration: _buildInputDecoration(
+                    hint: 'Staff',
+                    prefixIcon: Icons.badge_outlined,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Machine Key field
+                TextFormField(
+                  controller: _machineKeyController,
+                  decoration: _buildInputDecoration(
+                    hint: 'Machine Key',
+                    prefixIcon: Icons.vpn_key_outlined,
+                  ),
+                  validator: (v) {
+                    final value = v?.trim() ?? '';
+                    if (value.isEmpty) return 'Please enter the Machine Key';
+                    // simple validation: allow alphanumeric and dashes/underscores, min 4 chars
+                    final keyRegex = RegExp(r"^[A-Za-z0-9_-]{4,}");
+                    if (!keyRegex.hasMatch(value)) return 'Invalid machine key';
                     return null;
                   },
                 ),
@@ -373,7 +423,8 @@ class _SignupPageState extends State<SignupPage> {
                   children: [
                     Checkbox(
                       value: _agreeTerms,
-                      onChanged: (v) => setState(() => _agreeTerms = v ?? false),
+                      onChanged: (v) =>
+                          setState(() => _agreeTerms = v ?? false),
                       activeColor: const Color(0xFF5A6B47),
                     ),
                     const Expanded(
@@ -391,11 +442,26 @@ class _SignupPageState extends State<SignupPage> {
                       backgroundColor: const Color(0xFFFFD700),
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: _isLoading
-                        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Create Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Create Account',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                   ),
                 ),
 
@@ -405,15 +471,26 @@ class _SignupPageState extends State<SignupPage> {
                   children: [
                     const Text("Already have an account? "),
                     TextButton(
-                      onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+                      onPressed: () =>
+                          Navigator.pushReplacementNamed(context, '/login'),
                       style: ButtonStyle(
-                        overlayColor: MaterialStateProperty.all(Colors.transparent),
+                        overlayColor: MaterialStateProperty.all(
+                          Colors.transparent,
+                        ),
                         splashFactory: NoSplash.splashFactory,
                         padding: MaterialStateProperty.all(EdgeInsets.zero),
-                        minimumSize: MaterialStateProperty.all(const Size(0, 0)),
+                        minimumSize: MaterialStateProperty.all(
+                          const Size(0, 0),
+                        ),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text('Log in', style: TextStyle(color: Color(0xFF5A6B47), fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Log in',
+                        style: TextStyle(
+                          color: Color(0xFF5A6B47),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
