@@ -73,10 +73,8 @@ class _AlertsPageState extends State<AlertsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🟢 Header
             const Header(),
 
-            // 📦 Main Content
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -186,7 +184,6 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  // 🔘 Tab Builder
   Widget _buildTab(
     int index,
     String text, {

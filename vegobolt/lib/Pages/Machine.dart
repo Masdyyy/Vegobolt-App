@@ -4,6 +4,7 @@ import '../components/header.dart';
 import '../components/machine_control_button.dart';
 import '../utils/colors.dart';
 import 'dashboard.dart';
+import '../components/machine_status_card.dart';
 import 'alerts.dart';
 import 'maintenance.dart';
 import 'settings.dart';
@@ -88,107 +89,14 @@ class _MachinePageState extends State<MachinePage> {
                   const SizedBox(height: 16),
 
                   // Machine Card
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBackground,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'VB-001',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                Text(
-                                  'Barangay 171',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: AppColors.warningYellow,
-                                ),
-                              ),
-                              child: const Text(
-                                'Maintenance',
-                                style: TextStyle(
-                                  color: AppColors.warningYellow,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Oil Tank
-                        _buildProgressRow(
-                          icon: Icons.local_gas_station,
-                          label: "Oil Tank",
-                          value: 0,
-                          color: AppColors.primaryGreen,
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Battery
-                        _buildProgressRow(
-                          icon: Icons.battery_full,
-                          label: "Battery",
-                          value: 0,
-                          color: AppColors.criticalRed,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Temperature & Filter
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: _buildTextRow(
-                                Icons.thermostat,
-                                "Temperature: 96°C",
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildTextRow(
-                                Icons.filter_alt,
-                                "Filter: 30%",
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  const MachineStatusCard(
+                    machineId: 'VB-001',
+                    location: 'Barangay 171',
+                    statusText: 'Maintenance',
+                    statusColor: AppColors.warningYellow,
+                    oilValue: 0,
+                    batteryValue: 0,
+                    temperatureC: 0,
                   ),
 
                   const SizedBox(height: 16),
@@ -258,82 +166,9 @@ class _MachinePageState extends State<MachinePage> {
     );
   }
 
-  Widget _buildProgressRow({
-    required IconData icon,
-    required String label,
-    required double value,
-    required Color color,
-  }) {
-    int percent = (value * 100).round();
-    Color percentColor;
+  // _buildProgressRow removed — now provided by shared MachineStatusCard
 
-    if (percent < 20) {
-      percentColor = AppColors.criticalRed;
-    } else if (percent < 50) {
-      percentColor = AppColors.warningYellow;
-    } else {
-      percentColor = AppColors.primaryGreen;
-    }
-
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 13,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    '$percent%',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: percentColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              LinearProgressIndicator(
-                value: value,
-                color: color,
-                backgroundColor: color.withValues(alpha: 0.2),
-                minHeight: 6,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppColors.textSecondary),
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            text,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
+  // (Removed _buildTextRow helper; temperature row uses inline layout now.)
 
   Widget _buildMaintenanceCard({
     required String title,
