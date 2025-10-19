@@ -5,6 +5,7 @@ import '../components/add_maintenance_modal.dart';
 import '../utils/colors.dart';
 import 'dashboard.dart';
 import 'alerts.dart';
+import 'machine.dart';
 import 'settings.dart';
 
 class MaintenancePage extends StatefulWidget {
@@ -112,9 +113,21 @@ class _MaintenancePageState extends State<MaintenancePage>
   void _onNavTap(BuildContext context, int index) {
     if (index == 3) return; // already in Maintenance page
 
-    // If navigating to Machine page, pop with the updated scheduled items
+    // If navigating to Machine page, prefer to pop with the updated scheduled items
+    // when this Maintenance page was pushed from Machine (so Machine is below
+    // in the Navigator stack). If there's no route to pop to (for example the
+    // app used pushReplacement when navigating between pages), do a
+    // pushReplacement to the MachinePage so navigation is explicit and
+    // predictable.
     if (index == 1) {
-      Navigator.pop(context, scheduledItems);
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context, scheduledItems);
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MachinePage()),
+        );
+      }
       return;
     }
 

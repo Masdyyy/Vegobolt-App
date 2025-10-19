@@ -26,7 +26,7 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
   DateTime? _scheduledDate;
 
   final List<String> _maintenanceTypes = [
-    'Oil Refill',
+    'Tank Inspection',
     'Filter Replacement',
     'Battery Replacement',
     'General Inspection',
@@ -199,7 +199,7 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
         _buildLabel(label),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           onChanged: onChanged,
           validator: (v) => v == null ? 'Required' : null,
           decoration: _inputDecoration(hint),
