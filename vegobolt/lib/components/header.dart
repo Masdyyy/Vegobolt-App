@@ -11,7 +11,9 @@ class Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 1),
       decoration: BoxDecoration(
-        color: AppColors.primaryGreen,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkGreen
+            : AppColors.primaryGreen,
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.2),
@@ -47,10 +49,6 @@ class Header extends StatelessWidget {
               ),
               const SizedBox(width: 12),
             ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: onNotificationTap,
           ),
         ],
       ),

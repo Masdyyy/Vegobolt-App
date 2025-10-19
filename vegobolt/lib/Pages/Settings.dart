@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../components/navbar.dart';
 import '../components/header.dart';
 import '../components/machine_control_button.dart';
 import '../utils/colors.dart';
+import '../utils/theme_provider.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'alerts.dart';
@@ -52,7 +54,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: AppColors.getBackgroundColor(context),
       body: Column(
         children: [
           const Header(),
@@ -62,18 +64,20 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Settings',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Manage your app preference',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(
+                      color: AppColors.getTextSecondary(context),
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -125,6 +129,27 @@ class _SettingsPageState extends State<SettingsPage> {
                         'Scheduled maintenance alerts',
                         _maintenance,
                         (v) => setState(() => _maintenance = v),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // APPEARANCE SETTINGS
+                  _buildExpandableCard(
+                    title: 'Appearance',
+                    icon: Icons.palette_outlined,
+                    expanded: false,
+                    onExpand: (v) {},
+                    children: [
+                      Consumer<ThemeProvider>(
+                        builder: (context, themeProvider, child) {
+                          return _buildSwitch(
+                            'Dark Mode',
+                            'Switch between light and dark theme',
+                            themeProvider.isDarkMode,
+                            (v) => themeProvider.toggleTheme(),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -193,7 +218,7 @@ class _SettingsPageState extends State<SettingsPage> {
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
+          color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(12),
         ),
         child: ExpansionTile(
@@ -201,14 +226,14 @@ class _SettingsPageState extends State<SettingsPage> {
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
           title: Row(
             children: [
-              Icon(icon, color: AppColors.textPrimary, size: 24),
+              Icon(icon, color: AppColors.getTextPrimary(context), size: 24),
               const SizedBox(width: 12),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
             ],
@@ -216,7 +241,7 @@ class _SettingsPageState extends State<SettingsPage> {
           subtitle: null,
           trailing: Icon(
             expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-            color: AppColors.textSecondary,
+            color: AppColors.getTextSecondary(context),
           ),
           onExpansionChanged: onExpand,
           children: [
@@ -247,17 +272,17 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
               Text(
                 sub,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: AppColors.getTextSecondary(context),
                 ),
               ),
             ],
@@ -278,7 +303,7 @@ class _SettingsPageState extends State<SettingsPage> {
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -290,14 +315,14 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.textPrimary, size: 24),
+          Icon(icon, color: AppColors.getTextPrimary(context), size: 24),
           const SizedBox(width: 12),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: AppColors.getTextPrimary(context),
             ),
           ),
         ],

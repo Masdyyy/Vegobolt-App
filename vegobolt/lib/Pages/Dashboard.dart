@@ -167,7 +167,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: AppColors.getBackgroundColor(context),
       body: Column(
         children: [
           const Header(),
@@ -179,18 +179,20 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Dashboard',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Monitor your VegoBolt system',
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: TextStyle(
+                            color: AppColors.getTextSecondary(context),
+                          ),
                         ),
                         const SizedBox(height: 16),
 
@@ -200,7 +202,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         MachineStatusCard(
                           machineId: 'VB-0001',
                           location: 'Barangay 171',
-                          tankLevel: tankLevel, // ✅ Correct parameter name
+                          statusText: tankLevel >= 0.9 ? 'Full' : 'Normal',
+                          statusColor: tankLevel >= 0.9
+                              ? AppColors.criticalRed
+                              : AppColors.primaryGreen,
+                          tankLevel: tankLevel,
                           batteryValue: batteryValue,
                           temperatureC: temperatureC,
                         ),
@@ -211,13 +217,15 @@ class _DashboardPageState extends State<DashboardPage> {
                         _alertsLoading
                             ? const Center(child: CircularProgressIndicator())
                             : _alerts.isEmpty
-                            ? const Center(
+                            ? Center(
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(vertical: 24.0),
                                   child: Text(
                                     'No alerts detected.',
                                     style: TextStyle(
-                                      color: AppColors.textSecondary,
+                                      color: AppColors.getTextSecondary(
+                                        context,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -256,7 +264,9 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.primaryGreen,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkGreen
+            : AppColors.primaryGreen,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

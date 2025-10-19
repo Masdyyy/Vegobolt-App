@@ -6,48 +6,44 @@ class MachineStatusCard extends StatelessWidget {
   final String location;
   final String statusText;
   final Color statusColor;
-  final double tankLevel; // 0.0 - 1.0
-  final double batteryValue; // 0.0 - 1.0
+  final double tankLevel;
+  final double batteryValue;
   final int temperatureC;
 
   const MachineStatusCard({
     super.key,
     required this.machineId,
     required this.location,
-    this.statusText = 'Active',
-    this.statusColor = AppColors.primaryGreen,
-    this.tankLevel = 0.0,
-    this.batteryValue = 0.0,
-    this.temperatureC = 0,
+    required this.statusText,
+    required this.statusColor,
+    required this.tankLevel,
+    required this.batteryValue,
+    required this.temperatureC,
   });
 
-  // Determine textual status of tank
-  String getTankStatus(double value) {
-    if (value >= 0.9) return 'Full';
-    if (value <= 0.2) return 'Low';
-    return 'Normal';
-  }
-
-  // Determine color based on tank level
-  Color getTankColor(double value) {
-    if (value >= 0.9) return AppColors.primaryGreen;
-    if (value <= 0.2) return AppColors.criticalRed;
-    return AppColors.warningYellow;
+  // Helper to get tank status string
+  static String getTankStatus(double tankLevel) {
+    if (tankLevel >= 0.9) {
+      return 'Full';
+    } else if (tankLevel >= 0.5) {
+      return 'Normal';
+    } else if (tankLevel > 0.0) {
+      return 'Low';
+    } else {
+      return 'Empty';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    String tankStatus = getTankStatus(tankLevel);
-    Color tankColor = getTankColor(tankLevel);
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -64,17 +60,17 @@ class MachineStatusCard extends StatelessWidget {
                 children: [
                   Text(
                     machineId,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(
+                  Icon(
                     Icons.location_on,
                     size: 16,
-                    color: AppColors.textSecondary,
+                    color: AppColors.getTextSecondary(context),
                   ),
                 ],
               ),
@@ -102,104 +98,68 @@ class MachineStatusCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             location,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: AppColors.getTextSecondary(context),
               fontSize: 13,
             ),
           ),
           const SizedBox(height: 16),
-
           // 🟩 Tank Status
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.local_gas_station,
                 color: AppColors.primaryGreen,
                 size: 20,
               ),
               const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Tank Status',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          tankStatus,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: tankColor,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    LinearProgressIndicator(
-                      value: tankLevel.clamp(0.0, 1.0),
-                      color: tankColor,
-                      backgroundColor: tankColor.withOpacity(0.2),
-                      minHeight: 6,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Tank Level: ${(tankLevel * 100).round()}%',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+              Text(
+                'Tank: ${getTankStatus(tankLevel)}',
+                style: TextStyle(
+                  color: AppColors.getTextPrimary(context),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${(tankLevel * 100).toStringAsFixed(0)}%',
+                style: TextStyle(
+                  color: AppColors.getTextPrimary(context),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 12),
-
+          const SizedBox(height: 8),
           // 🔋 Battery
-          _buildProgressRow(
-            icon: Icons.battery_full,
-            label: 'Battery',
-            value: batteryValue,
-            color: AppColors.primaryGreen,
-          ),
-          const SizedBox(height: 12),
-
-          // 🌡 Temperature
           Row(
             children: [
-              const Icon(
-                Icons.thermostat,
-                size: 20,
-                color: AppColors.criticalRed,
-              ),
+              Icon(Icons.battery_full, color: AppColors.primaryGreen, size: 20),
               const SizedBox(width: 6),
-              const Text(
-                'Temperature',
+              Text(
+                'Battery: ${(batteryValue * 100).toStringAsFixed(0)}%',
                 style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimary(context),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
               ),
-              const Spacer(),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // 🌡️ Temperature
+          Row(
+            children: [
+              Icon(Icons.thermostat, color: AppColors.primaryGreen, size: 20),
+              const SizedBox(width: 6),
               Text(
-                '$temperatureC°C',
-                style: const TextStyle(
-                  fontSize: 13,
+                'Temperature: $temperatureC°C',
+                style: TextStyle(
+                  color: AppColors.getTextPrimary(context),
                   fontWeight: FontWeight.bold,
-                  color: AppColors.criticalRed,
+                  fontSize: 14,
                 ),
               ),
             ],

@@ -155,7 +155,7 @@ class _MaintenancePageState extends State<MaintenancePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: AppColors.getBackgroundColor(context),
       floatingActionButton: MouseRegion(
         onEnter: (_) => setState(() => _isHovering = true),
         onExit: (_) => setState(() => _isHovering = false),
@@ -195,20 +195,20 @@ class _MaintenancePageState extends State<MaintenancePage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Title
-                    const Text(
+                    Text(
                       'Maintenance',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 4),
                     // Subtitle
-                    const Text(
+                    Text(
                       'Track maintenance activities',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondary(context),
                         fontSize: 14,
                       ),
                     ),
@@ -216,15 +216,23 @@ class _MaintenancePageState extends State<MaintenancePage>
 
                     // Search bar
                     TextField(
+                      style: TextStyle(
+                        color: AppColors.getTextPrimary(context),
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Search maintenance records...',
-                        hintStyle: const TextStyle(color: AppColors.textLight),
-                        prefixIcon: const Icon(
+                        hintStyle: TextStyle(
+                          color: AppColors.getTextLight(context),
+                        ),
+                        prefixIcon: Icon(
                           Icons.search,
-                          color: AppColors.textSecondary,
+                          color: AppColors.getTextSecondary(context),
                         ),
                         filled: true,
-                        fillColor: AppColors.cardBackground,
+                        fillColor:
+                            Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkCardBackground
+                            : AppColors.cardBackground,
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 10,
                         ),
@@ -240,19 +248,31 @@ class _MaintenancePageState extends State<MaintenancePage>
                     Container(
                       height: 45,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkCardBackground
+                            : AppColors.cardBackground,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!, width: 1),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkTextLight
+                              : AppColors.textLight,
+                          width: 1,
+                        ),
                       ),
                       child: TabBar(
                         controller: _tabController,
                         indicator: BoxDecoration(
-                          color: const Color(0xFFFFD700),
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkGreen
+                              : AppColors.primaryGreen,
                           borderRadius: BorderRadius.circular(7),
                         ),
                         indicatorSize: TabBarIndicatorSize.tab,
                         labelColor: Colors.white,
-                        unselectedLabelColor: const Color(0xFF808080),
+                        unselectedLabelColor:
+                            Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.cardBackground
+                            : AppColors.getTextSecondary(context),
                         labelStyle: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -472,7 +492,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                 child: ElevatedButton(
                   onPressed: onResolve,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
+                    backgroundColor: AppColors.darkGreen,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

@@ -135,7 +135,7 @@ class _MachinePageState extends State<MachinePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: AppColors.getBackgroundColor(context),
       body: Column(
         children: [
           const Header(),
@@ -145,18 +145,20 @@ class _MachinePageState extends State<MachinePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Machine',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Control your VEGOBOLT station remotely',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(
+                      color: AppColors.getTextSecondary(context),
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -250,7 +252,7 @@ class _MachinePageState extends State<MachinePage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -268,10 +270,10 @@ class _MachinePageState extends State<MachinePage> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
               Container(
@@ -297,26 +299,26 @@ class _MachinePageState extends State<MachinePage> {
           const SizedBox(height: 6),
           Text(
             '$machineId • $location',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: AppColors.getTextSecondary(context),
               fontSize: 13,
             ),
           ),
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.calendar_today,
                 size: 14,
-                color: AppColors.textLight,
+                color: AppColors.getTextLight(context),
               ),
               const SizedBox(width: 4),
               Text(
                 scheduledDate != null
                     ? '${scheduledDate.month.toString().padLeft(2, '0')}/${scheduledDate.day.toString().padLeft(2, '0')}/${scheduledDate.year}'
                     : 'Not scheduled',
-                style: const TextStyle(
-                  color: AppColors.textLight,
+                style: TextStyle(
+                  color: AppColors.getTextLight(context),
                   fontSize: 12,
                 ),
               ),

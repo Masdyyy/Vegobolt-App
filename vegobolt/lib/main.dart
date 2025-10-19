@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 // ✅ Import all your pages
 import 'Pages/alerts.dart';
@@ -11,9 +12,15 @@ import 'Pages/forgetpassword.dart';
 import 'Pages/signup.dart';
 import 'Pages/HelpSupport.dart';
 import 'Pages/AccountSettings.dart';
+import 'utils/theme_provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -21,6 +28,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     var routes = {
       '/dashboard': (context) => const DashboardPage(),
       '/login': (context) => const LoginPage(),
@@ -33,13 +42,13 @@ class MyApp extends StatelessWidget {
       '/helpsupport': (context) => const HelpSupportPage(),
       '/accountsettings': (context) => const AccountSettingsPage(),
     };
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Vegobolt Mobile App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: themeProvider.lightTheme,
+      darkTheme: themeProvider.darkTheme,
+      themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
 
       // 👇 Choose your starting page here
       home: const LoginPage(),

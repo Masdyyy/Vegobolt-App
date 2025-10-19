@@ -43,16 +43,16 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
   }
 
   void _contactSupport() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening Contact Support...')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Opening Contact Support...')));
     // Add your contact support logic here (email, form, etc.)
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: AppColors.getBackgroundColor(context),
       body: Column(
         children: [
           const Header(),
@@ -66,7 +66,10 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: AppColors.getTextPrimary(context),
+                        ),
                         onPressed: () => Navigator.pop(context),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -75,18 +78,20 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Help & Support',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Find answers, contact support, and explore guides.',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(
+                      color: AppColors.getTextSecondary(context),
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -137,7 +142,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -153,10 +158,10 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
           // Title
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: 16),
@@ -172,11 +177,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                   color: iconColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 28,
-                ),
+                child: Icon(icon, color: iconColor, size: 28),
               ),
               const SizedBox(width: 16),
 
@@ -186,9 +187,9 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     description,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondary,
+                      color: AppColors.getTextSecondary(context),
                       height: 1.5,
                     ),
                   ),

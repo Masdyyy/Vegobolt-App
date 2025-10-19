@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/colors.dart';
 
 class NavBar extends StatelessWidget {
   final int currentIndex;
@@ -8,10 +9,12 @@ class NavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
+      backgroundColor: isDark ? AppColors.darkCardBackground : Colors.white,
       selectedItemColor: const Color(0xFF7BA23F),
-      unselectedItemColor: Colors.grey,
+      unselectedItemColor: isDark ? AppColors.darkTextSecondary : Colors.grey,
       currentIndex: currentIndex,
       onTap: onTap,
       items: const [

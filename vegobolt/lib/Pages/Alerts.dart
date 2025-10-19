@@ -153,7 +153,7 @@ class _AlertsPageState extends State<AlertsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: AppColors.getBackgroundColor(context),
       bottomNavigationBar: NavBar(
         currentIndex: 2,
         onTap: (index) => _onNavTap(context, index),
@@ -169,19 +169,19 @@ class _AlertsPageState extends State<AlertsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Alerts',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Monitor system notifications',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondary(context),
                         fontSize: 14,
                       ),
                     ),
@@ -253,8 +253,15 @@ class _AlertsPageState extends State<AlertsPage> {
     final List<String> tabs = ['All', 'Critical', 'Warning', 'Resolved'];
     return Container(
       decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkCardBackground
+            : AppColors.cardBackground,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.textLight),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkTextLight
+              : AppColors.textLight,
+        ),
       ),
       child: Row(
         children: List.generate(tabs.length, (index) {
@@ -266,7 +273,13 @@ class _AlertsPageState extends State<AlertsPage> {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isActive ? AppColors.warningYellow : Colors.white,
+                  color: isActive
+                      ? (Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkGreen
+                            : AppColors.warningYellow)
+                      : (Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkCardBackground
+                            : Colors.white),
                   borderRadius: BorderRadius.horizontal(
                     left: index == 0 ? const Radius.circular(8) : Radius.zero,
                     right: index == tabs.length - 1
@@ -278,7 +291,9 @@ class _AlertsPageState extends State<AlertsPage> {
                   tabs[index],
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: isActive ? Colors.white : AppColors.textSecondary,
+                    color: isActive
+                        ? Colors.white
+                        : AppColors.getTextSecondary(context),
                   ),
                 ),
               ),

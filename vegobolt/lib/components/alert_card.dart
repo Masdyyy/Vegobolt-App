@@ -28,7 +28,7 @@ class AlertCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -44,9 +44,9 @@ class AlertCard extends StatelessWidget {
         leading: Icon(icon, color: statusColor, size: 28),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: AppColors.getTextPrimary(context),
             fontSize: 15,
           ),
         ),
@@ -56,8 +56,8 @@ class AlertCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Machine: $machine',
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: AppColors.getTextSecondary(context),
                 fontSize: 13,
               ),
             ),
@@ -72,8 +72,8 @@ class AlertCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   location,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: AppColors.getTextSecondary(context),
                     fontSize: 12,
                   ),
                 ),
@@ -90,8 +90,8 @@ class AlertCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   time,
-                  style: const TextStyle(
-                    color: AppColors.textLight,
+                  style: TextStyle(
+                    color: AppColors.getTextLight(context),
                     fontSize: 12,
                   ),
                 ),

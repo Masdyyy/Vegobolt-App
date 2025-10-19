@@ -17,16 +17,16 @@ class AccountSettingsPage extends StatefulWidget {
 class _AccountSettingsPageState extends State<AccountSettingsPage> {
   final _formKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
-  
+
   // Profile Information Controllers
   final _emailController = TextEditingController();
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
-  
+
   // Password Controllers
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
-  
+
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
 
@@ -119,7 +119,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: AppColors.getBackgroundColor(context),
       body: Column(
         children: [
           const Header(),
@@ -133,7 +133,10 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: AppColors.getTextPrimary(context),
+                        ),
                         onPressed: () => Navigator.pop(context),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -142,18 +145,20 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Account Settings',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Manage your profile and security',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(
+                      color: AppColors.getTextSecondary(context),
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -181,7 +186,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -196,23 +201,23 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Profile Information',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 20),
 
             // Email Address
-            const Text(
+            Text(
               'Email Address',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 8),
@@ -234,9 +239,15 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryGreen,
+                    width: 2,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -277,9 +288,15 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryGreen,
+                    width: 2,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -317,9 +334,15 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryGreen,
+                    width: 2,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -367,7 +390,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -382,12 +405,12 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Security',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 12),
@@ -440,12 +463,20 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryGreen,
+                    width: 2,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscureCurrentPassword ? Icons.visibility_off : Icons.visibility,
+                    _obscureCurrentPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
                     color: AppColors.textSecondary,
                   ),
                   onPressed: () {
@@ -492,12 +523,20 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryGreen,
+                    width: 2,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
+                    _obscureNewPassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
                     color: AppColors.textSecondary,
                   ),
                   onPressed: () {
