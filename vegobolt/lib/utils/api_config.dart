@@ -6,8 +6,24 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 /// This file contains the base URL and endpoints for the backend API.
 /// Automatically detects the platform and uses the correct URL.
 class ApiConfig {
+  // 🚀 PRODUCTION URL (Vercel)
+  static const String productionUrl = 'https://vegobolt-app.vercel.app';
+  
+  // 🧪 LOCAL DEVELOPMENT URL
+  static const String developmentUrl = 'http://localhost:3000';
+  
+  // Toggle between production and development
+  // Set to true for production, false for local testing
+  static const bool useProduction = true;
+  
   // Automatically detect platform and use correct URL
   static String get baseUrl {
+    // Use production if enabled
+    if (useProduction) {
+      return productionUrl;
+    }
+    
+    // Otherwise use local development URLs
     if (kIsWeb) {
       // Web browser (Chrome, Edge, etc.)
       return 'http://localhost:3000';

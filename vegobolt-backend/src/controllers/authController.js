@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { generateToken, verifyToken: verifyJWT } = require('../services/jwtService');
+const { generateVerificationToken, sendVerificationEmail } = require('../services/emailService');
+const connectDB = require('../config/mongodb');
 
 /**
  * Register a new user with email and password
@@ -9,6 +11,9 @@ const { generateToken, verifyToken: verifyJWT } = require('../services/jwtServic
 const register = async (req, res, next) => {
     console.log('🔵 Registration request received:', req.body);
     try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
         const { email, password, displayName } = req.body;
         console.log('🔵 Parsed data:', { email, displayName, hasPassword: !!password });
 
@@ -41,27 +46,45 @@ const register = async (req, res, next) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        // Generate email verification token
+        const verificationToken = generateVerificationToken();
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
         // Create user in MongoDB
         const mongoUser = await User.createUser({
             email,
             password: hashedPassword,
-            displayName
+            displayName,
+            emailVerificationToken: verificationToken,
+            emailVerificationExpires: verificationExpires,
+            isEmailVerified: false
         });
 
-        // Generate JWT token
+        // Send verification email
+        try {
+            await sendVerificationEmail(email, verificationToken, displayName);
+            console.log('✅ Verification email sent successfully');
+        } catch (emailError) {
+            console.error('⚠️ Failed to send verification email:', emailError);
+            // Continue with registration even if email fails
+        }
+
+        // Generate JWT token (but user still needs to verify email to login)
         const token = generateToken(mongoUser);
 
         res.status(201).json({
             success: true,
-            message: 'User registered successfully',
+            message: 'User registered successfully. Please check your email to verify your account.',
             data: {
                 user: {
                     id: mongoUser._id,
                     email: mongoUser.email,
                     displayName: mongoUser.displayName,
+                    isEmailVerified: mongoUser.isEmailVerified,
                     createdAt: mongoUser.createdAt
                 },
-                token: token
+                token: token,
+                requiresEmailVerification: true
             }
         });
 
@@ -81,6 +104,9 @@ const register = async (req, res, next) => {
  */
 const login = async (req, res) => {
     try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
         const { email, password } = req.body;
 
         // Validate input
@@ -105,6 +131,15 @@ const login = async (req, res) => {
             return res.status(401).json({
                 success: false,
                 message: 'Account is inactive. Please contact support.'
+            });
+        }
+
+        // Check if email is verified
+        if (!user.isEmailVerified) {
+            return res.status(401).json({
+                success: false,
+                message: 'Please verify your email before logging in. Check your inbox for the verification link.',
+                requiresEmailVerification: true
             });
         }
 
@@ -262,6 +297,310 @@ const logout = async (req, res) => {
 };
 
 /**
+ * Verify user email with token
+ */
+const verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        if (!token) {
+            return res.status(400).json({
+                success: false,
+                message: 'Verification token is required'
+            });
+        }
+
+        // Find user with this verification token
+        const user = await User.findOne({
+            emailVerificationToken: token,
+            emailVerificationExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).send(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Verification Failed - Vegobolt</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            padding: 20px;
+                        }
+                        .container {
+                            background: white;
+                            padding: 40px;
+                            border-radius: 20px;
+                            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                            text-align: center;
+                            max-width: 500px;
+                        }
+                        .error-icon {
+                            width: 80px;
+                            height: 80px;
+                            background: #f44336;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin: 0 auto 30px;
+                            color: white;
+                            font-size: 50px;
+                            font-weight: bold;
+                        }
+                        h1 { color: #333; font-size: 28px; margin-bottom: 15px; }
+                        p { color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 20px; }
+                        .instruction {
+                            background: #fff3cd;
+                            border-left: 4px solid #ffc107;
+                            padding: 15px;
+                            border-radius: 5px;
+                            margin-top: 30px;
+                            text-align: left;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error-icon">!</div>
+                        <h1>Verification Failed</h1>
+                        <p>This verification link is invalid or has expired.</p>
+                        <div class="instruction">
+                            <p style="margin: 0;">
+                                <strong>What to do:</strong><br>
+                                1. Open the Vegobolt app<br>
+                                2. Try to log in<br>
+                                3. Request a new verification email
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+
+        // Update user as verified
+        user.isEmailVerified = true;
+        user.emailVerificationToken = null;
+        user.emailVerificationExpires = null;
+        await user.save();
+
+        // Return HTML success page for mobile users
+        res.status(200).send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Email Verified - Vegobolt</title>
+                <style>
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        min-height: 100vh;
+                        padding: 20px;
+                    }
+                    .container {
+                        background: white;
+                        padding: 40px;
+                        border-radius: 20px;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                        text-align: center;
+                        max-width: 500px;
+                        animation: slideUp 0.5s ease-out;
+                    }
+                    @keyframes slideUp {
+                        from {
+                            opacity: 0;
+                            transform: translateY(30px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                    .success-icon {
+                        width: 80px;
+                        height: 80px;
+                        background: #4CAF50;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0 auto 30px;
+                        animation: scaleIn 0.5s ease-out 0.2s both;
+                    }
+                    @keyframes scaleIn {
+                        from {
+                            transform: scale(0);
+                        }
+                        to {
+                            transform: scale(1);
+                        }
+                    }
+                    .checkmark {
+                        width: 40px;
+                        height: 40px;
+                        border: 4px solid white;
+                        border-top: none;
+                        border-left: none;
+                        transform: rotate(45deg);
+                        margin-top: -10px;
+                    }
+                    h1 {
+                        color: #333;
+                        font-size: 28px;
+                        margin-bottom: 15px;
+                    }
+                    p {
+                        color: #666;
+                        font-size: 16px;
+                        line-height: 1.6;
+                        margin-bottom: 20px;
+                    }
+                    .user-info {
+                        background: #f5f5f5;
+                        padding: 15px;
+                        border-radius: 10px;
+                        margin: 20px 0;
+                    }
+                    .user-info strong {
+                        color: #4CAF50;
+                    }
+                    .instruction {
+                        background: #e3f2fd;
+                        border-left: 4px solid #2196F3;
+                        padding: 15px;
+                        border-radius: 5px;
+                        margin-top: 30px;
+                        text-align: left;
+                    }
+                    .instruction strong {
+                        color: #2196F3;
+                        display: block;
+                        margin-bottom: 10px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="success-icon">
+                        <div class="checkmark"></div>
+                    </div>
+                    <h1>Email Verified!</h1>
+                    <p>Your email address has been successfully verified.</p>
+                    
+                    <div class="user-info">
+                        <p><strong>${user.displayName}</strong></p>
+                        <p style="font-size: 14px; color: #888;">${user.email}</p>
+                    </div>
+                    
+                    <div class="instruction">
+                        <strong>📱 Next Steps:</strong>
+                        <p style="margin: 0;">
+                            1. Return to the Vegobolt app<br>
+                            2. Log in with your email and password<br>
+                            3. Start using Vegobolt!
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `);
+
+    } catch (error) {
+        console.error('Email verification error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error verifying email',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Resend verification email
+ */
+const resendVerificationEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide email'
+            });
+        }
+
+        // Find user
+        const user = await User.findByEmail(email);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        // Check if already verified
+        if (user.isEmailVerified) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is already verified'
+            });
+        }
+
+        // Generate new verification token
+        const verificationToken = generateVerificationToken();
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        // Update user with new token
+        user.emailVerificationToken = verificationToken;
+        user.emailVerificationExpires = verificationExpires;
+        await user.save();
+
+        // Send verification email
+        try {
+            await sendVerificationEmail(email, verificationToken, user.displayName);
+            
+            res.status(200).json({
+                success: true,
+                message: 'Verification email sent successfully. Please check your inbox.'
+            });
+        } catch (emailError) {
+            console.error('Failed to send verification email:', emailError);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to send verification email. Please try again later.'
+            });
+        }
+
+    } catch (error) {
+        console.error('Resend verification error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error resending verification email',
+            error: error.message
+        });
+    }
+};
+
+/**
  * Request password reset
  * TODO: Implement with email service (e.g., SendGrid, Nodemailer)
  */
@@ -308,6 +647,8 @@ module.exports = {
     register,
     login,
     verifyToken,
+    verifyEmail,
+    resendVerificationEmail,
     getProfile,
     logout,
     requestPasswordReset
