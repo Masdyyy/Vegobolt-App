@@ -46,15 +46,20 @@ app.use(errorHandler);
 // Connect to MongoDB
 connectDB();
 
-// Start the server
-const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
-    console.log(`📍 Health check: http://localhost:${PORT}/health`);
-    console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
-    console.log(`📱 Mobile access: http://10.0.2.2:${PORT} (Android Emulator)`);
-});
+// Start the server (only in development, not on Vercel)
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3000;
+    const server = app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 Server is running on port ${PORT}`);
+        console.log(`📍 Health check: http://localhost:${PORT}/health`);
+        console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
+        console.log(`📱 Mobile access: http://10.0.2.2:${PORT} (Android Emulator)`);
+    });
 
-server.on('error', (error) => {
-    console.error('❌ Server error:', error);
-});
+    server.on('error', (error) => {
+        console.error('❌ Server error:', error);
+    });
+}
+
+// Export for Vercel serverless
+module.exports = app;

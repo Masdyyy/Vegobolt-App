@@ -25,6 +25,20 @@ router.post('/login', authController.login);
 router.post('/verify', authController.verifyToken);
 
 /**
+ * @route   GET /api/auth/verify-email/:token
+ * @desc    Verify user email with token
+ * @access  Public
+ */
+router.get('/verify-email/:token', authController.verifyEmail);
+
+/**
+ * @route   POST /api/auth/resend-verification
+ * @desc    Resend email verification
+ * @access  Public
+ */
+router.post('/resend-verification', authController.resendVerificationEmail);
+
+/**
  * @route   GET /api/auth/profile
  * @desc    Get current user profile
  * @access  Private (requires authentication)
