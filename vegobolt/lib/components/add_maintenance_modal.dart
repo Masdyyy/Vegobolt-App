@@ -108,9 +108,11 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
 
   @override
   Widget build(BuildContext context) {
+  final cardBg = AppColors.getCardBackground(context);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      backgroundColor: Colors.white,
+      backgroundColor: cardBg,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
@@ -165,23 +167,25 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
   }
 
   Widget _buildHeader() {
+    final textPrimary = AppColors.getTextPrimary(context);
     return Text(
       widget.isEdit ? 'Edit Maintenance' : 'Schedule New Maintenance',
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF333333),
+        color: textPrimary,
       ),
     );
   }
 
   Widget _buildLabel(String text) {
+    final textSecondary = AppColors.getTextSecondary(context);
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF333333),
+        color: textSecondary,
       ),
     );
   }
@@ -204,14 +208,14 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
           validator: (v) => v == null ? 'Required' : null,
           decoration: _inputDecoration(hint),
           isExpanded: true,
-          icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF666666)),
+          icon: Icon(Icons.arrow_drop_down, color: AppColors.getTextLight(context)),
           items: items
               .map(
                 (e) => DropdownMenuItem(
                   value: e,
                   child: Text(
                     e,
-                    style: const TextStyle(color: Color(0xFF333333)),
+                    style: TextStyle(color: AppColors.getTextPrimary(context)),
                   ),
                 ),
               )
@@ -249,7 +253,7 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
+              border: Border.all(color: AppColors.getTextLight(context)),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Row(
@@ -261,12 +265,12 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
                       : 'mm/dd/yyyy',
                   style: TextStyle(
                     color: date != null
-                        ? const Color(0xFF333333)
-                        : const Color(0xFFAAAAAA),
+                        ? AppColors.getTextPrimary(context)
+                        : AppColors.getTextLight(context),
                     fontSize: 14,
                   ),
                 ),
-                Icon(Icons.calendar_today, size: 18, color: Colors.grey[600]),
+                Icon(Icons.calendar_today, size: 18, color: AppColors.getTextLight(context)),
               ],
             ),
           ),
@@ -283,7 +287,7 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              side: BorderSide(color: Colors.grey[300]!),
+              side: BorderSide(color: AppColors.getTextLight(context)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -319,19 +323,19 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 14),
+      hintStyle: TextStyle(color: AppColors.getTextLight(context), fontSize: 14),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: BorderSide(color: Colors.grey[300]!),
+        borderSide: BorderSide(color: AppColors.getTextLight(context)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: BorderSide(color: Colors.grey[300]!),
+        borderSide: BorderSide(color: AppColors.getTextLight(context)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: Color(0xFF5A6B47), width: 1.5),
+        borderSide: BorderSide(color: AppColors.primaryGreen, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
@@ -341,6 +345,8 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
         borderRadius: BorderRadius.circular(6),
         borderSide: const BorderSide(color: Colors.red, width: 1.5),
       ),
+      filled: true,
+      fillColor: AppColors.getCardBackground(context),
     );
   }
 }

@@ -310,10 +310,10 @@ class _MaintenancePageState extends State<MaintenancePage>
 
   Widget _buildScheduledTab() {
     if (scheduledItems.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No scheduled maintenance',
-          style: TextStyle(color: Color(0xFF808080), fontSize: 16),
+          style: TextStyle(color: AppColors.getTextLight(context), fontSize: 16),
         ),
       );
     }
@@ -341,10 +341,10 @@ class _MaintenancePageState extends State<MaintenancePage>
 
   Widget _buildHistoryTab() {
     if (historyItems.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No history records',
-          style: TextStyle(color: Color(0xFF808080), fontSize: 16),
+          style: TextStyle(color: AppColors.getTextLight(context), fontSize: 16),
         ),
       );
     }
@@ -379,7 +379,7 @@ class _MaintenancePageState extends State<MaintenancePage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -399,10 +399,10 @@ class _MaintenancePageState extends State<MaintenancePage>
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF333333),
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
               ),
@@ -446,22 +446,22 @@ class _MaintenancePageState extends State<MaintenancePage>
           const SizedBox(height: 8),
           Text(
             '$machineId • $location',
-            style: const TextStyle(color: Color(0xFF808080), fontSize: 13),
+            style: TextStyle(color: AppColors.getTextLight(context), fontSize: 13),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.calendar_today,
                 size: 14,
-                color: Color(0xFFAAAAAA),
+                color: AppColors.getTextLight(context),
               ),
               const SizedBox(width: 4),
               Text(
                 scheduledDate != null
                     ? '${scheduledDate.month.toString().padLeft(2, '0')}/${scheduledDate.day.toString().padLeft(2, '0')}/${scheduledDate.year}'
                     : 'Not scheduled',
-                style: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 12),
+                style: TextStyle(color: AppColors.getTextLight(context), fontSize: 12),
               ),
             ],
           ),
@@ -472,16 +472,16 @@ class _MaintenancePageState extends State<MaintenancePage>
                 child: OutlinedButton(
                   onPressed: onEdit,
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Colors.grey[400]!, width: 1),
+                    side: BorderSide(color: AppColors.getTextLight(context), width: 1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: const Text(
+                    child: Text(
                     'Edit',
                     style: TextStyle(
-                      color: Color(0xFF5A6B47),
+                      color: AppColors.darkGreen,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -524,7 +524,7 @@ class _MaintenancePageState extends State<MaintenancePage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(12),
         border: Border(
           left: BorderSide(color: AppColors.primaryGreen, width: 4),
@@ -555,33 +555,33 @@ class _MaintenancePageState extends State<MaintenancePage>
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF333333),
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Machine: $machineId',
-                  style: const TextStyle(
-                    color: Color(0xFF808080),
+                  style: TextStyle(
+                    color: AppColors.getTextLight(context),
                     fontSize: 13,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.location_on,
                       size: 14,
-                      color: Color(0xFFAAAAAA),
+                      color: AppColors.getTextLight(context),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       location,
-                      style: const TextStyle(
-                        color: Color(0xFFAAAAAA),
+                      style: TextStyle(
+                        color: AppColors.getTextLight(context),
                         fontSize: 12,
                       ),
                     ),
@@ -590,16 +590,16 @@ class _MaintenancePageState extends State<MaintenancePage>
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today,
                       size: 14,
-                      color: Color(0xFFAAAAAA),
+                      color: AppColors.getTextLight(context),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       resolvedDate,
-                      style: const TextStyle(
-                        color: Color(0xFFAAAAAA),
+                      style: TextStyle(
+                        color: AppColors.getTextLight(context),
                         fontSize: 12,
                       ),
                     ),
