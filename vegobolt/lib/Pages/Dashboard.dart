@@ -80,16 +80,22 @@ class _DashboardPageState extends State<DashboardPage> {
         final data = json.decode(response.body);
 
         final int level = int.tryParse('${data['level'] ?? 0}') ?? 0;
-        final int temperature =
-            int.tryParse('${data['temperature'] ?? 0}') ?? 0;
-        final int battery = int.tryParse('${data['batteryLevel'] ?? 0}') ?? 0;
+        final double temperature =
+            double.tryParse('${data['temperature'] ?? 0}') ?? 0.0;
+        final double battery =
+            double.tryParse('${data['batteryLevel'] ?? 0}') ?? 0.0;
 
         setState(() {
           tankLevel = level / 100.0; // percentage -> 0..1
           batteryValue = battery / 100.0;
-          temperatureC = temperature;
+          temperatureC = temperature.round(); // Convert to int for display
           isLoading = false;
         });
+
+        // Debug: Print received values
+        print(
+          '📊 Data received - Level: $level%, Temp: $temperature°C, Battery: $battery%',
+        );
       } else {
         print('❌ Failed to fetch tank data: ${response.statusCode}');
       }
@@ -101,30 +107,13 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> fetchAlerts() async {
     try {
       final response = await http.get(
-        Uri.parse('${_getBaseUrl()}/api/tank/status'),
+        Uri.parse('${_getBaseUrl()}/api/tank/alerts'),
       );
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final String status = (data['status'] ?? '').toString();
-        final int level = int.tryParse('${data['level'] ?? 0}') ?? 0;
-        final String timeIso =
-            (data['createdAt'] ?? DateTime.now().toIso8601String()).toString();
-
-        final List<dynamic> derivedAlerts =
-            (status.toLowerCase() == 'full' || level >= 90)
-            ? [
-                {
-                  'title': 'Tank Full',
-                  'machine': 'VB-0001',
-                  'location': '-',
-                  'time': timeIso,
-                  'status': 'Critical',
-                },
-              ]
-            : [];
+        final List<dynamic> alertsData = json.decode(response.body);
 
         setState(() {
-          _alerts = derivedAlerts;
+          _alerts = alertsData;
           _alertsLoading = false;
         });
       } else {
@@ -236,14 +225,32 @@ class _DashboardPageState extends State<DashboardPage> {
                                 itemCount: _alerts.length,
                                 itemBuilder: (context, index) {
                                   final alert = _alerts[index];
+                                  final String alertStatus =
+                                      alert['status'] ?? '';
+                                  final String alertType = alert['type'] ?? '';
+
+                                  Color alertColor = Colors.orange;
+                                  IconData alertIcon =
+                                      Icons.warning_amber_rounded;
+
+                                  if (alertStatus == 'Critical') {
+                                    alertColor = AppColors.criticalRed;
+                                  }
+
+                                  if (alertType == 'temperature') {
+                                    alertIcon = Icons.thermostat;
+                                  } else if (alertType == 'tank') {
+                                    alertIcon = Icons.local_gas_station;
+                                  }
+
                                   return AlertCard(
                                     title: alert['title'] ?? 'No title',
                                     machine: alert['machine'] ?? 'Unknown',
                                     location: alert['location'] ?? '-',
                                     time: alert['time'] ?? '',
-                                    status: alert['status'] ?? '',
-                                    statusColor: Colors.orange,
-                                    icon: Icons.warning_amber_rounded,
+                                    status: alertStatus,
+                                    statusColor: alertColor,
+                                    icon: alertIcon,
                                   );
                                 },
                               ),

@@ -132,24 +132,8 @@ class MachineStatusCard extends StatelessWidget {
               ),
             ],
           ),
+          // 🌡️ Temperature (Show first, more important than battery)
           const SizedBox(height: 8),
-          // 🔋 Battery
-          Row(
-            children: [
-              Icon(Icons.battery_full, color: AppColors.primaryGreen, size: 20),
-              const SizedBox(width: 6),
-              Text(
-                'Battery: ${(batteryValue * 100).toStringAsFixed(0)}%',
-                style: TextStyle(
-                  color: AppColors.getTextPrimary(context),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // 🌡️ Temperature
           Row(
             children: [
               Icon(Icons.thermostat, color: AppColors.primaryGreen, size: 20),
@@ -164,6 +148,28 @@ class MachineStatusCard extends StatelessWidget {
               ),
             ],
           ),
+          // 🔋 Battery (Only show if battery data exists and is not default 100%)
+          if (batteryValue > 0 && batteryValue < 1.0) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.battery_full,
+                  color: AppColors.primaryGreen,
+                  size: 20,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Battery: ${(batteryValue * 100).toStringAsFixed(0)}%',
+                  style: TextStyle(
+                    color: AppColors.getTextPrimary(context),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
