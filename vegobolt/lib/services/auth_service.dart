@@ -221,4 +221,59 @@ class AuthService {
   Future<String?> getToken() async {
     return await _secureStorage.read(key: 'auth_token');
   }
+
+  /// Request password reset
+  /// 
+  /// Returns a Map with:
+  /// - success: bool
+  /// - message: String
+  Future<Map<String, dynamic>> requestPasswordReset(String email) async {
+    try {
+      final url = Uri.parse(ApiConfig.getUrl(ApiConfig.authPasswordReset));
+      
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
+      
+      // Handle server unreachable case
+      if (response.statusCode >= 500) {
+        return {
+          'success': false,
+          'message': 'Server error. Please try again later.',
+        };
+      }
+      
+      final responseData = jsonDecode(response.body);
+      
+      if (response.statusCode == 200) {
+        // The backend currently always returns success with a placeholder message
+        // Once properly implemented, this will send an actual reset email
+        return {
+          'success': true,
+          'message': 'If an account exists with this email, you will receive password reset instructions.',
+        };
+      } else {
+        String errorMessage = responseData['message'] ?? 'Request failed';
+        if (response.statusCode == 404) {
+          errorMessage = 'Service not available. Please try again later.';
+        }
+        return {
+          'success': false,
+          'message': errorMessage,
+        };
+      }
+    } catch (e) {
+      // Handle network/connection errors
+      return {
+        'success': false,
+        'message': 'Unable to connect to the server. Please check your internet connection.',
+      };
+    }
+  }
 }

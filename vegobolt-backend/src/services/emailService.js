@@ -27,15 +27,21 @@ const createTransporter = () => {
             },
         });
     } else {
-        // For development/testing - logs email to console
-        return nodemailer.createTransport({
-            host: 'smtp.ethereal.email',
-            port: 587,
-            secure: false,
-            auth: {
-                user: process.env.EMAIL_USER || 'test@ethereal.email',
-                pass: process.env.EMAIL_PASSWORD || 'test123',
-            },
+        // For development/testing - use Ethereal test account
+        return new Promise((resolve, reject) => {
+            // Create Ethereal test account
+            nodemailer.createTestAccount().then(testAccount => {
+                const transporter = nodemailer.createTransport({
+                    host: 'smtp.ethereal.email',
+                    port: 587,
+                    secure: false,
+                    auth: {
+                        user: testAccount.user,
+                        pass: testAccount.pass,
+                    },
+                });
+                resolve(transporter);
+            }).catch(reject);
         });
     }
 };
@@ -137,9 +143,11 @@ const sendVerificationEmail = async (email, token, displayName) => {
         
         console.log('✅ Verification email sent:', info.messageId);
         
-        // For development with Ethereal, log the preview URL
-        if (process.env.NODE_ENV === 'development' && process.env.EMAIL_SERVICE !== 'gmail' && process.env.EMAIL_SERVICE !== 'smtp') {
-            console.log('Preview URL:', nodemailer.getTestMessageUrl(info));
+        // For development with Ethereal, always log the preview URL
+        if (process.env.NODE_ENV === 'development') {
+            console.log('📧 Preview URL:', nodemailer.getTestMessageUrl(info));
+            // In development, we'll simulate success without actually sending emails
+            return { success: true, messageId: info.messageId, previewUrl: nodemailer.getTestMessageUrl(info) };
         }
         
         return { success: true, messageId: info.messageId };

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -10,7 +11,9 @@ class ForgotPasswordPage extends StatefulWidget {
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _authService = AuthService();
   bool _isLoading = false;
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   @override
   void dispose() {
@@ -19,24 +22,50 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   Future<void> _sendResetLink() async {
+    setState(() {
+      _autovalidateMode = AutovalidateMode.onUserInteraction;
+    });
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) {
-      return;
+    try {
+      final email = _emailController.text.trim().toLowerCase();
+      final result = await _authService.requestPasswordReset(email);
+
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Password reset email sent successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Failed to send reset email'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-
-    setState(() => _isLoading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Password reset link sent to ${_emailController.text}'),
-      ),
-    );
-    Navigator.pop(context);
   }
 
   @override
@@ -53,6 +82,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
           child: Form(
             key: _formKey,
+            autovalidateMode: _autovalidateMode,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -167,13 +197,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withValues(alpha: 0.6),
+                        color: const Color(0xFF5A6B47).withOpacity(0.6),
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: const Color(0xFF5A6B47).withValues(alpha: 0.6),
+                        color: const Color(0xFF5A6B47).withOpacity(0.6),
                       ),
                     ),
                     focusedBorder: const OutlineInputBorder(

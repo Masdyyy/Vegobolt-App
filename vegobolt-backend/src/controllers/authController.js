@@ -1,7 +1,8 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const User = require('../models/User');
 const { generateToken, verifyToken: verifyJWT } = require('../services/jwtService');
-const { generateVerificationToken, sendVerificationEmail } = require('../services/emailService');
+const { generateVerificationToken, sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
 const connectDB = require('../config/mongodb');
 
 /**
@@ -602,11 +603,33 @@ const resendVerificationEmail = async (req, res) => {
 
 /**
  * Request password reset
- * TODO: Implement with email service (e.g., SendGrid, Nodemailer)
+ * Generates a reset token and sends an email with reset instructions
  */
 const requestPasswordReset = async (req, res) => {
     try {
+        // Validate input first
         const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide email'
+            });
+        }
+
+        console.log('🔄 Password reset requested for:', email);
+
+        // Ensure MongoDB is connected (for serverless environments)
+        try {
+            await connectDB();
+            console.log('✅ MongoDB connected successfully');
+        } catch (dbError) {
+            console.error('❌ Database connection error:', dbError);
+            return res.status(500).json({
+                success: false,
+                message: 'Unable to process request. Please try again later.',
+                ...(process.env.NODE_ENV === 'development' && { error: 'Database connection failed' })
+            });
+        }
 
         if (!email) {
             return res.status(400).json({
@@ -617,27 +640,122 @@ const requestPasswordReset = async (req, res) => {
 
         // Check if user exists
         const user = await User.findByEmail(email);
+        
+        // Even if user is not found, return success for security
         if (!user) {
-            // Don't reveal if user exists or not for security
             return res.status(200).json({
                 success: true,
-                message: 'If the email exists, a password reset link will be sent'
+                message: 'If an account exists with this email, you will receive password reset instructions.'
             });
         }
 
-        // TODO: Generate password reset token and send email
-        // For now, return a placeholder message
-        
-        res.status(200).json({
-            success: true,
-            message: 'Password reset functionality will be implemented with email service'
-        });
+        // Generate password reset token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetExpires = Date.now() + 3600000; // 1 hour
+
+        // Save reset token and expiry
+        user.passwordResetToken = resetToken;
+        user.passwordResetExpires = resetExpires;
+        await user.save();
+
+        // Send password reset email
+        try {
+            console.log('🔄 Attempting to send password reset email to:', email);
+            const emailResult = await sendPasswordResetEmail(email, resetToken, user.displayName);
+            
+            // Log success and any preview URL in development
+            console.log('✅ Password reset email result:', emailResult);
+            
+            res.status(200).json({
+                success: true,
+                message: 'Password reset instructions have been sent to your email.',
+                ...(process.env.NODE_ENV === 'development' && { previewUrl: emailResult.previewUrl })
+            });
+        } catch (emailError) {
+            // Reset the token if email fails
+            user.passwordResetToken = null;
+            user.passwordResetExpires = null;
+            await user.save();
+            
+            console.error('❌ Failed to send password reset email:', {
+                error: emailError.message,
+                stack: emailError.stack,
+                email: email
+            });
+            
+            res.status(500).json({
+                success: false,
+                message: 'Failed to send password reset email. Please try again later.',
+                ...(process.env.NODE_ENV === 'development' && { error: emailError.message })
+            });
+        }
 
     } catch (error) {
         console.error('Password reset error:', error);
         res.status(500).json({
             success: false,
             message: 'Error requesting password reset',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Reset password using token
+ * Changes the user's password if the token is valid
+ */
+const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide reset token and new password'
+            });
+        }
+
+        // Find user with valid reset token
+        const user = await User.findOne({
+            passwordResetToken: token,
+            passwordResetExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password reset token is invalid or has expired'
+            });
+        }
+
+        // Validate password strength
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be at least 6 characters long'
+            });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update user's password and clear reset token
+        user.password = hashedPassword;
+        user.passwordResetToken = null;
+        user.passwordResetExpires = null;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Password has been reset successfully. Please login with your new password.'
+        });
+
+    } catch (error) {
+        console.error('Password reset error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error resetting password',
             error: error.message
         });
     }
@@ -651,5 +769,6 @@ module.exports = {
     resendVerificationEmail,
     getProfile,
     logout,
-    requestPasswordReset
+    requestPasswordReset,
+    resetPassword
 };
