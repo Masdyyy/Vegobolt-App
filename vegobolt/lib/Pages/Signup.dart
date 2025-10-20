@@ -122,14 +122,10 @@ class _SignupPageState extends State<SignupPage> {
       final email = _emailController.text.trim().toLowerCase();
       final firstName = _firstNameController.text.trim();
       final lastName = _lastNameController.text.trim();
-      final displayName = [
-        firstName,
-        lastName,
-      ].where((s) => s.isNotEmpty).join(' ').trim();
       final password = _passwordController.text;
 
-      // Call backend API to register
-      final result = await _authService.register(email, password, displayName);
+      // Call backend API to register with firstName and lastName
+      final result = await _authService.register(email, password, firstName, lastName);
 
       if (!mounted) return;
 
@@ -147,7 +143,7 @@ class _SignupPageState extends State<SignupPage> {
         );
 
         // Navigate to dashboard (user is already logged in after registration)
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        Navigator.pushReplacementNamed(context, '/login');
       } else {
         // Registration failed
         ScaffoldMessenger.of(context).showSnackBar(

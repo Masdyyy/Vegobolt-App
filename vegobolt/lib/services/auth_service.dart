@@ -116,7 +116,8 @@ class AuthService {
   Future<Map<String, dynamic>> register(
     String email,
     String password,
-    String displayName,
+    String firstName,
+    String lastName,
   ) async {
     try {
       final url = Uri.parse(ApiConfig.getUrl(ApiConfig.authRegister));
@@ -127,7 +128,8 @@ class AuthService {
         body: jsonEncode({
           'email': email,
           'password': password,
-          'displayName': displayName,
+          'firstName': firstName,
+          'lastName': lastName,
         }),
       );
 
@@ -140,10 +142,14 @@ class AuthService {
 
         // Save user data
         await _secureStorage.write(key: 'user_email', value: email);
-        await _secureStorage.write(
-          key: 'user_display_name',
-          value: displayName,
-        );
+        
+        // Save display name (auto-generated from firstName + lastName by backend)
+        if (responseData['data']['user']['displayName'] != null) {
+          await _secureStorage.write(
+            key: 'user_display_name',
+            value: responseData['data']['user']['displayName'],
+          );
+        }
 
         return {
           'success': true,
