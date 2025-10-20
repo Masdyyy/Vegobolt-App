@@ -55,10 +55,10 @@ app.use((req, res) => {
 // Error handler
 app.use(errorHandler);
 
-// MongoDB connect
-if (process.env.NODE_ENV !== 'production') {
-    connectDB();
-}
+// MongoDB connect - ALWAYS connect (handles both local and serverless)
+connectDB().catch(err => {
+    console.error('Failed to connect to MongoDB:', err);
+});
 
 // Local server start (for development)
 if (process.env.NODE_ENV !== 'production') {
