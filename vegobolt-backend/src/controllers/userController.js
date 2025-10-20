@@ -34,7 +34,7 @@ const getUserProfile = async (req, res) => {
  */
 const updateUserProfile = async (req, res) => {
     try {
-        const { displayName, phoneNumber, profilePicture } = req.body;
+        const { firstName, lastName, displayName, phoneNumber, profilePicture } = req.body;
         
         // Find user by Firebase UID
         const user = await User.findOne({ firebaseUid: req.user.uid });
@@ -47,6 +47,8 @@ const updateUserProfile = async (req, res) => {
         }
 
         // Update allowed fields
+        if (firstName) user.firstName = firstName;
+        if (lastName) user.lastName = lastName;
         if (displayName) user.displayName = displayName;
         if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
         if (profilePicture !== undefined) user.profilePicture = profilePicture;

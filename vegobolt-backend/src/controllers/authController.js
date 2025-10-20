@@ -15,14 +15,14 @@ const register = async (req, res, next) => {
         // Ensure MongoDB is connected (for serverless environments)
         await connectDB();
         
-        const { email, password, displayName } = req.body;
-        console.log('🔵 Parsed data:', { email, displayName, hasPassword: !!password });
+        const { email, password, firstName, lastName } = req.body;
+        console.log('🔵 Parsed data:', { email, firstName, lastName, hasPassword: !!password });
 
         // Validate input
-        if (!email || !password || !displayName) {
+        if (!email || !password || !firstName || !lastName) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide email, password, and display name'
+                message: 'Please provide email, password, first name, and last name'
             });
         }
 
@@ -55,7 +55,8 @@ const register = async (req, res, next) => {
         const mongoUser = await User.createUser({
             email,
             password: hashedPassword,
-            displayName,
+            firstName,
+            lastName,
             emailVerificationToken: verificationToken,
             emailVerificationExpires: verificationExpires,
             isEmailVerified: false
@@ -63,7 +64,7 @@ const register = async (req, res, next) => {
 
         // Send verification email
         try {
-            await sendVerificationEmail(email, verificationToken, displayName);
+            await sendVerificationEmail(email, verificationToken, mongoUser.displayName);
             console.log('✅ Verification email sent successfully');
         } catch (emailError) {
             console.error('⚠️ Failed to send verification email:', emailError);
@@ -80,6 +81,8 @@ const register = async (req, res, next) => {
                 user: {
                     id: mongoUser._id,
                     email: mongoUser.email,
+                    firstName: mongoUser.firstName,
+                    lastName: mongoUser.lastName,
                     displayName: mongoUser.displayName,
                     isEmailVerified: mongoUser.isEmailVerified,
                     createdAt: mongoUser.createdAt
@@ -163,6 +166,8 @@ const login = async (req, res) => {
                 user: {
                     id: user._id,
                     email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
                     displayName: user.displayName
                 },
                 token: token
@@ -200,9 +205,14 @@ const googleLogin = async (req, res) => {
         // Verify Google ID token and extract profile
         const payload = await verifyGoogleIdToken(idToken);
         const email = (payload.email || '').toLowerCase();
-        const displayName = payload.name || email.split('@')[0];
+        const fullName = payload.name || email.split('@')[0];
         const picture = payload.picture || null;
         const emailVerified = !!payload.email_verified;
+
+        // Parse first and last name from Google name
+        const nameParts = fullName.split(' ');
+        const firstName = payload.given_name || nameParts[0] || 'User';
+        const lastName = payload.family_name || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
 
         if (!email) {
             return res.status(400).json({
@@ -218,7 +228,8 @@ const googleLogin = async (req, res) => {
                 email,
                 // store a non-usable password placeholder for social login
                 password: `google:${payload.sub}`,
-                displayName,
+                firstName,
+                lastName,
                 profilePicture: picture,
                 isEmailVerified: emailVerified,
                 emailVerificationToken: null,
@@ -226,7 +237,9 @@ const googleLogin = async (req, res) => {
             });
         } else {
             // Update existing profile with Google info
-            if (!user.displayName && displayName) user.displayName = displayName;
+            if (!user.firstName && firstName) user.firstName = firstName;
+            if (!user.lastName && lastName) user.lastName = lastName;
+            if (!user.displayName) user.displayName = `${firstName} ${lastName}`.trim();
             if (picture && !user.profilePicture) user.profilePicture = picture;
             if (emailVerified && !user.isEmailVerified) user.isEmailVerified = true;
             await user.save();
@@ -242,6 +255,8 @@ const googleLogin = async (req, res) => {
                 user: {
                     id: user._id,
                     email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
                     displayName: user.displayName,
                     profilePicture: user.profilePicture,
                 },
@@ -293,6 +308,8 @@ const verifyToken = async (req, res) => {
                 user: {
                     id: user._id,
                     email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
                     displayName: user.displayName
                 },
                 tokenInfo: {
@@ -335,6 +352,8 @@ const getProfile = async (req, res) => {
                 user: {
                     id: user._id,
                     email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
                     displayName: user.displayName,
                     phoneNumber: user.phoneNumber,
                     profilePicture: user.profilePicture,

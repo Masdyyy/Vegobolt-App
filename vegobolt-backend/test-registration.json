@@ -1,5 +1,6 @@
 {
   "email": "testuser@vegobolt.com",
   "password": "Test123!",
-  "displayName": "Test User"
+  "firstName": "Test",
+  "lastName": "User"
 }
