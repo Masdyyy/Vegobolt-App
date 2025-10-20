@@ -12,9 +12,18 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    displayName: {
+    firstName: {
         type: String,
         required: true,
+        trim: true,
+    },
+    lastName: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    displayName: {
+        type: String,
         trim: true,
     },
     phoneNumber: {
@@ -54,6 +63,10 @@ const userSchema = new mongoose.Schema({
 // Update the updatedAt timestamp before saving
 userSchema.pre('save', function(next) {
     this.updatedAt = Date.now();
+    // Auto-generate displayName if not set
+    if (!this.displayName && this.firstName && this.lastName) {
+        this.displayName = `${this.firstName} ${this.lastName}`;
+    }
     next();
 });
 

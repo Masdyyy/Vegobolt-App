@@ -3,7 +3,8 @@ const http = require('http');
 const data = JSON.stringify({
   email: 'testuser@vegobolt.com',
   password: 'Test123!',
-  displayName: 'Test User'
+  firstName: 'Test',
+  lastName: 'User'
 });
 
 const options = {
@@ -41,6 +42,9 @@ const req = http.request(options, (res) => {
 
 req.on('error', (error) => {
   console.error('❌ Error:', error.message);
+  console.error('\n💡 Make sure the server is running:');
+  console.error('   Run: npm start');
+  console.error('   Or: node src/app.js');
 });
 
 req.on('timeout', () => {
