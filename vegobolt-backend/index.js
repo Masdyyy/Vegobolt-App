@@ -4,6 +4,15 @@
  */
 
 const app = require('./src/app');
+const connectDB = require('./src/config/mongodb');
+
+// ✅ Initialize MongoDB connection for serverless
+// This ensures the connection is established before handling requests
+if (process.env.NODE_ENV === 'production') {
+    connectDB().catch(err => {
+        console.error('❌ Failed to connect to MongoDB on startup:', err);
+    });
+}
 
 // ✅ For Vercel deployment — export the app
 module.exports = app;

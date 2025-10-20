@@ -16,13 +16,24 @@ if (process.env.NODE_ENV !== 'production') {
 This meant that when Vercel deployed the app with `NODE_ENV=production`, the database connection was never established, causing all database operations to fail.
 
 ## Fix Applied ✅
-Updated `src/app.js` to **always** connect to MongoDB regardless of environment:
+Updated `src/app.js` and `index.js` to **always connect to MongoDB**, regardless of environment:
 
+**In `src/app.js`:**
 ```javascript
 // ✅ NEW CODE (FIXED)
 connectDB().catch(err => {
     console.error('Failed to connect to MongoDB:', err);
 });
+```
+
+**In `index.js`:**
+```javascript
+// ✅ Initialize MongoDB for production/serverless
+if (process.env.NODE_ENV === 'production') {
+    connectDB().catch(err => {
+        console.error('❌ Failed to connect to MongoDB on startup:', err);
+    });
+}
 ```
 
 The connection handler is smart enough to:
