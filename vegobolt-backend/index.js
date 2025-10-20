@@ -4,21 +4,12 @@
  */
 
 const app = require('./src/app');
-const connectDB = require('./src/config/mongodb');
 
-// ✅ Initialize MongoDB connection for serverless
-// This ensures the connection is established before handling requests
-if (process.env.NODE_ENV === 'production') {
-    connectDB().catch(err => {
-        console.error('❌ Failed to connect to MongoDB on startup:', err);
-    });
-}
-
-// ✅ For Vercel deployment — export the app
+// ✅ For Vercel deployment — export the app as serverless function
 module.exports = app;
 
-// ✅ Optional: Local development support
-if (process.env.NODE_ENV !== 'production') {
+// ✅ Local development support
+if (require.main === module) {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 Local server running at http://localhost:${PORT}`);
