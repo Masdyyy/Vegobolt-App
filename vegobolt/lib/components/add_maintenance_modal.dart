@@ -108,7 +108,7 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
 
   @override
   Widget build(BuildContext context) {
-  final cardBg = AppColors.getCardBackground(context);
+    final cardBg = AppColors.getCardBackground(context);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -208,7 +208,10 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
           validator: (v) => v == null ? 'Required' : null,
           decoration: _inputDecoration(hint),
           isExpanded: true,
-          icon: Icon(Icons.arrow_drop_down, color: AppColors.getTextLight(context)),
+          icon: Icon(
+            Icons.arrow_drop_down,
+            color: AppColors.getTextLight(context),
+          ),
           items: items
               .map(
                 (e) => DropdownMenuItem(
@@ -270,7 +273,11 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
                     fontSize: 14,
                   ),
                 ),
-                Icon(Icons.calendar_today, size: 18, color: AppColors.getTextLight(context)),
+                Icon(
+                  Icons.calendar_today,
+                  size: 18,
+                  color: AppColors.getTextLight(context),
+                ),
               ],
             ),
           ),
@@ -323,7 +330,10 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: AppColors.getTextLight(context), fontSize: 14),
+      hintStyle: TextStyle(
+        color: AppColors.getTextLight(context),
+        fontSize: 14,
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),

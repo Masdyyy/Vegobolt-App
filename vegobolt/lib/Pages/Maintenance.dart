@@ -313,7 +313,10 @@ class _MaintenancePageState extends State<MaintenancePage>
       return Center(
         child: Text(
           'No scheduled maintenance',
-          style: TextStyle(color: AppColors.getTextLight(context), fontSize: 16),
+          style: TextStyle(
+            color: AppColors.getTextLight(context),
+            fontSize: 16,
+          ),
         ),
       );
     }
@@ -344,7 +347,10 @@ class _MaintenancePageState extends State<MaintenancePage>
       return Center(
         child: Text(
           'No history records',
-          style: TextStyle(color: AppColors.getTextLight(context), fontSize: 16),
+          style: TextStyle(
+            color: AppColors.getTextLight(context),
+            fontSize: 16,
+          ),
         ),
       );
     }
@@ -446,7 +452,10 @@ class _MaintenancePageState extends State<MaintenancePage>
           const SizedBox(height: 8),
           Text(
             '$machineId • $location',
-            style: TextStyle(color: AppColors.getTextLight(context), fontSize: 13),
+            style: TextStyle(
+              color: AppColors.getTextLight(context),
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -461,7 +470,10 @@ class _MaintenancePageState extends State<MaintenancePage>
                 scheduledDate != null
                     ? '${scheduledDate.month.toString().padLeft(2, '0')}/${scheduledDate.day.toString().padLeft(2, '0')}/${scheduledDate.year}'
                     : 'Not scheduled',
-                style: TextStyle(color: AppColors.getTextLight(context), fontSize: 12),
+                style: TextStyle(
+                  color: AppColors.getTextLight(context),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -472,13 +484,16 @@ class _MaintenancePageState extends State<MaintenancePage>
                 child: OutlinedButton(
                   onPressed: onEdit,
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: AppColors.getTextLight(context), width: 1),
+                    side: BorderSide(
+                      color: AppColors.getTextLight(context),
+                      width: 1,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                    child: Text(
+                  child: Text(
                     'Edit',
                     style: TextStyle(
                       color: AppColors.darkGreen,
