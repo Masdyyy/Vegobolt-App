@@ -57,8 +57,11 @@ const sendVerificationEmail = async (email, token, displayName) => {
     try {
         const transporter = createTransporter();
         
-        // Construct verification URL
-        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/auth/verify-email/${token}`;
+        // Construct verification URL - use BACKEND_URL for API endpoints
+        const backendUrl = process.env.BACKEND_URL || process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}` 
+            : 'http://localhost:3000';
+        const verificationUrl = `${backendUrl}/api/auth/verify-email/${token}`;
         
         const mailOptions = {
             from: process.env.EMAIL_FROM || '"Vegobolt" <noreply@vegobolt.com>',
@@ -160,6 +163,7 @@ const sendPasswordResetEmail = async (email, token, displayName) => {
     try {
         const transporter = createTransporter();
         
+        // Password reset should go to FRONTEND (Flutter app handles the reset form)
         const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${token}`;
         
         const mailOptions = {
