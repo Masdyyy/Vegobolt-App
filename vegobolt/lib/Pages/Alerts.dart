@@ -44,39 +44,19 @@ class _AlertsPageState extends State<AlertsPage> {
 
   Future<void> fetchAlerts() async {
     try {
-      // We now derive alerts from the latest tank status
-      // Only show an alert when the tank is FULL (critical)
+      // Fetch alerts from the new alerts endpoint
       final baseUrl = _getBaseUrl();
-      final response = await http.get(Uri.parse('$baseUrl/api/tank/status'));
+      final response = await http.get(Uri.parse('$baseUrl/api/tank/alerts'));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
-        final String status = (data['status'] ?? '').toString();
-        final int level = int.tryParse('${data['level'] ?? 0}') ?? 0;
-        final String timeIso =
-            (data['createdAt'] ?? DateTime.now().toIso8601String()).toString();
-
-        // Build a single alert only when FULL
-        final List<dynamic> derivedAlerts =
-            (status.toLowerCase() == 'full' || level >= 90)
-            ? [
-                {
-                  'title': 'Tank Full',
-                  'machine': 'VB-0001',
-                  'location': '-',
-                  'time': timeIso,
-                  'status': 'Critical',
-                },
-              ]
-            : [];
+        final List<dynamic> alertsData = json.decode(response.body);
 
         if (!mounted) return;
         setState(() {
-          _alerts = derivedAlerts;
+          _alerts = alertsData;
           _isLoading = false;
         });
-        debugPrint('✅ Derived alerts: ${_alerts.length}');
+        debugPrint('✅ Fetched alerts: ${_alerts.length}');
       } else {
         if (!mounted) return;
         setState(() => _isLoading = false);
@@ -204,6 +184,17 @@ class _AlertsPageState extends State<AlertsPage> {
                               itemCount: _filteredAlerts.length,
                               itemBuilder: (context, index) {
                                 final alert = _filteredAlerts[index];
+                                final String alertType = alert['type'] ?? '';
+
+                                IconData alertIcon =
+                                    Icons.warning_amber_rounded;
+
+                                if (alertType == 'temperature') {
+                                  alertIcon = Icons.thermostat;
+                                } else if (alertType == 'tank') {
+                                  alertIcon = Icons.local_gas_station;
+                                }
+
                                 return AlertCard(
                                   title: alert['title'] ?? 'No title',
                                   machine: alert['machine'] ?? 'Unknown',
@@ -211,7 +202,7 @@ class _AlertsPageState extends State<AlertsPage> {
                                   time: _formatTime(alert['time'] ?? ''),
                                   status: alert['status'] ?? '',
                                   statusColor: _getStatusColor(alert['status']),
-                                  icon: Icons.warning_amber_rounded,
+                                  icon: alertIcon,
                                 );
                               },
                             ),
