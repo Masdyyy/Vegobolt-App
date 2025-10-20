@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/auth_service.dart';
+import '../services/google_signin_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,6 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final _secureStorage = const FlutterSecureStorage();
   final _authService = AuthService();
+  final _google = GoogleSignInService();
 
   bool _isPasswordVisible = false;
   bool _isLoading = false;
@@ -125,20 +127,39 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _handleGoogleLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
 
-    // Simulate Google login process
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final idToken = await _google.signInAndGetIdToken();
+      if (idToken == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Google sign-in cancelled')),
+        );
+        return;
+      }
 
-    setState(() {
-      _isLoading = false;
-    });
-
-    // Navigate to dashboard
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      final result = await _authService.loginWithGoogle(idToken);
+      if (!mounted) return;
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Logged in with Google')));
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? 'Google login failed')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google login error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -174,7 +195,8 @@ class _LoginPageState extends State<LoginPage> {
                                   // stroke paint:
                                   foreground: Paint()
                                     ..style = PaintingStyle.stroke
-                                    ..strokeWidth = 3.2 // increase to make heavier
+                                    ..strokeWidth =
+                                        3.2 // increase to make heavier
                                     ..color = const Color(0xFF5A6B47),
                                   letterSpacing: -1.8,
                                 ),
@@ -316,7 +338,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                         color: Colors.grey[700],
                       ),
                       onPressed: () {
@@ -379,8 +403,13 @@ class _LoginPageState extends State<LoginPage> {
                               await _setRememberedEmail(null, false);
                             } else {
                               // if user checks, save current email immediately (if any)
-                              final currentEmail = _emailController.text.trim().toLowerCase();
-                              await _setRememberedEmail(currentEmail.isNotEmpty ? currentEmail : null, true);
+                              final currentEmail = _emailController.text
+                                  .trim()
+                                  .toLowerCase();
+                              await _setRememberedEmail(
+                                currentEmail.isNotEmpty ? currentEmail : null,
+                                true,
+                              );
                             }
                           },
                           activeColor: const Color(0xFF5A6B47),
@@ -469,7 +498,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 20), // reduced spacing here
-
                 // Google Login Button
                 SizedBox(
                   height: 56,
@@ -513,7 +541,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 16), // smaller gap to the sign-up row
-
                 // Sign Up Link (moved up a bit and given a small bottom padding)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
