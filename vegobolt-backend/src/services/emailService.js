@@ -48,6 +48,28 @@ const generateVerificationToken = () => {
 };
 
 /**
+ * Resolve the backend base URL for building API links in emails.
+ * Priority:
+ * 1) BACKEND_URL (explicit backend hostname)
+ * 2) API_BASE_URL (common alias)
+ * 3) VERCEL_URL (provided by Vercel) prefixed with https://
+ * 4) FRONTEND_URL (legacy fallback, in case API is hosted together)
+ * 5) http://localhost:3000 (local dev default)
+ */
+const getBackendBaseUrl = () => {
+    let base =
+        process.env.BACKEND_URL ||
+        process.env.API_BASE_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
+        process.env.FRONTEND_URL ||
+        'http://localhost:3000';
+
+    // Trim trailing slash if present to avoid double slashes in URLs
+    if (base.endsWith('/')) base = base.slice(0, -1);
+    return base;
+};
+
+/**
  * Send email verification email
  * @param {string} email - User's email address
  * @param {string} token - Verification token
@@ -57,11 +79,8 @@ const sendVerificationEmail = async (email, token, displayName) => {
     try {
         const transporter = createTransporter();
         
-        // Construct verification URL - use BACKEND_URL for API endpoints
-        const backendUrl = process.env.BACKEND_URL || process.env.VERCEL_URL 
-            ? `https://${process.env.VERCEL_URL}` 
-            : 'http://localhost:3000';
-        const verificationUrl = `${backendUrl}/api/auth/verify-email/${token}`;
+        // Construct verification URL
+        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/auth/verify-email/${token}`;
         
         const mailOptions = {
             from: process.env.EMAIL_FROM || '"Vegobolt" <noreply@vegobolt.com>',

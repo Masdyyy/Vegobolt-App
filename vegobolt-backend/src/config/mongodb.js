@@ -19,19 +19,23 @@ const connectDB = async () => {
             console.error('❌ MONGODB_URI is not set in environment variables');
             throw new Error('MONGODB_URI is not configured');
         }
+        console.log('⏳ Connecting to MongoDB...');
 
         const conn = await mongoose.connect(process.env.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 10000,
-            socketTimeoutMS: 45000,
+            // Increase timeouts to better handle cold starts / serverless
+            serverSelectionTimeoutMS: 30000,
+            connectTimeoutMS: 30000,
+            socketTimeoutMS: 60000,
+            maxPoolSize: 5,
         });
         
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
         cachedConnection = conn;
         return conn;
     } catch (error) {
-        console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    console.error(`❌ MongoDB Connection Error: ${error.message}`);
         console.error('Please check your internet connection and MongoDB Atlas settings');
         
         // In serverless, don't exit the process - just throw the error
