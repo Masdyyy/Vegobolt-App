@@ -279,6 +279,9 @@ const googleLogin = async (req, res) => {
  */
 const verifyToken = async (req, res) => {
     try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
         const token = req.headers.authorization?.split(' ')[1];
 
         if (!token) {
@@ -336,6 +339,9 @@ const verifyToken = async (req, res) => {
  */
 const getProfile = async (req, res) => {
     try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
         // req.user is set by authMiddleware
         const user = await User.findById(req.user.id);
 
@@ -400,6 +406,9 @@ const logout = async (req, res) => {
  */
 const verifyEmail = async (req, res) => {
     try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
         const { token } = req.params;
 
         if (!token) {
@@ -638,6 +647,9 @@ const verifyEmail = async (req, res) => {
  */
 const resendVerificationEmail = async (req, res) => {
     try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
         const { email } = req.body;
 
         if (!email) {
@@ -705,6 +717,9 @@ const resendVerificationEmail = async (req, res) => {
  */
 const requestPasswordReset = async (req, res) => {
     try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
         const { email } = req.body;
 
         if (!email) {
