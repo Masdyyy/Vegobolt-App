@@ -60,9 +60,22 @@ exports.getAlerts = async (req, res) => {
     }
 
     const alerts = [];
-    
-    // Only show overheating alert if CURRENTLY overheating
-    if (latest.alert === "overheating" || latest.temperature > 50) {
+
+    // Show smoke alert if detected
+    if (latest.alert === "smoke" || latest.alert === "overheating+smoke") {
+      alerts.push({
+        title: 'Smoke Detected',
+        machine: 'VB-0001',
+        location: 'Barangay 171',
+        time: latest.createdAt,
+        status: 'Critical',
+        type: 'smoke',
+        details: 'Smoke detected by MQ2 sensor.'
+      });
+    }
+
+    // Show overheating alert if currently overheating (even if combined with smoke)
+    if (latest.alert === "overheating" || latest.alert === "overheating+smoke" || latest.temperature > 50) {
       alerts.push({
         title: 'Overheating Alert',
         machine: 'VB-0001',
@@ -73,7 +86,7 @@ exports.getAlerts = async (req, res) => {
         details: `Temperature: ${latest.temperature}°C`
       });
     }
-    
+
     // Only show tank full alert if CURRENTLY full
     if (latest.status === "Full" || latest.level >= 90) {
       alerts.push({
