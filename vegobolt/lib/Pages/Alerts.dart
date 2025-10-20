@@ -276,7 +276,7 @@ class _AlertsPageState extends State<AlertsPage> {
                   color: isActive
                       ? (Theme.of(context).brightness == Brightness.dark
                             ? AppColors.darkGreen
-                            : AppColors.warningYellow)
+                            : AppColors.lightGreen)
                       : (Theme.of(context).brightness == Brightness.dark
                             ? AppColors.darkCardBackground
                             : Colors.white),
