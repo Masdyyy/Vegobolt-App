@@ -1,33 +1,32 @@
 const express = require("express");
 const router = express.Router();
-const Tank = require("../models/TankData");
 
-// GET /api/alerts
-// Returns an array with a single alert only when the latest tank status is Full (or level >= 90), otherwise []
-router.get("/", async (req, res) => {
-  try {
-    const latest = await Tank.findOne().sort({ createdAt: -1 });
-    if (!latest) return res.json([]);
+const mockAlerts = [
+  {
+    title: "Tank Full",
+    machine: "VB-0001",
+    location: "Barangay 171",
+    time: "2024-10-19T09:32:00Z",
+    status: "Critical",
+  },
+  {
+    title: "Low Battery Warning",
+    machine: "VB-0002",
+    location: "Barangay 172",
+    time: "2024-10-18T14:15:00Z",
+    status: "Warning",
+  },
+  {
+    title: "Maintenance Required",
+    machine: "VB-0003",
+    location: "Barangay 173",
+    time: "2024-10-17T10:20:00Z",
+    status: "Resolved",
+  },
+];
 
-    const isFull =
-      (typeof latest.status === "string" && latest.status.toLowerCase() === "full") ||
-      (typeof latest.level === "number" && latest.level >= 90);
-
-    if (!isFull) return res.json([]);
-
-    const alert = {
-      title: "Tank Full",
-      machine: "VB-0001", // optional static label for UI; adjust if you track machine IDs
-      location: "", // optional
-      time: latest.createdAt ? latest.createdAt.toISOString() : new Date().toISOString(),
-      status: "Critical",
-    };
-
-    return res.json([alert]);
-  } catch (err) {
-    console.error("/api/alerts error:", err);
-    res.status(500).json({ message: "Failed to load alerts" });
-  }
+router.get("/", (req, res) => {
+  res.json(mockAlerts);
 });
 
 module.exports = router;

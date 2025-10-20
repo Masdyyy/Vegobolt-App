@@ -18,6 +18,13 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 
 /**
+ * @route   POST /api/auth/google
+ * @desc    Login/Register with Google ID token
+ * @access  Public
+ */
+router.post('/google', authController.googleLogin);
+
+/**
  * @route   POST /api/auth/verify
  * @desc    Verify Firebase ID token
  * @access  Public

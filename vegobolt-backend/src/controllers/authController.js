@@ -3,6 +3,7 @@ const User = require('../models/User');
 const { generateToken, verifyToken: verifyJWT } = require('../services/jwtService');
 const { generateVerificationToken, sendVerificationEmail } = require('../services/emailService');
 const connectDB = require('../config/mongodb');
+const { verifyGoogleIdToken } = require('../services/googleAuthService');
 
 /**
  * Register a new user with email and password
@@ -174,6 +175,85 @@ const login = async (req, res) => {
             success: false,
             message: 'Error logging in',
             error: error.message
+        });
+    }
+};
+
+/**
+ * Login or register via Google ID token
+ * Body: { idToken: string }
+ */
+const googleLogin = async (req, res) => {
+    try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+
+        const { idToken } = req.body;
+
+        if (!idToken) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing idToken'
+            });
+        }
+
+        // Verify Google ID token and extract profile
+        const payload = await verifyGoogleIdToken(idToken);
+        const email = (payload.email || '').toLowerCase();
+        const displayName = payload.name || email.split('@')[0];
+        const picture = payload.picture || null;
+        const emailVerified = !!payload.email_verified;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'No email found in Google token'
+            });
+        }
+
+        // Find or create user
+        let user = await User.findByEmail(email);
+        if (!user) {
+            user = await User.createUser({
+                email,
+                // store a non-usable password placeholder for social login
+                password: `google:${payload.sub}`,
+                displayName,
+                profilePicture: picture,
+                isEmailVerified: emailVerified,
+                emailVerificationToken: null,
+                emailVerificationExpires: null,
+            });
+        } else {
+            // Update existing profile with Google info
+            if (!user.displayName && displayName) user.displayName = displayName;
+            if (picture && !user.profilePicture) user.profilePicture = picture;
+            if (emailVerified && !user.isEmailVerified) user.isEmailVerified = true;
+            await user.save();
+        }
+
+        // Issue JWT
+        const token = generateToken(user);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            data: {
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    displayName: user.displayName,
+                    profilePicture: user.profilePicture,
+                },
+                token,
+            },
+        });
+    } catch (error) {
+        console.error('Google login error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Google login failed',
+            error: error.message,
         });
     }
 };
@@ -646,6 +726,7 @@ const requestPasswordReset = async (req, res) => {
 module.exports = {
     register,
     login,
+    googleLogin,
     verifyToken,
     verifyEmail,
     resendVerificationEmail,
