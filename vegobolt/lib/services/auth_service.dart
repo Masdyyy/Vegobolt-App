@@ -18,14 +18,14 @@ class AuthService {
       'profile',
       'openid',
     ],
-    // For web, the client ID is set in index.html meta tag
-    // For mobile platforms (Android/iOS), use serverClientId
+    // For web, use the Web OAuth client ID
+    // For Android/iOS, Google Play Services will auto-detect the OAuth client
+    // based on package name (com.example.vegobolt) and SHA-1 fingerprint
     clientId: kIsWeb 
         ? '445716724471-0emjir8iu0ff8arpcujegfp559ka4rc6.apps.googleusercontent.com'
         : null,
-    serverClientId: kIsWeb 
-        ? null 
-        : '445716724471-0emjir8iu0ff8arpcujegfp559ka4rc6.apps.googleusercontent.com',
+    // serverClientId is NOT needed when you have an Android OAuth client
+    // configured in Google Cloud Console with matching package name + SHA-1
   );
   
   /// Login with email and password
