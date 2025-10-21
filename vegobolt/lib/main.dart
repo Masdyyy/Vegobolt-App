@@ -9,6 +9,7 @@ import 'Pages/machine.dart';
 import 'Pages/maintenance.dart';
 import 'Pages/settings.dart';
 import 'Pages/forgetpassword.dart';
+import 'Pages/ResetPassword.dart';
 import 'Pages/signup.dart';
 import 'Pages/HelpSupport.dart';
 import 'Pages/AccountSettings.dart';
@@ -59,6 +60,17 @@ class MyApp extends StatelessWidget {
 
       // To start with login page instead, change above to: home: const LoginPage(),
       routes: routes,
+
+      // Handle dynamic routes like reset-password with token
+      onGenerateRoute: (settings) {
+        if (settings.name == '/reset-password') {
+          final args = settings.arguments as Map<String, dynamic>?;
+          return MaterialPageRoute(
+            builder: (context) => ResetPasswordPage(token: args?['token']),
+          );
+        }
+        return null;
+      },
     );
   }
 }
