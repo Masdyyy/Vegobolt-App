@@ -3,6 +3,7 @@ import '../components/navbar.dart';
 import '../components/header.dart';
 import '../components/add_maintenance_modal.dart';
 import '../utils/colors.dart';
+import '../utils/navigation_helper.dart';
 import 'dashboard.dart';
 import 'alerts.dart';
 import 'machine.dart';
@@ -123,10 +124,7 @@ class _MaintenancePageState extends State<MaintenancePage>
       if (Navigator.canPop(context)) {
         Navigator.pop(context, scheduledItems);
       } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MachinePage()),
-        );
+        NavigationHelper.navigateWithoutAnimation(context, const MachinePage());
       }
       return;
     }
@@ -146,10 +144,7 @@ class _MaintenancePageState extends State<MaintenancePage>
         destination = const DashboardPage();
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => destination),
-    );
+    NavigationHelper.navigateWithoutAnimation(context, destination);
   }
 
   @override

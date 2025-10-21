@@ -7,6 +7,7 @@ import '../components/navbar.dart';
 import '../components/header.dart';
 import '../components/machine_control_button.dart';
 import '../utils/colors.dart';
+import '../utils/navigation_helper.dart';
 import 'dashboard.dart';
 import '../components/machine_status_card.dart';
 import 'alerts.dart';
@@ -211,10 +212,7 @@ class _MachinePageState extends State<MachinePage> {
         destination = const DashboardPage();
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => destination),
-    );
+    NavigationHelper.navigateWithoutAnimation(context, destination);
   }
 
   void _showShutdownConfirmation(BuildContext context) {

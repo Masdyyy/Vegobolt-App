@@ -7,6 +7,7 @@ import '../components/navbar.dart';
 import '../components/header.dart';
 import '../components/alert_card.dart';
 import '../utils/colors.dart';
+import '../utils/navigation_helper.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'maintenance.dart';
@@ -124,10 +125,7 @@ class _AlertsPageState extends State<AlertsPage> {
         destination = const DashboardPage();
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => destination),
-    );
+    NavigationHelper.navigateWithoutAnimation(context, destination);
   }
 
   @override

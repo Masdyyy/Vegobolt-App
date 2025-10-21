@@ -5,6 +5,7 @@ import '../components/header.dart';
 import '../components/machine_control_button.dart';
 import '../utils/colors.dart';
 import '../utils/theme_provider.dart';
+import '../utils/navigation_helper.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'alerts.dart';
@@ -32,10 +33,7 @@ class _SettingsPageState extends State<SettingsPage> {
       const AlertsPage(),
       const MaintenancePage(),
     ];
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => pages[i]),
-    );
+    NavigationHelper.navigateWithoutAnimation(context, pages[i]);
   }
 
   void _showShutdownConfirmation(BuildContext context) {
@@ -169,7 +167,14 @@ class _SettingsPageState extends State<SettingsPage> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Logging out...')));
-    Future.delayed(const Duration(seconds: 1), () {
+    
+    Future.delayed(const Duration(seconds: 0), () {
+      // Reset dark mode to light mode after navigation starts
+      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      if (themeProvider.isDarkMode) {
+        themeProvider.toggleTheme();
+      }
+      
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const LoginPage()),

@@ -4,6 +4,7 @@ import '../components/navbar.dart';
 import '../components/alert_card.dart';
 import '../components/header.dart';
 import '../utils/colors.dart';
+import '../utils/navigation_helper.dart';
 import '../components/machine_status_card.dart';
 import 'machine.dart';
 import 'alerts.dart';
@@ -225,10 +226,7 @@ class _DashboardPageState extends State<DashboardPage> {
         destination = const DashboardPage();
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => destination),
-    );
+    NavigationHelper.navigateWithoutAnimation(context, destination);
   }
 
   @override
