@@ -15,6 +15,18 @@ function getClient() {
   return oauthClient;
 }
 
+// Decode JWT payload without verifying the signature (for diagnostics only)
+function decodeJwtPayload(idToken) {
+  try {
+    const parts = idToken.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+    return payload;
+  } catch (_) {
+    return null;
+  }
+}
+
 /**
  * Verify a Google ID token from client (Flutter google_sign_in).
  * Returns the token payload if valid, else throws.
@@ -30,21 +42,23 @@ async function verifyGoogleIdToken(idToken) {
 
   const client = getClient();
 
-  // Try verification against all configured client IDs (audiences)
-  let lastErr;
-  for (const aud of CLIENT_IDS) {
-    try {
-      const ticket = await client.verifyIdToken({ idToken, audience: aud });
-      const payload = ticket.getPayload();
-      if (!payload || !payload.email) {
-        throw new Error('Invalid Google token payload');
-      }
-      return payload; // contains email, name, picture, sub, email_verified, etc.
-    } catch (e) {
-      lastErr = e;
+  try {
+    // Verify against any of the configured audiences in one shot
+    const ticket = await client.verifyIdToken({ idToken, audience: CLIENT_IDS });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      throw new Error('Invalid Google token payload');
     }
+    return payload; // contains email, name, picture, sub, email_verified, etc.
+  } catch (e) {
+    // Enhance error with diagnostics (what audience the token was minted for)
+    const decoded = decodeJwtPayload(idToken) || {};
+    const aud = decoded.aud;
+    const iss = decoded.iss;
+    const azp = decoded.azp; // authorized party (Web client ID on some flows)
+    const msg = `Google token verification failed: ${e?.message || 'unknown error'} | token.aud=${aud} token.azp=${azp} token.iss=${iss} | expected one of: ${CLIENT_IDS.join(', ')}`;
+    throw new Error(msg);
   }
-  throw new Error(`Google token verification failed: ${lastErr?.message || 'unknown error'}`);
 }
 
 module.exports = { verifyGoogleIdToken, CLIENT_IDS };
