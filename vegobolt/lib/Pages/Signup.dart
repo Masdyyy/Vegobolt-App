@@ -81,8 +81,8 @@ class _SignupPageState extends State<SignupPage> {
 
     List<String> errors = [];
 
-    if (value.length < 6) {
-      errors.add('at least 6 characters');
+    if (value.length < 8) {
+      errors.add('at least 8 characters');
     }
     if (!RegExp(r'[A-Z]').hasMatch(value)) {
       errors.add('1 uppercase letter');
@@ -92,6 +92,9 @@ class _SignupPageState extends State<SignupPage> {
     }
     if (!RegExp(r'[0-9]').hasMatch(value)) {
       errors.add('1 number');
+    }
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
+      errors.add('1 special character');
     }
 
     if (errors.isNotEmpty) {
@@ -125,7 +128,12 @@ class _SignupPageState extends State<SignupPage> {
       final password = _passwordController.text;
 
       // Call backend API to register with firstName and lastName
-      final result = await _authService.register(email, password, firstName, lastName);
+      final result = await _authService.register(
+        email,
+        password,
+        firstName,
+        lastName,
+      );
 
       if (!mounted) return;
 
@@ -283,13 +291,43 @@ class _SignupPageState extends State<SignupPage> {
                         controller: _firstNameController,
                         textCapitalization: TextCapitalization.words,
                         decoration: _buildInputDecoration(hint: 'First Name'),
+                        onChanged: (value) {
+                          // Auto-capitalize first letter if lowercase
+                          if (value.isNotEmpty &&
+                              value[0] == value[0].toLowerCase()) {
+                            final capitalized =
+                                value[0].toUpperCase() + value.substring(1);
+                            _firstNameController.value = TextEditingValue(
+                              text: capitalized,
+                              selection: TextSelection.collapsed(
+                                offset:
+                                    _firstNameController.selection.baseOffset,
+                              ),
+                            );
+                          }
+                        },
                         validator: (v) {
-                          final value = v?.trim() ?? '';
-                          if (value.isEmpty)
+                          // Don't trim for validation to catch trailing spaces
+                          final value = v ?? '';
+                          final trimmedValue = value.trim();
+
+                          if (trimmedValue.isEmpty)
                             return 'Please enter your first name';
-                          final nameRegex = RegExp(r"^[A-Za-z'-]+$");
-                          if (!nameRegex.hasMatch(value))
-                            return 'Invalid first name';
+
+                          // Check for any consecutive spaces (including at end before trim)
+                          if (value.contains('  ')) return 'Invalid input';
+
+                          // Check if starts with a letter
+                          if (!RegExp(r'^[A-Za-z]').hasMatch(trimmedValue))
+                            return 'Invalid input';
+
+                          // Allow only letters and single spaces
+                          final nameRegex = RegExp(
+                            r"^[A-Za-z]+(\s[A-Za-z]+)*$",
+                          );
+                          if (!nameRegex.hasMatch(trimmedValue))
+                            return 'Invalid input';
+
                           return null;
                         },
                       ),
@@ -300,13 +338,43 @@ class _SignupPageState extends State<SignupPage> {
                         controller: _lastNameController,
                         textCapitalization: TextCapitalization.words,
                         decoration: _buildInputDecoration(hint: 'Last Name'),
+                        onChanged: (value) {
+                          // Auto-capitalize first letter if lowercase
+                          if (value.isNotEmpty &&
+                              value[0] == value[0].toLowerCase()) {
+                            final capitalized =
+                                value[0].toUpperCase() + value.substring(1);
+                            _lastNameController.value = TextEditingValue(
+                              text: capitalized,
+                              selection: TextSelection.collapsed(
+                                offset:
+                                    _lastNameController.selection.baseOffset,
+                              ),
+                            );
+                          }
+                        },
                         validator: (v) {
-                          final value = v?.trim() ?? '';
-                          if (value.isEmpty)
+                          // Don't trim for validation to catch trailing spaces
+                          final value = v ?? '';
+                          final trimmedValue = value.trim();
+
+                          if (trimmedValue.isEmpty)
                             return 'Please enter your last name';
-                          final nameRegex = RegExp(r"^[A-Za-z'-]+$");
-                          if (!nameRegex.hasMatch(value))
-                            return 'Invalid last name';
+
+                          // Check for any consecutive spaces (including at end before trim)
+                          if (value.contains('  ')) return 'Invalid input';
+
+                          // Check if starts with a letter
+                          if (!RegExp(r'^[A-Za-z]').hasMatch(trimmedValue))
+                            return 'Invalid input';
+
+                          // Allow only letters and single spaces
+                          final nameRegex = RegExp(
+                            r"^[A-Za-z]+(\s[A-Za-z]+)*$",
+                          );
+                          if (!nameRegex.hasMatch(trimmedValue))
+                            return 'Invalid input';
+
                           return null;
                         },
                       ),
