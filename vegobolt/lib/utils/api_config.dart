@@ -35,7 +35,7 @@ class ApiConfig {
       return 'http://localhost:3000';
     } else {
       // Physical devices on same WiFi network
-      return 'http://192.168.100.8:3000';
+      return 'http://192.168.100.28:3000';
     }
   }
 
@@ -47,6 +47,7 @@ class ApiConfig {
   static const String authProfile = '/api/auth/profile';
   static const String authLogout = '/api/auth/logout';
   static const String authPasswordReset = '/api/auth/password-reset';
+  static const String authResetPassword = '/api/auth/reset-password';
 
   // Helper method to get full URL
   static String getUrl(String endpoint) {

@@ -87,9 +87,15 @@ const sendVerificationEmail = async (email, token, displayName) => {
             to: email,
             subject: 'Verify Your Email - Vegobolt',
             html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4;">
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #F5F5DC;">
                     <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <h1 style="color: #4CAF50; text-align: center; margin-bottom: 30px;">Welcome to Vegobolt!</h1>
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h1 style="margin: 0; padding: 0;">
+                                <span style="color: #5A6B47; font-style: italic; font-weight: 900; font-size: 32px; letter-spacing: -1.8px;">VEGO</span><span style="color: #FFD700; font-style: italic; font-weight: 900; font-size: 32px; letter-spacing: -1.2px;">BOLT</span>
+                            </h1>
+                        </div>
+                        
+                        <h2 style="color: #5A6B47; text-align: center; margin-bottom: 20px;">Welcome to Vegobolt</h2>
                         
                         <p style="font-size: 16px; color: #333; line-height: 1.6;">
                             Hello <strong>${displayName}</strong>,
@@ -102,11 +108,11 @@ const sendVerificationEmail = async (email, token, displayName) => {
                         
                         <div style="text-align: center; margin: 30px 0;">
                             <a href="${verificationUrl}" 
-                               style="background-color: #4CAF50; 
+                               style="background-color: #7AB93F; 
                                       color: white; 
                                       padding: 15px 40px; 
                                       text-decoration: none; 
-                                      border-radius: 5px; 
+                                      border-radius: 8px; 
                                       font-size: 16px; 
                                       font-weight: bold;
                                       display: inline-block;">
@@ -117,7 +123,7 @@ const sendVerificationEmail = async (email, token, displayName) => {
                         <p style="font-size: 14px; color: #666; line-height: 1.6;">
                             Or copy and paste this link into your browser:
                         </p>
-                        <p style="font-size: 12px; color: #888; word-break: break-all; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                        <p style="font-size: 12px; color: #888; word-break: break-all; background-color: #F5F5DC; padding: 10px; border-radius: 5px;">
                             ${verificationUrl}
                         </p>
                         
@@ -182,7 +188,6 @@ const sendPasswordResetEmail = async (email, token, displayName) => {
     try {
         const transporter = createTransporter();
         
-        // Password reset should go to FRONTEND (Flutter app handles the reset form)
         const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${token}`;
         
         const mailOptions = {
@@ -190,9 +195,15 @@ const sendPasswordResetEmail = async (email, token, displayName) => {
             to: email,
             subject: 'Password Reset Request - Vegobolt',
             html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4;">
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #F5F5DC;">
                     <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <h1 style="color: #FF9800; text-align: center; margin-bottom: 30px;">Password Reset Request</h1>
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h1 style="margin: 0; padding: 0;">
+                                <span style="color: #5A6B47; font-style: italic; font-weight: 900; font-size: 32px; letter-spacing: -1.8px;">VEGO</span><span style="color: #FFD700; font-style: italic; font-weight: 900; font-size: 32px; letter-spacing: -1.2px;">BOLT</span>
+                            </h1>
+                        </div>
+                        
+                        <h2 style="color: #5A6B47; text-align: center; margin-bottom: 20px;">Password Reset Request</h2>
                         
                         <p style="font-size: 16px; color: #333; line-height: 1.6;">
                             Hello <strong>${displayName}</strong>,
@@ -205,11 +216,11 @@ const sendPasswordResetEmail = async (email, token, displayName) => {
                         
                         <div style="text-align: center; margin: 30px 0;">
                             <a href="${resetUrl}" 
-                               style="background-color: #FF9800; 
+                               style="background-color: #FFD700; 
                                       color: white; 
                                       padding: 15px 40px; 
                                       text-decoration: none; 
-                                      border-radius: 5px; 
+                                      border-radius: 8px; 
                                       font-size: 16px; 
                                       font-weight: bold;
                                       display: inline-block;">
@@ -220,7 +231,7 @@ const sendPasswordResetEmail = async (email, token, displayName) => {
                         <p style="font-size: 14px; color: #666; line-height: 1.6;">
                             Or copy and paste this link into your browser:
                         </p>
-                        <p style="font-size: 12px; color: #888; word-break: break-all; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                        <p style="font-size: 12px; color: #888; word-break: break-all; background-color: #F5F5DC; padding: 10px; border-radius: 5px;">
                             ${resetUrl}
                         </p>
                         
@@ -228,7 +239,7 @@ const sendPasswordResetEmail = async (email, token, displayName) => {
                             This password reset link will expire in <strong>1 hour</strong>.
                         </p>
                         
-                        <p style="font-size: 14px; color: #d32f2f; line-height: 1.6;">
+                        <p style="font-size: 14px; color: #E74C3C; line-height: 1.6;">
                             If you didn't request a password reset, please ignore this email and your password will remain unchanged.
                         </p>
                         
@@ -240,10 +251,31 @@ const sendPasswordResetEmail = async (email, token, displayName) => {
                     </div>
                 </div>
             `,
+            text: `
+                Password Reset Request
+                
+                Hello ${displayName},
+                
+                We received a request to reset your Vegobolt account password. 
+                Click the link below to create a new password:
+                
+                ${resetUrl}
+                
+                This password reset link will expire in 1 hour.
+                
+                If you didn't request a password reset, please ignore this email and your password will remain unchanged.
+                
+                © ${new Date().getFullYear()} Vegobolt. All rights reserved.
+            `,
         };
 
         const info = await transporter.sendMail(mailOptions);
         console.log('✅ Password reset email sent:', info.messageId);
+        
+        // For development with Ethereal, log the preview URL
+        if (process.env.NODE_ENV === 'development' && process.env.EMAIL_SERVICE !== 'gmail' && process.env.EMAIL_SERVICE !== 'smtp') {
+            console.log('Preview URL:', nodemailer.getTestMessageUrl(info));
+        }
         
         return { success: true, messageId: info.messageId };
         

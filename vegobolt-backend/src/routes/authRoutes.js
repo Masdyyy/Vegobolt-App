@@ -66,4 +66,18 @@ router.post('/logout', authenticateToken, authController.logout);
  */
 router.post('/password-reset', authController.requestPasswordReset);
 
+/**
+ * @route   GET /api/auth/reset-password/:token
+ * @desc    Show password reset page (like email verification)
+ * @access  Public
+ */
+router.get('/reset-password/:token', authController.showResetPasswordPage);
+
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Reset password with token (API endpoint)
+ * @access  Public
+ */
+router.post('/reset-password', authController.resetPassword);
+
 module.exports = router;

@@ -1,35 +1,89 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
-class ForgotPasswordPage extends StatefulWidget {
-  const ForgotPasswordPage({super.key});
+class ResetPasswordPage extends StatefulWidget {
+  final String? token;
+
+  const ResetPasswordPage({super.key, this.token});
 
   @override
-  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
+  State<ResetPasswordPage> createState() => _ResetPasswordPageState();
 }
 
-class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
+  // Add autovalidate mode for real-time validation after first submit
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _sendResetLink() async {
+  // Password validation function that shows all requirements
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a password';
+    }
+
+    List<String> errors = [];
+
+    if (value.length < 6) {
+      errors.add('at least 6 characters');
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      errors.add('1 uppercase letter');
+    }
+    if (!RegExp(r'[a-z]').hasMatch(value)) {
+      errors.add('1 lowercase letter');
+    }
+    if (!RegExp(r'[0-9]').hasMatch(value)) {
+      errors.add('1 number');
+    }
+
+    if (errors.isNotEmpty) {
+      return 'Password must have: ${errors.join(', ')}';
+    }
+
+    return null;
+  }
+
+  Future<void> _resetPassword() async {
+    // Enable autovalidation after first submit attempt
+    setState(() {
+      _autovalidateMode = AutovalidateMode.onUserInteraction;
+    });
+
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (widget.token == null || widget.token!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid reset link. Please request a new one.'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      final result =
-          await _authService.requestPasswordReset(_emailController.text.trim());
+      final result = await _authService.resetPassword(
+        widget.token!,
+        _passwordController.text.trim(),
+      );
 
       if (!mounted) return;
 
@@ -38,16 +92,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       if (result['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message'] ??
-                'Password reset link sent to ${_emailController.text}'),
+            content: Text(result['message'] ?? 'Password reset successful!'),
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context);
+
+        // Navigate to login page
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message'] ?? 'Failed to send reset link'),
+            content: Text(result['message'] ?? 'Failed to reset password'),
             backgroundColor: Colors.red,
           ),
         );
@@ -80,6 +135,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
           child: Form(
             key: _formKey,
+            autovalidateMode: _autovalidateMode, // Enable auto-validation
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -103,7 +159,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                   // stroke paint:
                                   foreground: Paint()
                                     ..style = PaintingStyle.stroke
-                                    ..strokeWidth = 3.2 // increase to make heavier
+                                    ..strokeWidth = 3.2
                                     ..color = const Color(0xFF5A6B47),
                                   letterSpacing: -1.8,
                                 ),
@@ -160,7 +216,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'Forgot Password',
+                  'Reset Password',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -170,7 +226,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter your email address to get a\nreset link',
+                  'Enter your new password',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -180,14 +236,72 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    hintText: 'Email Address',
+                    hintText: 'New Password',
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     prefixIcon: Icon(
-                      Icons.email_outlined,
+                      Icons.lock_outline,
                       color: Colors.grey[700],
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Colors.grey[700],
+                      ),
+                      onPressed: () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      },
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: const Color(0xFF5A6B47).withValues(alpha: 0.6),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: const Color(0xFF5A6B47).withValues(alpha: 0.6),
+                      ),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide(
+                        color: Color(0xFF5A6B47),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  validator: _validatePassword,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirmPassword,
+                  decoration: InputDecoration(
+                    hintText: 'Confirm Password',
+                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    prefixIcon: Icon(
+                      Icons.lock_outline,
+                      color: Colors.grey[700],
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Colors.grey[700],
+                      ),
+                      onPressed: () {
+                        setState(
+                            () => _obscureConfirmPassword = !_obscureConfirmPassword);
+                      },
                     ),
                     filled: true,
                     fillColor: Colors.white,
@@ -212,13 +326,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
-                      return 'Please enter your email';
-                    final emailRegex = RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    );
-                    if (!emailRegex.hasMatch(value))
-                      return 'Please enter a valid email';
+                    if (value == null || value.isEmpty) {
+                      return 'Please confirm your password';
+                    }
+                    if (value != _passwordController.text) {
+                      return 'Passwords do not match';
+                    }
                     return null;
                   },
                 ),
@@ -226,7 +339,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 SizedBox(
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _sendResetLink,
+                    onPressed: _isLoading ? null : _resetPassword,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFFD700),
                       foregroundColor: Colors.white,
@@ -245,7 +358,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             ),
                           )
                         : const Text(
-                            'Continue',
+                            'Reset Password',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
