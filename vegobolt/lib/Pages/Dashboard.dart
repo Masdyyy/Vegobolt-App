@@ -279,7 +279,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               // Determine icon based on alert type
                               final String alertType = alert['type'] ?? '';
                               IconData alertIcon = Icons.warning_amber_rounded;
-                              
+
                               if (alertType == 'temperature') {
                                 alertIcon = Icons.thermostat;
                               } else if (alertType == 'tank') {
