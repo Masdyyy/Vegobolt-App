@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "axios": "^1.12.2",
-    "nodemon": "^2.0.22"
+    "nodemon": "^3.1.10"
   },
   "author": "Your Name",
   "license": "MIT"
