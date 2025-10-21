@@ -16,7 +16,7 @@ class Header extends StatelessWidget {
             : AppColors.primaryGreen,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: const Color.fromARGB(255, 161, 159, 159).withOpacity(0.2),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 2),
