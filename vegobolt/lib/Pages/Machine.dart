@@ -60,7 +60,7 @@ class _MachinePageState extends State<MachinePage> {
       case 'emulator':
         return 'http://10.0.2.2:3000';
       case 'device':
-        return 'http://192.168.100.28:3000';
+        return 'http://192.168.100.49:3000';
       case 'ios':
         return 'http://localhost:3000';
       default:
@@ -513,111 +513,115 @@ class _MachinePageState extends State<MachinePage> {
     
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
-      body: Column(
-        children: [
-          const Header(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Machine',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.getTextPrimary(context),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Control your VEGOBOLT station remotely',
-                    style: TextStyle(
-                      color: AppColors.getTextSecondary(context),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ✅ Live Machine Card (same data as Dashboard)
-                  MachineStatusCard(
-                    machineId: 'VB-0001',
-                    initialLocation: 'Barangay 171',
-                    statusText: machineProvider.statusText,
-                    statusColor: machineProvider.statusColor,
-                    tankLevel: tankLevel,
-                    batteryValue: batteryValue,
-                    temperatureC: temperatureC,
-                    alertStatus: _currentAlertStatus,
-                    onLocationChanged: (newLocation) {
-                      print('Location updated to: $newLocation');
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Dynamic Buttons based on machine status - No Restart button
-                  if (machineProvider.isActive)
-                    MachineControlButton(
-                      label: 'Shutdown Machine',
-                      icon: Icons.power_settings_new,
-                      color: AppColors.criticalRed,
-                      onPressed: () => _showShutdownConfirmation(context),
-                    ),
-                  if (!machineProvider.isActive)
-                    MachineControlButton(
-                      label: 'Activate Station',
-                      icon: Icons.power_rounded,
-                      color: AppColors.darkGreen,
-                      onPressed: () => _showActivateConfirmation(context),
-                    ),
-
-                  const SizedBox(height: 20),
-
-                  const Text(
-                    'Scheduled Maintenance',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Display maintenance items or empty state
-                  if (scheduledMaintenanceItems.isEmpty)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24.0),
-                        child: Text(
-                          'No scheduled maintenance',
-                          style: TextStyle(
-                            color: Color(0xFF808080),
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ...scheduledMaintenanceItems.map(
-                      (item) => _buildMaintenanceCard(
-                        title: item['title'],
-                        machineId: item['machineId'],
-                        location: item['location'],
-                        scheduledDate: item['scheduledDate'],
-                        priority: item['priority'],
-                        priorityColor: item['priorityColor'],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
       bottomNavigationBar: NavBar(
         currentIndex: 1,
         onTap: (index) => _onNavTap(context, index),
+      ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Header(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Machine',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.getTextPrimary(context),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Control your VEGOBOLT station remotely',
+                      style: TextStyle(
+                        color: AppColors.getTextSecondary(context),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ✅ Live Machine Card (same data as Dashboard)
+                    MachineStatusCard(
+                      machineId: 'VB-0001',
+                      initialLocation: 'Barangay 171',
+                      statusText: machineProvider.statusText,
+                      statusColor: machineProvider.statusColor,
+                      tankLevel: tankLevel,
+                      batteryValue: batteryValue,
+                      temperatureC: temperatureC,
+                      alertStatus: _currentAlertStatus,
+                      onLocationChanged: (newLocation) {
+                        print('Location updated to: $newLocation');
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Dynamic Buttons based on machine status - No Restart button
+                    if (machineProvider.isActive)
+                      MachineControlButton(
+                        label: 'Shutdown Machine',
+                        icon: Icons.power_settings_new,
+                        color: AppColors.criticalRed,
+                        onPressed: () => _showShutdownConfirmation(context),
+                      ),
+                    if (!machineProvider.isActive)
+                      MachineControlButton(
+                        label: 'Activate Station',
+                        icon: Icons.power_rounded,
+                        color: AppColors.darkGreen,
+                        onPressed: () => _showActivateConfirmation(context),
+                      ),
+
+                    const SizedBox(height: 20),
+
+                    const Text(
+                      'Scheduled Maintenance',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Display maintenance items or empty state
+                    if (scheduledMaintenanceItems.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24.0),
+                          child: Text(
+                            'No scheduled maintenance',
+                            style: TextStyle(
+                              color: Color(0xFF808080),
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ...scheduledMaintenanceItems.map(
+                        (item) => _buildMaintenanceCard(
+                          title: item['title'],
+                          machineId: item['machineId'],
+                          location: item['location'],
+                          scheduledDate: item['scheduledDate'],
+                          priority: item['priority'],
+                          priorityColor: item['priorityColor'],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

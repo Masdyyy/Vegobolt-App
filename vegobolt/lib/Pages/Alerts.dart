@@ -83,7 +83,7 @@ class _AlertsPageState extends State<AlertsPage> {
       case 'emulator':
         return 'http://10.0.2.2:3000';
       case 'device':
-        return 'http://192.168.100.28:3000'; // Your PC's IP
+        return 'http://192.168.100.49:3000'; // Your PC's IP
       case 'ios':
         return 'http://localhost:3000';
       default:

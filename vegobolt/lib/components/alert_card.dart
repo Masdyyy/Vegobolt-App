@@ -26,7 +26,7 @@ class AlertCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(10),
@@ -40,33 +40,36 @@ class AlertCard extends StatelessWidget {
         border: Border(left: BorderSide(color: statusColor, width: 5)),
       ),
       child: ListTile(
+        contentPadding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+        dense: true,
+        visualDensity: VisualDensity.compact,
         onTap: onTap,
-        leading: Icon(icon, color: statusColor, size: 28),
+        leading: Icon(icon, color: statusColor, size: 24),
         title: Text(
           title,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: AppColors.getTextPrimary(context),
-            fontSize: 15,
+            fontSize: 14,
           ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               'Machine: $machine',
               style: TextStyle(
                 color: AppColors.getTextSecondary(context),
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Row(
               children: [
                 const Icon(
                   Icons.location_on_outlined,
-                  size: 14,
+                  size: 12,
                   color: AppColors.textLight,
                 ),
                 const SizedBox(width: 4),
@@ -74,7 +77,7 @@ class AlertCard extends StatelessWidget {
                   location,
                   style: TextStyle(
                     color: AppColors.getTextSecondary(context),
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
               ],
@@ -84,7 +87,7 @@ class AlertCard extends StatelessWidget {
               children: [
                 const Icon(
                   Icons.access_time,
-                  size: 14,
+                  size: 12,
                   color: AppColors.textLight,
                 ),
                 const SizedBox(width: 4),
@@ -92,7 +95,7 @@ class AlertCard extends StatelessWidget {
                   time,
                   style: TextStyle(
                     color: AppColors.getTextLight(context),
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
               ],
@@ -100,7 +103,7 @@ class AlertCard extends StatelessWidget {
           ],
         ),
         trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
             color: Colors.transparent,
             border: Border.all(color: statusColor),
@@ -111,7 +114,7 @@ class AlertCard extends StatelessWidget {
             style: TextStyle(
               color: statusColor,
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 11,
             ),
           ),
         ),
