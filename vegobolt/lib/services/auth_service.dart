@@ -253,4 +253,67 @@ class AuthService {
   Future<String?> getToken() async {
     return await _secureStorage.read(key: 'auth_token');
   }
+
+  /// Request password reset
+  ///
+  /// Sends a password reset link to the user's email
+  Future<Map<String, dynamic>> requestPasswordReset(String email) async {
+    try {
+      final url = Uri.parse(ApiConfig.getUrl(ApiConfig.authPasswordReset));
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        return {
+          'success': true,
+          'message': responseData['message'] ?? 'Password reset link sent',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['message'] ?? 'Failed to send reset link',
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: ${e.toString()}'};
+    }
+  }
+
+  /// Reset password with token
+  ///
+  /// Resets the user's password using the token from email
+  Future<Map<String, dynamic>> resetPassword(
+      String token, String newPassword) async {
+    try {
+      final url = Uri.parse(ApiConfig.getUrl(ApiConfig.authResetPassword));
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'token': token, 'newPassword': newPassword}),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        return {
+          'success': true,
+          'message': responseData['message'] ?? 'Password reset successful',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['message'] ?? 'Failed to reset password',
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: ${e.toString()}'};
+    }
+  }
 }

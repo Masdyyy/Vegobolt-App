@@ -546,7 +546,7 @@ const verifyEmail = async (req, res) => {
                     .success-icon {
                         width: 80px;
                         height: 80px;
-                        background: #4CAF50;
+                        background: #7AB93F;
                         border-radius: 50%;
                         display: flex;
                         align-items: center;
@@ -583,24 +583,24 @@ const verifyEmail = async (req, res) => {
                         margin-bottom: 20px;
                     }
                     .user-info {
-                        background: #f5f5f5;
+                        background: #F5F5DC;
                         padding: 15px;
                         border-radius: 10px;
                         margin: 20px 0;
                     }
                     .user-info strong {
-                        color: #4CAF50;
+                        color: #5A6B47;
                     }
                     .instruction {
-                        background: #e3f2fd;
-                        border-left: 4px solid #2196F3;
+                        background: #F5F5DC;
+                        border-left: 4px solid #7AB93F;
                         padding: 15px;
                         border-radius: 5px;
                         margin-top: 30px;
                         text-align: left;
                     }
                     .instruction strong {
-                        color: #2196F3;
+                        color: #5A6B47;
                         display: block;
                         margin-bottom: 10px;
                     }
@@ -620,7 +620,7 @@ const verifyEmail = async (req, res) => {
                     </div>
                     
                     <div class="instruction">
-                        <strong>📱 Next Steps:</strong>
+                        <strong>Next Steps:</strong>
                         <p style="margin: 0;">
                             1. Return to the Vegobolt app<br>
                             2. Log in with your email and password<br>
@@ -713,7 +713,7 @@ const resendVerificationEmail = async (req, res) => {
 
 /**
  * Request password reset
- * TODO: Implement with email service (e.g., SendGrid, Nodemailer)
+ * Generates reset token and sends email
  */
 const requestPasswordReset = async (req, res) => {
     try {
@@ -739,19 +739,479 @@ const requestPasswordReset = async (req, res) => {
             });
         }
 
-        // TODO: Generate password reset token and send email
-        // For now, return a placeholder message
-        
-        res.status(200).json({
-            success: true,
-            message: 'Password reset functionality will be implemented with email service'
-        });
+        // Generate password reset token
+        const { generateVerificationToken, sendPasswordResetEmail } = require('../services/emailService');
+        const resetToken = generateVerificationToken();
+        const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+        // Save reset token to user
+        user.passwordResetToken = resetToken;
+        user.passwordResetExpires = resetExpires;
+        await user.save();
+
+        // Send password reset email
+        try {
+            await sendPasswordResetEmail(email, resetToken, user.displayName);
+            
+            res.status(200).json({
+                success: true,
+                message: 'If the email exists, a password reset link will be sent'
+            });
+        } catch (emailError) {
+            console.error('Failed to send password reset email:', emailError);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to send password reset email. Please try again later.'
+            });
+        }
 
     } catch (error) {
         console.error('Password reset error:', error);
         res.status(500).json({
             success: false,
             message: 'Error requesting password reset',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Display password reset page with token
+ * Similar to email verification - shows HTML page directly
+ */
+const showResetPasswordPage = async (req, res) => {
+    try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
+        const { token } = req.params;
+
+        if (!token) {
+            return res.status(400).send(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Invalid Link - Vegobolt</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            padding: 20px;
+                        }
+                        .container {
+                            background: white;
+                            padding: 40px;
+                            border-radius: 20px;
+                            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                            text-align: center;
+                            max-width: 500px;
+                        }
+                        .error-icon {
+                            width: 80px;
+                            height: 80px;
+                            background: #f44336;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin: 0 auto 30px;
+                            color: white;
+                            font-size: 50px;
+                        }
+                        h1 { color: #333; font-size: 28px; margin-bottom: 15px; }
+                        p { color: #666; font-size: 16px; line-height: 1.6; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error-icon">!</div>
+                        <h1>Invalid Link</h1>
+                        <p>This password reset link is invalid.</p>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+
+        // Find user with valid reset token
+        const user = await User.findOne({
+            passwordResetToken: token,
+            passwordResetExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).send(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Reset Link Expired - Vegobolt</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            padding: 20px;
+                        }
+                        .container {
+                            background: white;
+                            padding: 40px;
+                            border-radius: 20px;
+                            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                            text-align: center;
+                            max-width: 500px;
+                        }
+                        .error-icon {
+                            width: 80px;
+                            height: 80px;
+                            background: #FF9800;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin: 0 auto 30px;
+                            color: white;
+                            font-size: 50px;
+                        }
+                        h1 { color: #333; font-size: 28px; margin-bottom: 15px; }
+                        p { color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 15px; }
+                        .instruction {
+                            background: #fff3cd;
+                            border-left: 4px solid #ffc107;
+                            padding: 15px;
+                            border-radius: 5px;
+                            margin-top: 20px;
+                            text-align: left;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="error-icon">⏱</div>
+                        <h1>Link Expired</h1>
+                        <p>This password reset link has expired or has already been used.</p>
+                        <div class="instruction">
+                            <p style="margin: 0;">
+                                <strong>What to do:</strong><br>
+                                1. Open the Vegobolt app<br>
+                                2. Go to "Forgot Password?"<br>
+                                3. Request a new reset link
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+
+        // Show password reset form
+        res.status(200).send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Reset Password - Vegobolt</title>
+                <style>
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        min-height: 100vh;
+                        padding: 20px;
+                    }
+                    .container {
+                        background: white;
+                        padding: 40px;
+                        border-radius: 20px;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                        max-width: 450px;
+                        width: 100%;
+                        animation: slideUp 0.5s ease-out;
+                    }
+                    @keyframes slideUp {
+                        from {
+                            opacity: 0;
+                            transform: translateY(30px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                    h1 {
+                        color: #333;
+                        font-size: 28px;
+                        margin-bottom: 10px;
+                        text-align: center;
+                    }
+                    .subtitle {
+                        color: #666;
+                        font-size: 14px;
+                        text-align: center;
+                        margin-bottom: 30px;
+                    }
+                    .form-group {
+                        margin-bottom: 20px;
+                    }
+                    label {
+                        display: block;
+                        color: #333;
+                        font-size: 14px;
+                        font-weight: 600;
+                        margin-bottom: 8px;
+                    }
+                    input[type="password"] {
+                        width: 100%;
+                        padding: 12px 15px;
+                        border: 2px solid #e0e0e0;
+                        border-radius: 8px;
+                        font-size: 16px;
+                        transition: border-color 0.3s;
+                    }
+                    input[type="password"]:focus {
+                        outline: none;
+                        border-color: #7AB93F;
+                    }
+                    .error-message {
+                        color: #f44336;
+                        font-size: 13px;
+                        margin-top: 5px;
+                        display: none;
+                    }
+                    button {
+                        width: 100%;
+                        padding: 14px;
+                        background: #FFD700;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: transform 0.2s, background 0.2s;
+                    }
+                    button:hover {
+                        transform: translateY(-2px);
+                        background: #E6C200;
+                    }
+                    button:disabled {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                        transform: none;
+                    }
+                    .success-message {
+                        background: #7AB93F;
+                        color: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        text-align: center;
+                        display: none;
+                        margin-top: 20px;
+                    }
+                    .password-requirements {
+                        background: #F5F5DC;
+                        padding: 12px;
+                        border-radius: 6px;
+                        font-size: 13px;
+                        color: #666;
+                        margin-top: 10px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>Reset Your Password</h1>
+                    <p class="subtitle">Enter your new password below</p>
+                    
+                    <form id="resetForm">
+                        <div class="form-group">
+                            <label for="password">New Password</label>
+                            <input type="password" id="password" name="password" required minlength="6">
+                            <div class="error-message" id="passwordError"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required>
+                            <div class="error-message" id="confirmError"></div>
+                        </div>
+                        
+                        <div class="password-requirements">
+                            Password must be at least 6 characters long
+                        </div>
+                        
+                        <button type="submit" id="submitBtn">Reset Password</button>
+                        
+                        <div class="success-message" id="successMessage">
+                            Password reset successful! You can now close this page and login with your new password.
+                        </div>
+                    </form>
+                </div>
+
+                <script>
+                    const form = document.getElementById('resetForm');
+                    const passwordInput = document.getElementById('password');
+                    const confirmInput = document.getElementById('confirmPassword');
+                    const submitBtn = document.getElementById('submitBtn');
+                    const successMessage = document.getElementById('successMessage');
+
+                    form.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        
+                        // Clear previous errors
+                        document.getElementById('passwordError').style.display = 'none';
+                        document.getElementById('confirmError').style.display = 'none';
+                        
+                        const password = passwordInput.value;
+                        const confirmPassword = confirmInput.value;
+                        
+                        // Validate
+                        if (password.length < 6) {
+                            document.getElementById('passwordError').textContent = 'Password must be at least 6 characters';
+                            document.getElementById('passwordError').style.display = 'block';
+                            return;
+                        }
+                        
+                        if (password !== confirmPassword) {
+                            document.getElementById('confirmError').textContent = 'Passwords do not match';
+                            document.getElementById('confirmError').style.display = 'block';
+                            return;
+                        }
+                        
+                        // Submit
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = 'Resetting...';
+                        
+                        try {
+                            const response = await fetch('/api/auth/reset-password', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    token: '${token}',
+                                    newPassword: password
+                                })
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (data.success) {
+                                form.style.display = 'none';
+                                successMessage.style.display = 'block';
+                            } else {
+                                alert(data.message || 'Failed to reset password');
+                                submitBtn.disabled = false;
+                                submitBtn.textContent = 'Reset Password';
+                            }
+                        } catch (error) {
+                            alert('An error occurred. Please try again.');
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Reset Password';
+                        }
+                    });
+                </script>
+            </body>
+            </html>
+        `);
+
+    } catch (error) {
+        console.error('Show reset password page error:', error);
+        res.status(500).send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Error - Vegobolt</title>
+            </head>
+            <body>
+                <h1>An error occurred</h1>
+                <p>Please try again later.</p>
+            </body>
+            </html>
+        `);
+    }
+};
+
+/**
+ * Reset password with token (API endpoint)
+ */
+const resetPassword = async (req, res) => {
+    try {
+        // Ensure MongoDB is connected (for serverless environments)
+        await connectDB();
+        
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide reset token and new password'
+            });
+        }
+
+        // Validate password strength
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be at least 6 characters long'
+            });
+        }
+
+        // Find user with valid reset token
+        const user = await User.findOne({
+            passwordResetToken: token,
+            passwordResetExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid or expired reset token'
+            });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update user password and clear reset token
+        user.password = hashedPassword;
+        user.passwordResetToken = null;
+        user.passwordResetExpires = null;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Password has been reset successfully. You can now login with your new password.'
+        });
+
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error resetting password',
             error: error.message
         });
     }
@@ -766,5 +1226,7 @@ module.exports = {
     resendVerificationEmail,
     getProfile,
     logout,
-    requestPasswordReset
+    requestPasswordReset,
+    showResetPasswordPage,
+    resetPassword
 };
