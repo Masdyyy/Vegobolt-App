@@ -2,10 +2,10 @@
   "name": "vegobolt-backend",
   "version": "1.0.0",
   "description": "Backend for Vegobolt Mobile App using Firebase and MongoDB",
-  "main": "src/app.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.2",

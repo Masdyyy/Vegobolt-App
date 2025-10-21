@@ -55,24 +55,11 @@ app.use((req, res) => {
 // Error handler
 app.use(errorHandler);
 
-// MongoDB connect
-if (process.env.NODE_ENV !== 'production') {
-    connectDB();
-}
-
-// Local server start (for development)
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 3000;
-    const server = app.listen(PORT, '0.0.0.0', () => {
-        console.log(`🚀 Server is running on port ${PORT}`);
-        console.log(`📍 Health check: http://localhost:${PORT}/health`);
-        console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
-        console.log(`📱 ESP32 API: http://localhost:${PORT}/api/tank`);
-        console.log(`🚨 Alerts API: http://localhost:${PORT}/api/alerts`);
-    });
-
-    server.on('error', (error) => {
-        console.error('❌ Server error:', error);
+// MongoDB connect - only for local development
+// For serverless, connection happens per request
+if (require.main === module) {
+    connectDB().catch(err => {
+        console.error('Failed to connect to MongoDB:', err);
     });
 }
 

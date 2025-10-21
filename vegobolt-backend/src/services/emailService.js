@@ -80,7 +80,7 @@ const sendVerificationEmail = async (email, token, displayName) => {
         const transporter = createTransporter();
         
         // Construct verification URL
-        const verificationUrl = `${getBackendBaseUrl()}/api/auth/verify-email/${token}`;
+        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/api/auth/verify-email/${token}`;
         
         const mailOptions = {
             from: process.env.EMAIL_FROM || '"Vegobolt" <noreply@vegobolt.com>',
@@ -188,8 +188,7 @@ const sendPasswordResetEmail = async (email, token, displayName) => {
     try {
         const transporter = createTransporter();
         
-        // Use backend URL (same as email verification)
-        const resetUrl = `${getBackendBaseUrl()}/api/auth/reset-password/${token}`;
+        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${token}`;
         
         const mailOptions = {
             from: process.env.EMAIL_FROM || '"Vegobolt" <noreply@vegobolt.com>',
