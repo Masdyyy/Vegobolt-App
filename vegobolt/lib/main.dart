@@ -13,11 +13,15 @@ import 'Pages/signup.dart';
 import 'Pages/HelpSupport.dart';
 import 'Pages/AccountSettings.dart';
 import 'utils/theme_provider.dart';
+import 'providers/machine_provider.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => MachineProvider()),
+      ],
       child: const MyApp(),
     ),
   );

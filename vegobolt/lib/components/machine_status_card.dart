@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 
-class MachineStatusCard extends StatelessWidget {
+class MachineStatusCard extends StatefulWidget {
   final String machineId;
-  final String location;
+  final String initialLocation;
   final String statusText;
   final Color statusColor;
   final double tankLevel;
   final double batteryValue;
   final int temperatureC;
+  final String alertStatus; // 'normal', 'warning', 'critical'
+  final Function(String)? onLocationChanged;
 
   const MachineStatusCard({
     super.key,
     required this.machineId,
-    required this.location,
+    required this.initialLocation,
     required this.statusText,
     required this.statusColor,
     required this.tankLevel,
     required this.batteryValue,
     required this.temperatureC,
+    this.alertStatus = 'normal',
+    this.onLocationChanged,
   });
 
   // Helper to get tank status string
@@ -35,12 +39,106 @@ class MachineStatusCard extends StatelessWidget {
   }
 
   @override
+  State<MachineStatusCard> createState() => _MachineStatusCardState();
+}
+
+class _MachineStatusCardState extends State<MachineStatusCard> {
+  late String currentLocation;
+  bool isEditingLocation = false;
+  late TextEditingController locationController;
+
+  @override
+  void initState() {
+    super.initState();
+    currentLocation = widget.initialLocation;
+    locationController = TextEditingController(text: currentLocation);
+  }
+
+  void _saveLocation() {
+    setState(() {
+      currentLocation = locationController.text;
+      isEditingLocation = false;
+    });
+    widget.onLocationChanged?.call(locationController.text);
+  }
+
+  void _cancelEditLocation() {
+    locationController.text = currentLocation;
+    setState(() {
+      isEditingLocation = false;
+    });
+  }
+
+  Widget _buildAlertBadge() {
+    if (widget.alertStatus == 'normal') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey, width: 2),
+          color: Colors.transparent,
+        ),
+        child: const Text(
+          'Normal',
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    } else if (widget.alertStatus == 'warning') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.amber, width: 2),
+          color: Colors.transparent,
+        ),
+        child: const Text(
+          'Warning',
+          style: TextStyle(
+            color: Colors.amber,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    } else if (widget.alertStatus == 'critical') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.criticalRed, width: 2),
+          color: Colors.transparent,
+        ),
+        child: Text(
+          'Critical',
+          style: TextStyle(
+            color: AppColors.criticalRed,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  @override
+  void dispose() {
+    locationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.3)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -52,124 +150,226 @@ class MachineStatusCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Header Row: Machine ID + Active Badge + Alert Status Badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Text(
-                    machineId,
+                    widget.machineId,
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.getTextPrimary(context),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.location_on,
-                    size: 16,
-                    color: AppColors.getTextSecondary(context),
+                  const SizedBox(width: 12),
+                  // Status Badge (Active/Offline)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: widget.statusText == 'Active'
+                          ? AppColors.primaryGreen
+                          : Colors.grey,
+                    ),
+                    child: Text(
+                      widget.statusText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: statusColor),
-                  color: statusColor.withOpacity(0.1),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              // Alert Status Badge (Normal, Warning, or Critical)
+              _buildAlertBadge(),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            location,
-            style: TextStyle(
-              color: AppColors.getTextSecondary(context),
-              fontSize: 13,
-            ),
-          ),
+          const SizedBox(height: 12),
+          // Location + Edit Icon (Inline Editing)
+          isEditingLocation
+              ? Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: locationController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter location',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                        style: TextStyle(
+                          color: AppColors.getTextPrimary(context),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _saveLocation,
+                      child: Icon(
+                        Icons.check_circle,
+                        size: 24,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _cancelEditLocation,
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 24,
+                        color: AppColors.criticalRed,
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      size: 18,
+                      color: AppColors.getTextSecondary(context),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      currentLocation,
+                      style: TextStyle(
+                        color: AppColors.getTextPrimary(context),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isEditingLocation = true;
+                        });
+                      },
+                      child: Icon(
+                        Icons.edit,
+                        size: 18,
+                        color: AppColors.getTextSecondary(context),
+                      ),
+                    ),
+                  ],
+                ),
           const SizedBox(height: 16),
-          // 🟩 Tank Status
+          // Tank Status with Progress Bar
           Row(
             children: [
               Icon(
-                Icons.local_gas_station,
+                Icons.water_drop,
                 color: AppColors.primaryGreen,
                 size: 20,
               ),
               const SizedBox(width: 6),
               Text(
-                'Tank: ${getTankStatus(tankLevel)}',
+                'Tank:',
                 style: TextStyle(
                   color: AppColors.getTextPrimary(context),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
                 ),
               ),
-              const SizedBox(width: 12),
+              const Spacer(),
               Text(
-                '${(tankLevel * 100).toStringAsFixed(0)}%',
+                '${(widget.tankLevel * 100).toStringAsFixed(0)}%',
                 style: TextStyle(
-                  color: AppColors.getTextPrimary(context),
+                  color: AppColors.primaryGreen,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
               ),
             ],
           ),
-          // 🌡️ Temperature (Show first, more important than battery)
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
+          LinearProgressIndicator(
+            value: widget.tankLevel.clamp(0.0, 1.0),
+            color: AppColors.primaryGreen,
+            backgroundColor: Colors.grey.withOpacity(0.2),
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 14),
+          // Battery Status with Progress Bar
           Row(
             children: [
-              Icon(Icons.thermostat, color: AppColors.primaryGreen, size: 20),
+              Icon(
+                Icons.battery_full,
+                color: AppColors.primaryGreen,
+                size: 20,
+              ),
               const SizedBox(width: 6),
               Text(
-                'Temperature: $temperatureC°C',
+                'Battery:',
                 style: TextStyle(
                   color: AppColors.getTextPrimary(context),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${(widget.batteryValue * 100).toStringAsFixed(0)}%',
+                style: const TextStyle(
+                  color: Colors.red,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
               ),
             ],
           ),
-          // 🔋 Battery (Only show if battery data exists and is not default 100%)
-          if (batteryValue > 0 && batteryValue < 1.0) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.battery_full,
-                  color: AppColors.primaryGreen,
-                  size: 20,
+          const SizedBox(height: 6),
+          LinearProgressIndicator(
+            value: widget.batteryValue.clamp(0.0, 1.0),
+            color: Colors.red,
+            backgroundColor: Colors.grey.withOpacity(0.2),
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 14),
+          // Temperature
+          Row(
+            children: [
+              Icon(
+                Icons.thermostat,
+                color: AppColors.primaryGreen,
+                size: 20,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Temperature',
+                style: TextStyle(
+                  color: AppColors.getTextPrimary(context),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  'Battery: ${(batteryValue * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    color: AppColors.getTextPrimary(context),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+              ),
+              const Spacer(),
+              Text(
+                '${widget.temperatureC}°C',
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ],
       ),
     );

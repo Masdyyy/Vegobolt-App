@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../components/navbar.dart';
 import '../components/alert_card.dart';
 import '../components/header.dart';
@@ -11,6 +12,7 @@ import 'settings.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:async';
+import '../providers/machine_provider.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -27,6 +29,7 @@ class _DashboardPageState extends State<DashboardPage> {
   List<dynamic> _alerts = [];
   bool _alertsLoading = true;
   Timer? _pollTimer;
+  String _currentAlertStatus = 'normal'; // Track current alert status
 
   @override
   void initState() {
@@ -61,7 +64,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'emulator':
         return 'http://10.0.2.2:3000';
       case 'device':
-        return 'http://192.168.100.28:3000'; // Your PC's IP
+        return 'http://192.168.100.49:3000'; // Your PC's IP
       case 'ios':
         return 'http://localhost:3000';
       default:
@@ -74,54 +77,129 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final response = await http.get(
         Uri.parse('${_getBaseUrl()}/api/tank/status'),
-      );
+      ).timeout(const Duration(seconds: 3));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
         final int level = int.tryParse('${data['level'] ?? 0}') ?? 0;
-        final double temperature =
-            double.tryParse('${data['temperature'] ?? 0}') ?? 0.0;
-        final double battery =
-            double.tryParse('${data['batteryLevel'] ?? 0}') ?? 0.0;
+        final int temperature =
+            int.tryParse('${data['temperature'] ?? 0}') ?? 0;
+        final int battery = int.tryParse('${data['batteryLevel'] ?? 0}') ?? 0;
 
         setState(() {
           tankLevel = level / 100.0; // percentage -> 0..1
           batteryValue = battery / 100.0;
-          temperatureC = temperature.round(); // Convert to int for display
+          temperatureC = temperature;
           isLoading = false;
         });
-
-        // Debug: Print received values
-        print(
-          '📊 Data received - Level: $level%, Temp: $temperature°C, Battery: $battery%',
-        );
       } else {
         print('❌ Failed to fetch tank data: ${response.statusCode}');
+        _useFallbackData();
       }
     } catch (e) {
       print('⚠️ Error fetching tank data: $e');
+      _useFallbackData();
     }
+  }
+
+  void _useFallbackData() {
+    setState(() {
+      tankLevel = 1.0; // 100%
+      batteryValue = 0.15; // 15%
+      temperatureC = 96;
+      isLoading = false;
+    });
+  }
+
+  // ✅ Determine alert status based on recent alerts
+  String _determineAlertStatus(List<dynamic> alerts) {
+    if (alerts.isEmpty) {
+      return 'normal';
+    }
+
+    // Check if any alert has Critical status (highest priority)
+    bool hasCritical = alerts.any((alert) => 
+      (alert['status'] ?? '').toString().toLowerCase() == 'critical'
+    );
+    
+    if (hasCritical) {
+      return 'critical';
+    }
+
+    // Check if any alert has Warning status
+    bool hasWarning = alerts.any((alert) => 
+      (alert['status'] ?? '').toString().toLowerCase() == 'warning'
+    );
+    
+    if (hasWarning) {
+      return 'warning';
+    }
+
+    return 'normal';
   }
 
   Future<void> fetchAlerts() async {
     try {
       final response = await http.get(
-        Uri.parse('${_getBaseUrl()}/api/tank/alerts'),
-      );
+        Uri.parse('${_getBaseUrl()}/api/tank/status'),
+      ).timeout(const Duration(seconds: 3));
+      
       if (response.statusCode == 200) {
-        final List<dynamic> alertsData = json.decode(response.body);
+        final data = json.decode(response.body);
+        final String status = (data['status'] ?? '').toString();
+        final int level = int.tryParse('${data['level'] ?? 0}') ?? 0;
+        final String timeIso =
+            (data['createdAt'] ?? DateTime.now().toIso8601String()).toString();
+
+        final List<dynamic> derivedAlerts =
+            (status.toLowerCase() == 'full' || level >= 90)
+            ? [
+                {
+                  'title': 'Tank Full',
+                  'machine': 'VB-0001',
+                  'location': '-',
+                  'time': timeIso,
+                  'status': 'Critical',
+                },
+              ]
+            : [];
 
         setState(() {
-          _alerts = alertsData;
+          _alerts = derivedAlerts;
+          _currentAlertStatus = _determineAlertStatus(derivedAlerts);
           _alertsLoading = false;
         });
       } else {
-        setState(() => _alertsLoading = false);
+        setState(() {
+          _alertsLoading = false;
+          _currentAlertStatus = 'critical';
+          _alerts = [
+            {
+              'title': 'Tank Full',
+              'machine': 'VB-0001',
+              'location': '-',
+              'time': DateTime.now().toIso8601String(),
+              'status': 'Critical',
+            },
+          ];
+        });
         print('❌ Failed to fetch alerts: ${response.statusCode}');
       }
     } catch (e) {
-      setState(() => _alertsLoading = false);
+      setState(() {
+        _alertsLoading = false;
+        _currentAlertStatus = 'critical';
+        _alerts = [
+          {
+            'title': 'Tank Full',
+            'machine': 'VB-0001',
+            'location': '-',
+            'time': DateTime.now().toIso8601String(),
+            'status': 'Critical',
+          },
+        ];
+      });
       print('⚠️ Error fetching alerts: $e');
     }
   }
@@ -155,6 +233,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final machineProvider = Provider.of<MachineProvider>(context);
+    
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
       body: Column(
@@ -190,19 +270,20 @@ class _DashboardPageState extends State<DashboardPage> {
 
                         MachineStatusCard(
                           machineId: 'VB-0001',
-                          location: 'Barangay 171',
-                          statusText: tankLevel >= 0.9 ? 'Full' : 'Normal',
-                          statusColor: tankLevel >= 0.9
-                              ? AppColors.criticalRed
-                              : AppColors.primaryGreen,
+                          initialLocation: 'Barangay 171',
+                          statusText: machineProvider.statusText,
+                          statusColor: machineProvider.statusColor,
                           tankLevel: tankLevel,
                           batteryValue: batteryValue,
                           temperatureC: temperatureC,
+                          alertStatus: _currentAlertStatus, // Pass dynamic alert status
+                          onLocationChanged: (newLocation) {
+                            print('Location updated to: $newLocation');
+                          },
                         ),
 
                         const SizedBox(height: 20),
                         _buildSectionHeader('Recent Alerts'),
-                        const SizedBox(height: 12),
                         _alertsLoading
                             ? const Center(child: CircularProgressIndicator())
                             : _alerts.isEmpty
@@ -225,32 +306,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                 itemCount: _alerts.length,
                                 itemBuilder: (context, index) {
                                   final alert = _alerts[index];
-                                  final String alertStatus =
-                                      alert['status'] ?? '';
-                                  final String alertType = alert['type'] ?? '';
-
-                                  Color alertColor = Colors.orange;
-                                  IconData alertIcon =
-                                      Icons.warning_amber_rounded;
-
-                                  if (alertStatus == 'Critical') {
-                                    alertColor = AppColors.criticalRed;
-                                  }
-
-                                  if (alertType == 'temperature') {
-                                    alertIcon = Icons.thermostat;
-                                  } else if (alertType == 'tank') {
-                                    alertIcon = Icons.local_gas_station;
-                                  }
-
                                   return AlertCard(
                                     title: alert['title'] ?? 'No title',
                                     machine: alert['machine'] ?? 'Unknown',
                                     location: alert['location'] ?? '-',
                                     time: alert['time'] ?? '',
-                                    status: alertStatus,
-                                    statusColor: alertColor,
-                                    icon: alertIcon,
+                                    status: alert['status'] ?? '',
+                                    statusColor:  AppColors.criticalRed,
+                                    icon: Icons.warning_amber_rounded,
                                   );
                                 },
                               ),
