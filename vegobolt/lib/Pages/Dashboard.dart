@@ -13,7 +13,9 @@ import 'settings.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'package:intl/intl.dart';
 import '../providers/machine_provider.dart';
+import '../utils/api_config.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -51,34 +53,28 @@ class _DashboardPageState extends State<DashboardPage> {
     super.dispose();
   }
 
-  // ✅ Get base URL for backend
+  // ✅ Get base URL from centralized config
   String _getBaseUrl() {
-    // Change this based on your setup:
-    // - 'web': Use localhost (Chrome/Web)
-    // - 'emulator': Use 10.0.2.2 (Android Emulator)
-    // - 'device': Use your PC's IP (192.168.100.28)
-    // - 'ios': Use localhost (iOS Simulator)
-    const mode = 'device'; // 👈 For Android device
-    switch (mode) {
-      case 'web':
-        return 'http://localhost:3000';
-      case 'emulator':
-        return 'http://10.0.2.2:3000';
-      case 'device':
-        return 'http://192.168.100.49:3000'; // Your PC's IP
-      case 'ios':
-        return 'http://localhost:3000';
-      default:
-        return 'http://localhost:3000';
+    return ApiConfig.baseUrl;
+  }
+
+  // Format ISO timestamp to readable format
+  String _formatTime(String isoTime) {
+    if (isoTime.isEmpty) return '-';
+    try {
+      final dateTime = DateTime.parse(isoTime);
+      return DateFormat('MMM dd, yyyy hh:mm a').format(dateTime);
+    } catch (e) {
+      return isoTime;
     }
   }
 
   // ✅ Fetch data from backend
   Future<void> fetchTankData() async {
     try {
-      final response = await http.get(
-        Uri.parse('${_getBaseUrl()}/api/tank/status'),
-      ).timeout(const Duration(seconds: 3));
+      final response = await http
+          .get(Uri.parse('${_getBaseUrl()}/api/tank/status'))
+          .timeout(const Duration(seconds: 3));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -120,19 +116,19 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     // Check if any alert has Critical status (highest priority)
-    bool hasCritical = alerts.any((alert) => 
-      (alert['status'] ?? '').toString().toLowerCase() == 'critical'
+    bool hasCritical = alerts.any(
+      (alert) => (alert['status'] ?? '').toString().toLowerCase() == 'critical',
     );
-    
+
     if (hasCritical) {
       return 'critical';
     }
 
     // Check if any alert has Warning status
-    bool hasWarning = alerts.any((alert) => 
-      (alert['status'] ?? '').toString().toLowerCase() == 'warning'
+    bool hasWarning = alerts.any(
+      (alert) => (alert['status'] ?? '').toString().toLowerCase() == 'warning',
     );
-    
+
     if (hasWarning) {
       return 'warning';
     }
@@ -142,64 +138,33 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> fetchAlerts() async {
     try {
-      final response = await http.get(
-        Uri.parse('${_getBaseUrl()}/api/tank/status'),
-      ).timeout(const Duration(seconds: 3));
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final String status = (data['status'] ?? '').toString();
-        final int level = int.tryParse('${data['level'] ?? 0}') ?? 0;
-        final String timeIso =
-            (data['createdAt'] ?? DateTime.now().toIso8601String()).toString();
+      // Fetch ALL alerts from the alerts endpoint (same as Alerts page)
+      final response = await http
+          .get(Uri.parse('${_getBaseUrl()}/api/tank/alerts'))
+          .timeout(const Duration(seconds: 3));
 
-        final List<dynamic> derivedAlerts =
-            (status.toLowerCase() == 'full' || level >= 90)
-            ? [
-                {
-                  'title': 'Tank Full',
-                  'machine': 'VB-0001',
-                  'location': '-',
-                  'time': timeIso,
-                  'status': 'Critical',
-                },
-              ]
-            : [];
+      if (response.statusCode == 200) {
+        final List<dynamic> alertsData = json.decode(response.body);
 
         setState(() {
-          _alerts = derivedAlerts;
-          _currentAlertStatus = _determineAlertStatus(derivedAlerts);
+          _alerts = alertsData;
+          _currentAlertStatus = _determineAlertStatus(alertsData);
           _alertsLoading = false;
         });
+        print('✅ Fetched ${alertsData.length} alerts');
       } else {
         setState(() {
           _alertsLoading = false;
-          _currentAlertStatus = 'critical';
-          _alerts = [
-            {
-              'title': 'Tank Full',
-              'machine': 'VB-0001',
-              'location': '-',
-              'time': DateTime.now().toIso8601String(),
-              'status': 'Critical',
-            },
-          ];
+          _currentAlertStatus = 'normal';
+          _alerts = [];
         });
         print('❌ Failed to fetch alerts: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
         _alertsLoading = false;
-        _currentAlertStatus = 'critical';
-        _alerts = [
-          {
-            'title': 'Tank Full',
-            'machine': 'VB-0001',
-            'location': '-',
-            'time': DateTime.now().toIso8601String(),
-            'status': 'Critical',
-          },
-        ];
+        _currentAlertStatus = 'normal';
+        _alerts = [];
       });
       print('⚠️ Error fetching alerts: $e');
     }
@@ -232,7 +197,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final machineProvider = Provider.of<MachineProvider>(context);
-    
+
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
       bottomNavigationBar: NavBar(
@@ -296,30 +261,44 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                           )
                         : _alerts.isEmpty
-                            ? Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                                  child: Text(
-                                    'No alerts detected.',
-                                    style: TextStyle(
-                                      color: AppColors.getTextSecondary(context),
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : Column(
-                                children: _alerts.take(3).map((alert) {
-                                  return AlertCard(
-                                    title: alert['title'] ?? '',
-                                    machine: alert['machine'] ?? '',
-                                    location: alert['location'] ?? '',
-                                    time: alert['time'] ?? '',
-                                    status: alert['status'] ?? '',
-                                    statusColor: _getStatusColor(alert['status']),
-                                    icon: Icons.local_gas_station,
-                                  );
-                                }).toList(),
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12.0,
                               ),
+                              child: Text(
+                                'No alerts detected.',
+                                style: TextStyle(
+                                  color: AppColors.getTextSecondary(context),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Column(
+                            children: _alerts.take(3).map((alert) {
+                              // Determine icon based on alert type
+                              final String alertType = alert['type'] ?? '';
+                              IconData alertIcon = Icons.warning_amber_rounded;
+                              
+                              if (alertType == 'temperature') {
+                                alertIcon = Icons.thermostat;
+                              } else if (alertType == 'tank') {
+                                alertIcon = Icons.local_gas_station;
+                              } else if (alertType == 'smoke') {
+                                alertIcon = Icons.warning_amber_rounded;
+                              }
+
+                              return AlertCard(
+                                title: alert['title'] ?? '',
+                                machine: alert['machine'] ?? '',
+                                location: alert['location'] ?? '',
+                                time: _formatTime(alert['time'] ?? ''),
+                                status: alert['status'] ?? '',
+                                statusColor: _getStatusColor(alert['status']),
+                                icon: alertIcon,
+                              );
+                            }).toList(),
+                          ),
                   ],
                 ),
               ),

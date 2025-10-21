@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../utils/api_config.dart';
 import '../components/navbar.dart';
 import '../components/header.dart';
 import '../components/machine_control_button.dart';
@@ -52,29 +53,17 @@ class _MachinePageState extends State<MachinePage> {
     super.dispose();
   }
 
-  // Match Dashboard's base URL logic
+  // Get base URL from centralized config
   String _getBaseUrl() {
-    const mode = 'device'; // For Android device testing
-    switch (mode) {
-      case 'web':
-        return 'http://localhost:3000';
-      case 'emulator':
-        return 'http://10.0.2.2:3000';
-      case 'device':
-        return 'http://192.168.100.49:3000';
-      case 'ios':
-        return 'http://localhost:3000';
-      default:
-        return 'http://localhost:3000';
-    }
+    return ApiConfig.baseUrl;
   }
 
   Future<void> fetchTankData() async {
     try {
-      final response = await http.get(
-        Uri.parse('${_getBaseUrl()}/api/tank/status'),
-      ).timeout(const Duration(seconds: 3));
-      
+      final response = await http
+          .get(Uri.parse('${_getBaseUrl()}/api/tank/status'))
+          .timeout(const Duration(seconds: 3));
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final int level = int.tryParse('${data['level'] ?? 0}') ?? 0;
@@ -114,19 +103,19 @@ class _MachinePageState extends State<MachinePage> {
     }
 
     // Check if any alert has Critical status (highest priority)
-    bool hasCritical = alerts.any((alert) => 
-      (alert['status'] ?? '').toString().toLowerCase() == 'critical'
+    bool hasCritical = alerts.any(
+      (alert) => (alert['status'] ?? '').toString().toLowerCase() == 'critical',
     );
-    
+
     if (hasCritical) {
       return 'critical';
     }
 
     // Check if any alert has Warning status
-    bool hasWarning = alerts.any((alert) => 
-      (alert['status'] ?? '').toString().toLowerCase() == 'warning'
+    bool hasWarning = alerts.any(
+      (alert) => (alert['status'] ?? '').toString().toLowerCase() == 'warning',
     );
-    
+
     if (hasWarning) {
       return 'warning';
     }
@@ -136,10 +125,10 @@ class _MachinePageState extends State<MachinePage> {
 
   Future<void> fetchAlerts() async {
     try {
-      final response = await http.get(
-        Uri.parse('${_getBaseUrl()}/api/tank/status'),
-      ).timeout(const Duration(seconds: 3));
-      
+      final response = await http
+          .get(Uri.parse('${_getBaseUrl()}/api/tank/status'))
+          .timeout(const Duration(seconds: 3));
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final String status = (data['status'] ?? '').toString();
@@ -216,8 +205,11 @@ class _MachinePageState extends State<MachinePage> {
   }
 
   void _showShutdownConfirmation(BuildContext context) {
-    final machineProvider = Provider.of<MachineProvider>(context, listen: false);
-    
+    final machineProvider = Provider.of<MachineProvider>(
+      context,
+      listen: false,
+    );
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -258,7 +250,7 @@ class _MachinePageState extends State<MachinePage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Title
                 Text(
                   'Shutdown Station',
@@ -269,7 +261,7 @@ class _MachinePageState extends State<MachinePage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Message
                 Text(
                   'Are you sure you want to shutdown this station? This will stop all operations.',
@@ -281,7 +273,7 @@ class _MachinePageState extends State<MachinePage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Buttons
                 Row(
                   children: [
@@ -361,8 +353,11 @@ class _MachinePageState extends State<MachinePage> {
   }
 
   void _showActivateConfirmation(BuildContext context) {
-    final machineProvider = Provider.of<MachineProvider>(context, listen: false);
-    
+    final machineProvider = Provider.of<MachineProvider>(
+      context,
+      listen: false,
+    );
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -403,7 +398,7 @@ class _MachinePageState extends State<MachinePage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Title
                 Text(
                   'Activate Station',
@@ -414,7 +409,7 @@ class _MachinePageState extends State<MachinePage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Message
                 Text(
                   'Are you sure you want to activate this station? This will start all operations.',
@@ -426,7 +421,7 @@ class _MachinePageState extends State<MachinePage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Buttons
                 Row(
                   children: [
@@ -508,7 +503,7 @@ class _MachinePageState extends State<MachinePage> {
   @override
   Widget build(BuildContext context) {
     final machineProvider = Provider.of<MachineProvider>(context);
-    
+
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
       bottomNavigationBar: NavBar(

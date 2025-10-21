@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'package:intl/intl.dart';
+import '../utils/api_config.dart';
 import '../components/navbar.dart';
 import '../components/header.dart';
 import '../components/alert_card.dart';
@@ -71,25 +72,7 @@ class _AlertsPageState extends State<AlertsPage> {
   }
 
   String _getBaseUrl() {
-    // Change this based on your setup:
-    // - 'web': Use localhost (Chrome/Web)
-    // - 'emulator': Use 10.0.2.2 (Android Emulator)
-    // - 'device': Use your PC's IP (192.168.100.28)
-    // - 'ios': Use localhost (iOS Simulator)
-    const mode = 'device'; // 👈 CHANGE THIS!
-
-    switch (mode) {
-      case 'web':
-        return 'http://localhost:3000'; // For Chrome/Web
-      case 'emulator':
-        return 'http://10.0.2.2:3000';
-      case 'device':
-        return 'http://192.168.100.49:3000'; // Your PC's IP
-      case 'ios':
-        return 'http://localhost:3000';
-      default:
-        return 'http://localhost:3000';
-    }
+    return ApiConfig.baseUrl;
   }
 
   List<dynamic> get _filteredAlerts {
