@@ -57,7 +57,6 @@ Relationships:
                         │ *firstName            String │
                         │ *lastName             String │
                         │ displayName           String │
-                        │ profilePicture        String │
                         │ isActive              Boolean│
                         │ isEmailVerified       Boolean│
                         │ emailVerificationToken String│

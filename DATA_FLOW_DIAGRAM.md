@@ -615,7 +615,6 @@ A comprehensive IoT system for monitoring and managing vegetable oil storage tan
 │ email (String)   │         │ userId (FK)
 │ password (Hash)  │         │
 │ name (String)    │         │
-│ phone (String)   │         │
 │ isVerified (Bool)│         │
 │ verificationToken│         │
 │ googleId (String)│         │
