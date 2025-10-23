@@ -574,25 +574,18 @@ class _MachinePageState extends State<MachinePage> {
 
                     const SizedBox(height: 20),
 
-                    const Text(
-                      'Scheduled Maintenance',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
+                    _buildSectionHeader('Scheduled Maintenance'),
                     const SizedBox(height: 12),
 
                     // Display maintenance items or empty state
                     if (scheduledMaintenanceItems.isEmpty)
-                      const Center(
+                      Center(
                         child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24.0),
+                          padding: const EdgeInsets.symmetric(vertical: 24.0),
                           child: Text(
                             'No scheduled maintenance',
                             style: TextStyle(
-                              color: Color(0xFF808080),
+                              color: AppColors.getTextSecondary(context),
                               fontSize: 16,
                             ),
                           ),
@@ -615,6 +608,30 @@ class _MachinePageState extends State<MachinePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDarkMode ? AppColors.darkGreen : AppColors.primaryGreen,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
