@@ -46,7 +46,6 @@ Relationships:
 │                      VEGOBOLT DATABASE SCHEMA (MongoDB)                      │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-
                         ┌──────────────────────────────┐
                         │          USER                │
                         │   (users collection)         │
