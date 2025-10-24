@@ -120,63 +120,76 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
-      body: Column(
-        children: [
-          const Header(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Back button and Title
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.arrow_back,
-                          color: AppColors.getTextPrimary(context),
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Account Settings',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.getTextPrimary(context),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Manage your profile and security',
-                    style: TextStyle(
-                      color: AppColors.getTextSecondary(context),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // PROFILE INFORMATION CARD
-                  _buildProfileSection(),
-                  const SizedBox(height: 24),
-
-                  // SECURITY CARD
-                  _buildSecuritySection(),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
       bottomNavigationBar: NavBar(
         currentIndex: 4,
         onTap: (i) => _onNavTap(context, i),
+      ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Header(),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Back button
+                    IconButton(
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: AppColors.getTextPrimary(context),
+                      ),
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SettingsPage()),
+                        );
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      alignment: Alignment.centerLeft,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Account Settings',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.getTextPrimary(context),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Manage your profile and security',
+                      style: TextStyle(
+                        color: AppColors.getTextSecondary(context),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // PROFILE INFORMATION CARD
+                            _buildProfileSection(),
+                            const SizedBox(height: 24),
+
+                            // SECURITY CARD
+                            _buildSecuritySection(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -224,18 +237,33 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
+              ),
               decoration: InputDecoration(
                 hintText: 'Email Address',
-                hintStyle: const TextStyle(color: AppColors.textLight),
+                hintStyle: TextStyle(
+                  color: AppColors.getTextSecondary(context),
+                ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkCardBackground
+                    : Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -262,29 +290,44 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             const SizedBox(height: 16),
 
             // Full Name
-            const Text(
+            Text(
               'Full Name',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _nameController,
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
+              ),
               decoration: InputDecoration(
                 hintText: 'Full Name',
-                hintStyle: const TextStyle(color: AppColors.textLight),
+                hintStyle: TextStyle(
+                  color: AppColors.getTextSecondary(context),
+                ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkCardBackground
+                    : Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -308,29 +351,44 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             const SizedBox(height: 16),
 
             // Address
-            const Text(
+            Text(
               'Address',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _addressController,
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
+              ),
               decoration: InputDecoration(
                 hintText: 'Address',
-                hintStyle: const TextStyle(color: AppColors.textLight),
+                hintStyle: TextStyle(
+                  color: AppColors.getTextSecondary(context),
+                ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkCardBackground
+                    : Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -416,50 +474,65 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             const SizedBox(height: 12),
 
             // Change Password Header
-            const Text(
+            Text(
               'Change Password',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'When you change your password, we keep you logged in to this device but may logged out from other devices.',
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: AppColors.getTextSecondary(context),
                 height: 1.4,
               ),
             ),
             const SizedBox(height: 20),
 
             // Current Password
-            const Text(
+            Text(
               'Current Password *',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _currentPasswordController,
               obscureText: _obscureCurrentPassword,
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
+              ),
               decoration: InputDecoration(
                 hintText: 'Enter Current Password',
-                hintStyle: const TextStyle(color: AppColors.textLight),
+                hintStyle: TextStyle(
+                  color: AppColors.getTextSecondary(context),
+                ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkCardBackground
+                    : Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -496,30 +569,45 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             const SizedBox(height: 16),
 
             // New Password
-            const Text(
+            Text(
               'New Password *',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _newPasswordController,
               obscureText: _obscureNewPassword,
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
+              ),
               decoration: InputDecoration(
                 hintText: 'Enter New Password',
-                hintStyle: const TextStyle(color: AppColors.textLight),
+                hintStyle: TextStyle(
+                  color: AppColors.getTextSecondary(context),
+                ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkCardBackground
+                    : Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade300,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),

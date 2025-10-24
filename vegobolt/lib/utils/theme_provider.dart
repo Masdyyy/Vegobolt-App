@@ -25,6 +25,15 @@ class ThemeProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Reset theme to light mode (used during logout)
+  Future<void> resetToLightMode() async {
+    if (_isDarkMode) {
+      _isDarkMode = false;
+      await _storage.write(key: 'isDarkMode', value: 'false');
+      notifyListeners();
+    }
+  }
+
   ThemeData get lightTheme => ThemeData(
     brightness: Brightness.light,
     scaffoldBackgroundColor: const Color(0xFFF5F5DC),
