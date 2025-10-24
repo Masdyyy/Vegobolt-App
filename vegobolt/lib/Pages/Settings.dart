@@ -163,23 +163,30 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _logout() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Logging out...')));
+  void _logout() async {
+    // Reset theme to light mode immediately before logout
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    await themeProvider.resetToLightMode();
     
-    Future.delayed(const Duration(seconds: 0), () {
-      // Reset dark mode to light mode after navigation starts
-      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-      if (themeProvider.isDarkMode) {
-        themeProvider.toggleTheme();
-      }
-      
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-        (route) => false,
+    // Show logout message with shorter duration
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logging out...'),
+          duration: Duration(milliseconds: 500),
+        ),
       );
+    }
+    
+    // Navigate to login page
+    Future.microtask(() {
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+          (route) => false,
+        );
+      }
     });
   }
 
