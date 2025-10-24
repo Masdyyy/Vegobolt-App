@@ -238,16 +238,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
                     MachineStatusCard(
                       machineId: 'VB-0001',
-                      initialLocation: 'Barangay 171',
+                      initialLocation: machineProvider.location,
                       statusText: machineProvider.statusText,
                       statusColor: machineProvider.statusColor,
                       tankLevel: tankLevel,
                       batteryValue: batteryValue,
                       temperatureC: temperatureC,
                       alertStatus: _currentAlertStatus,
-                      onLocationChanged: (newLocation) {
-                        print('Location updated to: $newLocation');
-                      },
+                      isEditable: false, // Disable editing in Dashboard
                     ),
 
                     const SizedBox(height: 12),

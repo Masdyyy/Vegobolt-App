@@ -313,7 +313,7 @@ class _MachinePageState extends State<MachinePage> {
                                 children: [
                                   Icon(Icons.check_circle, color: Colors.white),
                                   SizedBox(width: 12),
-                                  Text('Station shutdown successfully'),
+                                  Text('Machine shutdown successfully'),
                                 ],
                               ),
                               backgroundColor: AppColors.criticalRed,
@@ -401,7 +401,7 @@ class _MachinePageState extends State<MachinePage> {
 
                 // Title
                 Text(
-                  'Activate Station',
+                  'Activate Machine',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -461,7 +461,7 @@ class _MachinePageState extends State<MachinePage> {
                                 children: [
                                   Icon(Icons.check_circle, color: Colors.white),
                                   SizedBox(width: 12),
-                                  Text('Station activated successfully'),
+                                  Text('Machine activated successfully'),
                                 ],
                               ),
                               backgroundColor: AppColors.primaryGreen,
@@ -542,15 +542,17 @@ class _MachinePageState extends State<MachinePage> {
                     // ✅ Live Machine Card (same data as Dashboard)
                     MachineStatusCard(
                       machineId: 'VB-0001',
-                      initialLocation: 'Barangay 171',
+                      initialLocation: machineProvider.location,
                       statusText: machineProvider.statusText,
                       statusColor: machineProvider.statusColor,
                       tankLevel: tankLevel,
                       batteryValue: batteryValue,
                       temperatureC: temperatureC,
                       alertStatus: _currentAlertStatus,
+                      isEditable: true, // Enable editing in Machine page
                       onLocationChanged: (newLocation) {
-                        print('Location updated to: $newLocation');
+                        // Update the provider to sync across pages
+                        machineProvider.updateLocation(newLocation);
                       },
                     ),
 

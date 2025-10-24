@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../components/navbar.dart';
 import '../components/header.dart';
-import '../components/machine_control_button.dart';
 import '../utils/colors.dart';
 import '../utils/theme_provider.dart';
 import '../utils/navigation_helper.dart';
@@ -21,7 +20,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _isMachineExpanded = false;
   bool _isNotifExpanded = false;
   bool _allNotif = true, _critical = true, _maintenance = false;
 
@@ -34,133 +32,6 @@ class _SettingsPageState extends State<SettingsPage> {
       const MaintenancePage(),
     ];
     NavigationHelper.navigateWithoutAnimation(context, pages[i]);
-  }
-
-  void _showShutdownConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.getCardBackground(context),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.criticalRed.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.power_settings_new,
-                    size: 48,
-                    color: AppColors.criticalRed,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                
-                // Title
-                Text(
-                  'Shutdown Station',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.getTextPrimary(context),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                
-                // Message
-                Text(
-                  'Are you sure you want to shutdown this station? This will stop all operations.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: AppColors.getTextSecondary(context),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: AppColors.getTextSecondary(context),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            color: AppColors.getTextPrimary(context),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Shutting down station...')),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.criticalRed,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Shutdown',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   void _logout() async {
@@ -224,23 +95,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         color: AppColors.getTextSecondary(context),
                         fontSize: 14,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // MACHINE CONTROL
-                    _buildExpandableCard(
-                      title: 'Machine Control',
-                      icon: Icons.settings_outlined,
-                      expanded: _isMachineExpanded,
-                      onExpand: (v) => setState(() => _isMachineExpanded = v),
-                      children: [
-                        MachineControlButton(
-                          label: 'Shutdown Station',
-                          icon: Icons.power_settings_new,
-                          color: AppColors.criticalRed,
-                          onPressed: () => _showShutdownConfirmation(context),
-                        ),
-                      ],
                     ),
                     const SizedBox(height: 16),
 

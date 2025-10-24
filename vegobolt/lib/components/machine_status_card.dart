@@ -11,6 +11,7 @@ class MachineStatusCard extends StatefulWidget {
   final int temperatureC;
   final String alertStatus; // 'normal', 'warning', 'critical'
   final Function(String)? onLocationChanged;
+  final bool isEditable; // New parameter to control if location is editable
 
   const MachineStatusCard({
     super.key,
@@ -23,6 +24,7 @@ class MachineStatusCard extends StatefulWidget {
     required this.temperatureC,
     this.alertStatus = 'normal',
     this.onLocationChanged,
+    this.isEditable = true, // Default to editable for backward compatibility
   });
 
   // Helper to get tank status string
@@ -52,6 +54,18 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
     super.initState();
     currentLocation = widget.initialLocation;
     locationController = TextEditingController(text: currentLocation);
+  }
+
+  @override
+  void didUpdateWidget(MachineStatusCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update location when it changes from provider
+    if (oldWidget.initialLocation != widget.initialLocation) {
+      setState(() {
+        currentLocation = widget.initialLocation;
+        locationController.text = widget.initialLocation;
+      });
+    }
   }
 
   void _saveLocation() {
@@ -193,7 +207,7 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
             ],
           ),
           const SizedBox(height: 12),
-          // Location + Edit Icon (Inline Editing)
+          // Location + Edit Icon (Inline Editing) - Only show edit when isEditable is true
           isEditingLocation
               ? Row(
                   children: [
@@ -253,18 +267,20 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isEditingLocation = true;
-                        });
-                      },
-                      child: Icon(
-                        Icons.edit,
-                        size: 18,
-                        color: AppColors.getTextSecondary(context),
+                    // Only show edit button if isEditable is true
+                    if (widget.isEditable)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isEditingLocation = true;
+                          });
+                        },
+                        child: Icon(
+                          Icons.edit,
+                          size: 18,
+                          color: AppColors.getTextSecondary(context),
+                        ),
                       ),
-                    ),
                   ],
                 ),
           const SizedBox(height: 16),
