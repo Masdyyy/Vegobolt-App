@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../components/navbar.dart';
 import '../components/header.dart';
 import '../utils/colors.dart';
+import '../utils/navigation_helper.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'alerts.dart';
@@ -29,9 +30,9 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
 
   void _onNavTap(BuildContext context, int i) {
     if (i == 4) {
-      Navigator.pushReplacement(
+      NavigationHelper.navigateWithoutAnimation(
         context,
-        MaterialPageRoute(builder: (_) => const SettingsPage()),
+        const SettingsPage(),
       );
       return;
     }
@@ -41,10 +42,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
       const AlertsPage(),
       const MaintenancePage(),
     ];
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => pages[i]),
-    );
+    NavigationHelper.navigateWithoutAnimation(context, pages[i]);
   }
 
   void _viewGuide() {
@@ -124,11 +122,9 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                         color: AppColors.getTextPrimary(context),
                       ),
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        NavigationHelper.navigateWithoutAnimation(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const SettingsPage(),
-                          ),
+                          const SettingsPage(),
                         );
                       },
                       padding: EdgeInsets.zero,

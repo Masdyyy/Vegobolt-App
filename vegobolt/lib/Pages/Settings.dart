@@ -150,20 +150,16 @@ class _SettingsPageState extends State<SettingsPage> {
 
                     // ACCOUNT & HELP
                     _buildTile(Icons.person_outline, 'Account Settings', () {
-                      Navigator.push(
+                      NavigationHelper.navigateWithoutAnimation(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const AccountSettingsPage(),
-                        ),
+                        const AccountSettingsPage(),
                       );
                     }),
                     const SizedBox(height: 16),
                     _buildTile(Icons.help_outline, 'Help & Support', () {
-                      Navigator.push(
+                      NavigationHelper.navigateWithoutAnimation(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const HelpSupportPage(),
-                        ),
+                        const HelpSupportPage(),
                       );
                     }),
                     const SizedBox(height: 24),

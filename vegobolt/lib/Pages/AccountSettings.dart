@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../components/navbar.dart';
 import '../components/header.dart';
 import '../utils/colors.dart';
+import '../utils/navigation_helper.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'alerts.dart';
@@ -42,9 +43,9 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
   void _onNavTap(BuildContext context, int i) {
     if (i == 4) {
-      Navigator.pushReplacement(
+      NavigationHelper.navigateWithoutAnimation(
         context,
-        MaterialPageRoute(builder: (_) => const SettingsPage()),
+        const SettingsPage(),
       );
       return;
     }
@@ -54,10 +55,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
       const AlertsPage(),
       const MaintenancePage(),
     ];
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => pages[i]),
-    );
+    NavigationHelper.navigateWithoutAnimation(context, pages[i]);
   }
 
   void _saveProfileChanges() {
@@ -142,9 +140,9 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                         color: AppColors.getTextPrimary(context),
                       ),
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        NavigationHelper.navigateWithoutAnimation(
                           context,
-                          MaterialPageRoute(builder: (_) => const SettingsPage()),
+                          const SettingsPage(),
                         );
                       },
                       padding: EdgeInsets.zero,
