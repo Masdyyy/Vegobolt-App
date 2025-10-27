@@ -4,11 +4,10 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:intl/intl.dart';
 import '../utils/api_config.dart';
-import '../components/navbar.dart';
-import '../components/header.dart';
 import '../components/alert_card.dart';
 import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
+import '../utils/responsive_layout.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'maintenance.dart';
@@ -113,58 +112,123 @@ class _AlertsPageState extends State<AlertsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
-      bottomNavigationBar: NavBar(
-        currentIndex: 2,
-        onTap: (index) => _onNavTap(context, index),
-      ),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Header(),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+    final responsive = ResponsiveHelper(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AdaptiveScaffold(
+      title: 'Alerts',
+      currentIndex: 2,
+      onNavigationChanged: (index) => _onNavTap(context, index),
+      navigationItems: const [
+        NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
+        NavigationItem(icon: Icons.precision_manufacturing, label: 'Machine'),
+        NavigationItem(icon: Icons.warning_amber, label: 'Alerts'),
+        NavigationItem(icon: Icons.build, label: 'Maintenance'),
+        NavigationItem(icon: Icons.settings, label: 'Settings'),
+      ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+              isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE8F5E9),
+            ],
+          ),
+        ),
+        child: ResponsiveLayout(
+          maxWidth: 1600,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Page header at the top
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 16, tablet: 20, desktop: 24),
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 12, tablet: 16, desktop: 20),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Alerts',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.getTextPrimary(context),
-                      ),
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: responsive.getValue(
+                              mobile: 28,
+                              tablet: 32,
+                              desktop: 36,
+                            ),
+                          ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
                       'Monitor system notifications',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppColors.getTextSecondary(context),
-                        fontSize: 14,
+                        fontSize: responsive.getValue(
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildTabs(),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: _isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : _filteredAlerts.isEmpty
+                  ],
+                ),
+              ),
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(responsive.getPadding()),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTabs(),
+                      SizedBox(
+                        height: responsive.getValue(
+                          mobile: 16,
+                          tablet: 20,
+                          desktop: 24,
+                        ),
+                      ),
+                      _isLoading
                           ? const Center(
-                              child: Text(
-                                'No alerts detected.',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
+                              child: Padding(
+                                padding: EdgeInsets.all(40),
+                                child: CircularProgressIndicator(),
+                              ),
+                            )
+                          : _filteredAlerts.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(40),
+                                child: Text(
+                                  'No alerts detected.',
+                                  style: TextStyle(
+                                    color: AppColors.getTextSecondary(context),
+                                  ),
                                 ),
                               ),
                             )
-                          : ListView.builder(
-                              itemCount: _filteredAlerts.length,
-                              itemBuilder: (context, index) {
-                                final alert = _filteredAlerts[index];
+                          : ResponsiveGrid(
+                              mobileColumns: 1,
+                              tabletColumns: 1,
+                              desktopColumns: 1,
+                              spacing: responsive.getValue(
+                                mobile: 12,
+                                tablet: 16,
+                                desktop: 20,
+                              ),
+                              runSpacing: responsive.getValue(
+                                mobile: 12,
+                                tablet: 16,
+                                desktop: 20,
+                              ),
+                              children: _filteredAlerts.map((alert) {
                                 final String alertType = alert['type'] ?? '';
 
                                 IconData alertIcon =
@@ -185,14 +249,14 @@ class _AlertsPageState extends State<AlertsPage> {
                                   statusColor: _getStatusColor(alert['status']),
                                   icon: alertIcon,
                                 );
-                              },
+                              }).toList(),
                             ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

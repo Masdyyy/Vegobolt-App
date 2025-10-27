@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../components/navbar.dart';
-import '../components/header.dart';
 import '../utils/colors.dart';
 import '../utils/theme_provider.dart';
 import '../utils/navigation_helper.dart';
+import '../utils/responsive_layout.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'alerts.dart';
@@ -38,7 +37,7 @@ class _SettingsPageState extends State<SettingsPage> {
     // Reset theme to light mode immediately before logout
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     await themeProvider.resetToLightMode();
-    
+
     // Show logout message with shorter duration
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -48,7 +47,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       );
     }
-    
+
     // Navigate to login page
     Future.microtask(() {
       if (mounted) {
@@ -63,40 +62,97 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
-      bottomNavigationBar: NavBar(
-        currentIndex: 4,
-        onTap: (index) => _onNavTap(context, index),
-      ),
-      body: SafeArea(
+    final responsive = ResponsiveHelper(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AdaptiveScaffold(
+      title: 'VegoBolt Settings',
+      currentIndex: 4,
+      onNavigationChanged: (index) => _onNavTap(context, index),
+      navigationItems: const [
+        NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
+        NavigationItem(icon: Icons.precision_manufacturing, label: 'Machine'),
+        NavigationItem(icon: Icons.warning_amber, label: 'Alerts'),
+        NavigationItem(icon: Icons.build, label: 'Maintenance'),
+        NavigationItem(icon: Icons.settings, label: 'Settings'),
+      ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+              isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE8F5E9),
+            ],
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Header(),
+            // Fixed header at top
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                horizontal: responsive.getValue(
+                  mobile: 12,
+                  tablet: 16,
+                  desktop: 20,
+                ),
+                vertical: responsive.getValue(
+                  mobile: 12,
+                  tablet: 16,
+                  desktop: 20,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Settings',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: Text(
+                      'Manage your account and preferences',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.getTextSecondary(context),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Scrollable content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.getValue(
+                    mobile: 12,
+                    tablet: 16,
+                    desktop: 20,
+                  ),
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Settings',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.getTextPrimary(context),
+                    SizedBox(
+                      height: responsive.getValue(
+                        mobile: 20,
+                        tablet: 24,
+                        desktop: 32,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Manage your account and preferences',
-                      style: TextStyle(
-                        color: AppColors.getTextSecondary(context),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
 
                     // NOTIFICATION SETTINGS
                     _buildExpandableCard(
@@ -207,23 +263,30 @@ class _SettingsPageState extends State<SettingsPage> {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
+        width: double.infinity,
         decoration: BoxDecoration(
           color: AppColors.getCardBackground(context),
           borderRadius: BorderRadius.circular(12),
         ),
         child: ExpansionTile(
           initiallyExpanded: expanded,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          childrenPadding: EdgeInsets.zero,
           title: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, color: AppColors.getTextPrimary(context), size: 24),
               const SizedBox(width: 12),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.getTextPrimary(context),
+              Flexible(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.getTextPrimary(context),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
             ],
@@ -236,7 +299,7 @@ class _SettingsPageState extends State<SettingsPage> {
           onExpansionChanged: onExpand,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Column(children: children),
             ),
           ],
@@ -266,6 +329,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   fontWeight: FontWeight.w600,
                   color: AppColors.getTextPrimary(context),
                 ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
               Text(
                 sub,
@@ -273,10 +338,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   fontSize: 13,
                   color: AppColors.getTextSecondary(context),
                 ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
             ],
           ),
         ),
+        const SizedBox(width: 8),
         Switch(
           value: val,
           onChanged: onChanged,
@@ -306,12 +374,16 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           Icon(icon, color: AppColors.getTextPrimary(context), size: 24),
           const SizedBox(width: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.getTextPrimary(context),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.getTextPrimary(context),
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],

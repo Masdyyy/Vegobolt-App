@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
+import '../utils/responsive_layout.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -177,6 +178,8 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = ResponsiveHelper(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5DC),
       appBar: AppBar(
@@ -184,381 +187,398 @@ class _SignupPageState extends State<SignupPage> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF5A6B47)),
       ),
-      body: SafeArea(
+      body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-          child: Form(
-            key: _formKey,
-            autovalidateMode: _autovalidateMode, // Enable auto-validation
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 8),
-                Center(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Transform.rotate(
-                        angle: 0,
-                        child: RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'VEGO',
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontStyle: FontStyle.italic,
-                                  fontWeight: FontWeight.w500,
-                                  foreground: Paint()
-                                    ..style = PaintingStyle.stroke
-                                    ..strokeWidth = 3.2
-                                    ..color = const Color(0xFF5A6B47),
-                                  letterSpacing: -1.8,
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: responsive.getValue(
+                mobile: double.infinity,
+                tablet: 600,
+                desktop: 500,
+              ),
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: responsive.getValue(
+                mobile: 24.0,
+                tablet: 48.0,
+                desktop: 48.0,
+              ),
+              vertical: 8.0,
+            ),
+            child: Form(
+              key: _formKey,
+              autovalidateMode: _autovalidateMode, // Enable auto-validation
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Transform.rotate(
+                          angle: 0,
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'VEGO',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w500,
+                                    foreground: Paint()
+                                      ..style = PaintingStyle.stroke
+                                      ..strokeWidth = 3.2
+                                      ..color = const Color(0xFF5A6B47),
+                                    letterSpacing: -1.8,
+                                  ),
                                 ),
-                              ),
-                              TextSpan(
-                                text: 'BOLT',
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontStyle: FontStyle.italic,
-                                  fontWeight: FontWeight.w500,
-                                  foreground: Paint()
-                                    ..style = PaintingStyle.stroke
-                                    ..strokeWidth = 3.2
-                                    ..color = const Color(0xFFFFD700),
-                                  letterSpacing: -1.2,
+                                TextSpan(
+                                  text: 'BOLT',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w500,
+                                    foreground: Paint()
+                                      ..style = PaintingStyle.stroke
+                                      ..strokeWidth = 3.2
+                                      ..color = const Color(0xFFFFD700),
+                                    letterSpacing: -1.2,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
+                        Transform.rotate(
+                          angle: 0,
+                          child: RichText(
+                            text: const TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'VEGO',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF5A6B47),
+                                    letterSpacing: -1.8,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'BOLT',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFFFFD700),
+                                    letterSpacing: -1.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Create Account',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF5A6B47),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Fill in your details below',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // First Name and Last Name fields (split Full Name)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _firstNameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: _buildInputDecoration(hint: 'First Name'),
+                          onChanged: (value) {
+                            // Auto-capitalize first letter if lowercase
+                            if (value.isNotEmpty &&
+                                value[0] == value[0].toLowerCase()) {
+                              final capitalized =
+                                  value[0].toUpperCase() + value.substring(1);
+                              _firstNameController.value = TextEditingValue(
+                                text: capitalized,
+                                selection: TextSelection.collapsed(
+                                  offset:
+                                      _firstNameController.selection.baseOffset,
+                                ),
+                              );
+                            }
+                          },
+                          validator: (v) {
+                            // Don't trim for validation to catch trailing spaces
+                            final value = v ?? '';
+                            final trimmedValue = value.trim();
+
+                            if (trimmedValue.isEmpty)
+                              return 'Please enter your first name';
+
+                            // Check for any consecutive spaces (including at end before trim)
+                            if (value.contains('  ')) return 'Invalid input';
+
+                            // Check if starts with a letter
+                            if (!RegExp(r'^[A-Za-z]').hasMatch(trimmedValue))
+                              return 'Invalid input';
+
+                            // Allow only letters and single spaces
+                            final nameRegex = RegExp(
+                              r"^[A-Za-z]+(\s[A-Za-z]+)*$",
+                            );
+                            if (!nameRegex.hasMatch(trimmedValue))
+                              return 'Invalid input';
+
+                            return null;
+                          },
+                        ),
                       ),
-                      Transform.rotate(
-                        angle: 0,
-                        child: RichText(
-                          text: const TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'VEGO',
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontStyle: FontStyle.italic,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF5A6B47),
-                                  letterSpacing: -1.8,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _lastNameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: _buildInputDecoration(hint: 'Last Name'),
+                          onChanged: (value) {
+                            // Auto-capitalize first letter if lowercase
+                            if (value.isNotEmpty &&
+                                value[0] == value[0].toLowerCase()) {
+                              final capitalized =
+                                  value[0].toUpperCase() + value.substring(1);
+                              _lastNameController.value = TextEditingValue(
+                                text: capitalized,
+                                selection: TextSelection.collapsed(
+                                  offset:
+                                      _lastNameController.selection.baseOffset,
                                 ),
+                              );
+                            }
+                          },
+                          validator: (v) {
+                            // Don't trim for validation to catch trailing spaces
+                            final value = v ?? '';
+                            final trimmedValue = value.trim();
+
+                            if (trimmedValue.isEmpty)
+                              return 'Please enter your last name';
+
+                            // Check for any consecutive spaces (including at end before trim)
+                            if (value.contains('  ')) return 'Invalid input';
+
+                            // Check if starts with a letter
+                            if (!RegExp(r'^[A-Za-z]').hasMatch(trimmedValue))
+                              return 'Invalid input';
+
+                            // Allow only letters and single spaces
+                            final nameRegex = RegExp(
+                              r"^[A-Za-z]+(\s[A-Za-z]+)*$",
+                            );
+                            if (!nameRegex.hasMatch(trimmedValue))
+                              return 'Invalid input';
+
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: _buildInputDecoration(
+                      hint: 'Email Address',
+                      prefixIcon: Icons.email_outlined,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return 'Please enter your email';
+                      final emailRegex = RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      );
+                      if (!emailRegex.hasMatch(value))
+                        return 'Please enter a valid email';
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: !_isPasswordVisible,
+                    decoration: _buildInputDecoration(
+                      hint: 'Password',
+                      prefixIcon: Icons.lock_outline,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.grey[700],
+                        ),
+                        onPressed: () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible,
+                        ),
+                      ),
+                    ),
+                    validator: _validatePassword,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    obscureText: !_isConfirmVisible,
+                    decoration: _buildInputDecoration(
+                      hint: 'Confirm Password',
+                      prefixIcon: Icons.lock_outline,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isConfirmVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.grey[700],
+                        ),
+                        onPressed: () => setState(
+                          () => _isConfirmVisible = !_isConfirmVisible,
+                        ),
+                      ),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty)
+                        return 'Please confirm your password';
+                      if (v != _passwordController.text)
+                        return 'Passwords do not match';
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Read-only Staff field (auto-filled)
+                  TextFormField(
+                    controller: _staffController,
+                    readOnly: true,
+                    decoration: _buildInputDecoration(
+                      hint: 'Staff',
+                      prefixIcon: Icons.badge_outlined,
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Machine Key field
+                  TextFormField(
+                    controller: _machineKeyController,
+                    decoration: _buildInputDecoration(
+                      hint: 'Machine Key',
+                      prefixIcon: Icons.vpn_key_outlined,
+                    ),
+                    validator: (v) {
+                      final value = v?.trim() ?? '';
+                      if (value.isEmpty) return 'Please enter the Machine Key';
+                      // simple validation: allow alphanumeric and dashes/underscores, min 4 chars
+                      final keyRegex = RegExp(r"^[A-Za-z0-9_-]{4,}");
+                      if (!keyRegex.hasMatch(value))
+                        return 'Invalid machine key';
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _agreeTerms,
+                        onChanged: (v) =>
+                            setState(() => _agreeTerms = v ?? false),
+                        activeColor: const Color(0xFF5A6B47),
+                      ),
+                      const Expanded(
+                        child: Text('I agree to the Terms & Privacy Policy'),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _handleSignup,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFD700),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
                               ),
-                              TextSpan(
-                                text: 'BOLT',
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontStyle: FontStyle.italic,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFFFFD700),
-                                  letterSpacing: -1.2,
-                                ),
+                            )
+                          : const Text(
+                              'Create Account',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
                               ),
-                            ],
+                            ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Already have an account? "),
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.pushReplacementNamed(context, '/login'),
+                        style: ButtonStyle(
+                          overlayColor: MaterialStateProperty.all(
+                            Colors.transparent,
+                          ),
+                          splashFactory: NoSplash.splashFactory,
+                          padding: MaterialStateProperty.all(EdgeInsets.zero),
+                          minimumSize: MaterialStateProperty.all(
+                            const Size(0, 0),
+                          ),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Log in',
+                          style: TextStyle(
+                            color: Color(0xFF5A6B47),
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Create Account',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF5A6B47),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Fill in your details below',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-
-                // First Name and Last Name fields (split Full Name)
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _firstNameController,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: _buildInputDecoration(hint: 'First Name'),
-                        onChanged: (value) {
-                          // Auto-capitalize first letter if lowercase
-                          if (value.isNotEmpty &&
-                              value[0] == value[0].toLowerCase()) {
-                            final capitalized =
-                                value[0].toUpperCase() + value.substring(1);
-                            _firstNameController.value = TextEditingValue(
-                              text: capitalized,
-                              selection: TextSelection.collapsed(
-                                offset:
-                                    _firstNameController.selection.baseOffset,
-                              ),
-                            );
-                          }
-                        },
-                        validator: (v) {
-                          // Don't trim for validation to catch trailing spaces
-                          final value = v ?? '';
-                          final trimmedValue = value.trim();
-
-                          if (trimmedValue.isEmpty)
-                            return 'Please enter your first name';
-
-                          // Check for any consecutive spaces (including at end before trim)
-                          if (value.contains('  ')) return 'Invalid input';
-
-                          // Check if starts with a letter
-                          if (!RegExp(r'^[A-Za-z]').hasMatch(trimmedValue))
-                            return 'Invalid input';
-
-                          // Allow only letters and single spaces
-                          final nameRegex = RegExp(
-                            r"^[A-Za-z]+(\s[A-Za-z]+)*$",
-                          );
-                          if (!nameRegex.hasMatch(trimmedValue))
-                            return 'Invalid input';
-
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _lastNameController,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: _buildInputDecoration(hint: 'Last Name'),
-                        onChanged: (value) {
-                          // Auto-capitalize first letter if lowercase
-                          if (value.isNotEmpty &&
-                              value[0] == value[0].toLowerCase()) {
-                            final capitalized =
-                                value[0].toUpperCase() + value.substring(1);
-                            _lastNameController.value = TextEditingValue(
-                              text: capitalized,
-                              selection: TextSelection.collapsed(
-                                offset:
-                                    _lastNameController.selection.baseOffset,
-                              ),
-                            );
-                          }
-                        },
-                        validator: (v) {
-                          // Don't trim for validation to catch trailing spaces
-                          final value = v ?? '';
-                          final trimmedValue = value.trim();
-
-                          if (trimmedValue.isEmpty)
-                            return 'Please enter your last name';
-
-                          // Check for any consecutive spaces (including at end before trim)
-                          if (value.contains('  ')) return 'Invalid input';
-
-                          // Check if starts with a letter
-                          if (!RegExp(r'^[A-Za-z]').hasMatch(trimmedValue))
-                            return 'Invalid input';
-
-                          // Allow only letters and single spaces
-                          final nameRegex = RegExp(
-                            r"^[A-Za-z]+(\s[A-Za-z]+)*$",
-                          );
-                          if (!nameRegex.hasMatch(trimmedValue))
-                            return 'Invalid input';
-
-                          return null;
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: _buildInputDecoration(
-                    hint: 'Email Address',
-                    prefixIcon: Icons.email_outlined,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty)
-                      return 'Please enter your email';
-                    final emailRegex = RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    );
-                    if (!emailRegex.hasMatch(value))
-                      return 'Please enter a valid email';
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: !_isPasswordVisible,
-                  decoration: _buildInputDecoration(
-                    hint: 'Password',
-                    prefixIcon: Icons.lock_outline,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: Colors.grey[700],
-                      ),
-                      onPressed: () => setState(
-                        () => _isPasswordVisible = !_isPasswordVisible,
-                      ),
-                    ),
-                  ),
-                  validator: _validatePassword,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: !_isConfirmVisible,
-                  decoration: _buildInputDecoration(
-                    hint: 'Confirm Password',
-                    prefixIcon: Icons.lock_outline,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isConfirmVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: Colors.grey[700],
-                      ),
-                      onPressed: () => setState(
-                        () => _isConfirmVisible = !_isConfirmVisible,
-                      ),
-                    ),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty)
-                      return 'Please confirm your password';
-                    if (v != _passwordController.text)
-                      return 'Passwords do not match';
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                // Read-only Staff field (auto-filled)
-                TextFormField(
-                  controller: _staffController,
-                  readOnly: true,
-                  decoration: _buildInputDecoration(
-                    hint: 'Staff',
-                    prefixIcon: Icons.badge_outlined,
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Machine Key field
-                TextFormField(
-                  controller: _machineKeyController,
-                  decoration: _buildInputDecoration(
-                    hint: 'Machine Key',
-                    prefixIcon: Icons.vpn_key_outlined,
-                  ),
-                  validator: (v) {
-                    final value = v?.trim() ?? '';
-                    if (value.isEmpty) return 'Please enter the Machine Key';
-                    // simple validation: allow alphanumeric and dashes/underscores, min 4 chars
-                    final keyRegex = RegExp(r"^[A-Za-z0-9_-]{4,}");
-                    if (!keyRegex.hasMatch(value)) return 'Invalid machine key';
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _agreeTerms,
-                      onChanged: (v) =>
-                          setState(() => _agreeTerms = v ?? false),
-                      activeColor: const Color(0xFF5A6B47),
-                    ),
-                    const Expanded(
-                      child: Text('I agree to the Terms & Privacy Policy'),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleSignup,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFD700),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Create Account',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Already have an account? "),
-                    TextButton(
-                      onPressed: () =>
-                          Navigator.pushReplacementNamed(context, '/login'),
-                      style: ButtonStyle(
-                        overlayColor: MaterialStateProperty.all(
-                          Colors.transparent,
-                        ),
-                        splashFactory: NoSplash.splashFactory,
-                        padding: MaterialStateProperty.all(EdgeInsets.zero),
-                        minimumSize: MaterialStateProperty.all(
-                          const Size(0, 0),
-                        ),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: const Text(
-                        'Log in',
-                        style: TextStyle(
-                          color: Color(0xFF5A6B47),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

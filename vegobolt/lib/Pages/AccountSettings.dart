@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../components/navbar.dart';
-import '../components/header.dart';
 import '../utils/colors.dart';
+import '../utils/responsive_layout.dart';
+import '../utils/navigation_helper.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'alerts.dart';
@@ -41,23 +41,16 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
   }
 
   void _onNavTap(BuildContext context, int i) {
-    if (i == 4) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const SettingsPage()),
-      );
-      return;
-    }
+    if (i == 4) return; // Already on Settings-related page
+
     final pages = [
       const DashboardPage(),
       const MachinePage(),
       const AlertsPage(),
       const MaintenancePage(),
+      const SettingsPage(),
     ];
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => pages[i]),
-    );
+    NavigationHelper.navigateWithoutAnimation(context, pages[i]);
   }
 
   void _saveProfileChanges() {
@@ -118,20 +111,46 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
-      bottomNavigationBar: NavBar(
-        currentIndex: 4,
-        onTap: (i) => _onNavTap(context, i),
-      ),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Header(),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+    final responsive = ResponsiveHelper(context);
+    final responsivePadding = responsive.getValue(
+      mobile: 12.0,
+      tablet: 16.0,
+      desktop: 20.0,
+    );
+
+    return AdaptiveScaffold(
+      title: 'Account Settings',
+      currentIndex: 4,
+      onNavigationChanged: (i) => _onNavTap(context, i),
+      navigationItems: const [
+        NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
+        NavigationItem(icon: Icons.precision_manufacturing, label: 'Machine'),
+        NavigationItem(icon: Icons.warning_amber, label: 'Alerts'),
+        NavigationItem(icon: Icons.build, label: 'Maintenance'),
+        NavigationItem(icon: Icons.settings, label: 'Settings'),
+      ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A1A)
+                  : const Color(0xFFF5F5F5),
+              Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF2D2D2D)
+                  : Colors.white,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fixed Header
+              Padding(
+                padding: EdgeInsets.all(responsivePadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -142,9 +161,9 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                         color: AppColors.getTextPrimary(context),
                       ),
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        NavigationHelper.navigateWithoutAnimation(
                           context,
-                          MaterialPageRoute(builder: (_) => const SettingsPage()),
+                          const SettingsPage(),
                         );
                       },
                       padding: EdgeInsets.zero,
@@ -161,16 +180,32 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Manage your profile and security',
-                      style: TextStyle(
-                        color: AppColors.getTextSecondary(context),
-                        fontSize: 14,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: Text(
+                        'Manage your profile and security',
+                        style: TextStyle(
+                          color: AppColors.getTextSecondary(context),
+                          fontSize: 14,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: SingleChildScrollView(
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Scrollable Content
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: responsivePadding,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -180,15 +215,16 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
                             // SECURITY CARD
                             _buildSecuritySection(),
+                            const SizedBox(height: 24),
                           ],
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -237,9 +273,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              style: TextStyle(
-                color: AppColors.getTextPrimary(context),
-              ),
+              style: TextStyle(color: AppColors.getTextPrimary(context)),
               decoration: InputDecoration(
                 hintText: 'Email Address',
                 hintStyle: TextStyle(
@@ -301,9 +335,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             const SizedBox(height: 8),
             TextFormField(
               controller: _nameController,
-              style: TextStyle(
-                color: AppColors.getTextPrimary(context),
-              ),
+              style: TextStyle(color: AppColors.getTextPrimary(context)),
               decoration: InputDecoration(
                 hintText: 'Full Name',
                 hintStyle: TextStyle(
@@ -362,9 +394,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             const SizedBox(height: 8),
             TextFormField(
               controller: _addressController,
-              style: TextStyle(
-                color: AppColors.getTextPrimary(context),
-              ),
+              style: TextStyle(color: AppColors.getTextPrimary(context)),
               decoration: InputDecoration(
                 hintText: 'Address',
                 hintStyle: TextStyle(
@@ -506,9 +536,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             TextFormField(
               controller: _currentPasswordController,
               obscureText: _obscureCurrentPassword,
-              style: TextStyle(
-                color: AppColors.getTextPrimary(context),
-              ),
+              style: TextStyle(color: AppColors.getTextPrimary(context)),
               decoration: InputDecoration(
                 hintText: 'Enter Current Password',
                 hintStyle: TextStyle(
@@ -581,9 +609,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             TextFormField(
               controller: _newPasswordController,
               obscureText: _obscureNewPassword,
-              style: TextStyle(
-                color: AppColors.getTextPrimary(context),
-              ),
+              style: TextStyle(color: AppColors.getTextPrimary(context)),
               decoration: InputDecoration(
                 hintText: 'Enter New Password',
                 hintStyle: TextStyle(

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../components/navbar.dart';
 import '../components/alert_card.dart';
-import '../components/header.dart';
 import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
+import '../utils/responsive_layout.dart';
 import '../components/machine_status_card.dart';
 import 'machine.dart';
 import 'alerts.dart';
@@ -197,111 +196,183 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final machineProvider = Provider.of<MachineProvider>(context);
+    final responsive = ResponsiveHelper(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
-      bottomNavigationBar: NavBar(
-        currentIndex: 0,
-        onTap: (index) => _onNavTap(context, index),
-      ),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Header(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+    return AdaptiveScaffold(
+      title: 'VegoBolt Dashboard',
+      currentIndex: 0,
+      onNavigationChanged: (index) => _onNavTap(context, index),
+      navigationItems: const [
+        NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
+        NavigationItem(icon: Icons.precision_manufacturing, label: 'Machine'),
+        NavigationItem(icon: Icons.warning_amber, label: 'Alerts'),
+        NavigationItem(icon: Icons.build, label: 'Maintenance'),
+        NavigationItem(icon: Icons.settings, label: 'Settings'),
+      ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+              isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE8F5E9),
+            ],
+          ),
+        ),
+        child: ResponsiveLayout(
+          maxWidth: 1600,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Page header at the top
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 16, tablet: 20, desktop: 24),
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 12, tablet: 16, desktop: 20),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Dashboard',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.getTextPrimary(context),
-                      ),
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: responsive.getValue(
+                              mobile: 28,
+                              tablet: 32,
+                              desktop: 36,
+                            ),
+                          ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
                       'Monitor your VegoBolt system',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppColors.getTextSecondary(context),
-                        fontSize: 14,
+                        fontSize: responsive.getValue(
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    _buildSectionHeader('Machine Status'),
-                    const SizedBox(height: 12),
-
-                    MachineStatusCard(
-                      machineId: 'VB-0001',
-                      initialLocation: machineProvider.location,
-                      statusText: machineProvider.statusText,
-                      statusColor: machineProvider.statusColor,
-                      tankLevel: tankLevel,
-                      batteryValue: batteryValue,
-                      temperatureC: temperatureC,
-                      alertStatus: _currentAlertStatus,
-                      isEditable: false, // Disable editing in Dashboard
-                    ),
-
-                    const SizedBox(height: 12),
-                    _buildSectionHeader('Recent Alerts'),
-                    const SizedBox(height: 14),
-                    _alertsLoading
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(20),
-                              child: CircularProgressIndicator(),
-                            ),
-                          )
-                        : _alerts.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12.0,
-                              ),
-                              child: Text(
-                                'No alerts detected.',
-                                style: TextStyle(
-                                  color: AppColors.getTextSecondary(context),
-                                ),
-                              ),
-                            ),
-                          )
-                        : Column(
-                            children: _alerts.take(3).map((alert) {
-                              // Determine icon based on alert type
-                              final String alertType = alert['type'] ?? '';
-                              IconData alertIcon = Icons.warning_amber_rounded;
-
-                              if (alertType == 'temperature') {
-                                alertIcon = Icons.thermostat;
-                              } else if (alertType == 'tank') {
-                                alertIcon = Icons.local_gas_station;
-                              } else if (alertType == 'smoke') {
-                                alertIcon = Icons.warning_amber_rounded;
-                              }
-
-                              return AlertCard(
-                                title: alert['title'] ?? '',
-                                machine: alert['machine'] ?? '',
-                                location: alert['location'] ?? '',
-                                time: _formatTime(alert['time'] ?? ''),
-                                status: alert['status'] ?? '',
-                                statusColor: _getStatusColor(alert['status']),
-                                icon: alertIcon,
-                              );
-                            }).toList(),
-                          ),
                   ],
                 ),
               ),
-            ),
-          ],
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(responsive.getPadding()),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionHeader('Machine Status'),
+                      SizedBox(
+                        height: responsive.getValue(
+                          mobile: 12,
+                          tablet: 14,
+                          desktop: 16,
+                        ),
+                      ),
+
+                      MachineStatusCard(
+                        machineId: 'VB-0001',
+                        initialLocation: machineProvider.location,
+                        statusText: machineProvider.statusText,
+                        statusColor: machineProvider.statusColor,
+                        tankLevel: tankLevel,
+                        batteryValue: batteryValue,
+                        temperatureC: temperatureC,
+                        alertStatus: _currentAlertStatus,
+                        isEditable: false,
+                      ),
+
+                      SizedBox(
+                        height: responsive.getValue(
+                          mobile: 20,
+                          tablet: 24,
+                          desktop: 32,
+                        ),
+                      ),
+                      _buildSectionHeader('Recent Alerts'),
+                      SizedBox(
+                        height: responsive.getValue(
+                          mobile: 14,
+                          tablet: 16,
+                          desktop: 18,
+                        ),
+                      ),
+
+                      _alertsLoading
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(20),
+                                child: CircularProgressIndicator(),
+                              ),
+                            )
+                          : _alerts.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12.0,
+                                ),
+                                child: Text(
+                                  'No alerts detected.',
+                                  style: TextStyle(
+                                    color: AppColors.getTextSecondary(context),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ResponsiveGrid(
+                              mobileColumns: 1,
+                              tabletColumns: 1,
+                              desktopColumns: 1,
+                              spacing: responsive.getValue(
+                                mobile: 12,
+                                tablet: 16,
+                                desktop: 20,
+                              ),
+                              runSpacing: responsive.getValue(
+                                mobile: 12,
+                                tablet: 16,
+                                desktop: 20,
+                              ),
+                              children: _alerts.take(6).map((alert) {
+                                final String alertType = alert['type'] ?? '';
+                                IconData alertIcon =
+                                    Icons.warning_amber_rounded;
+
+                                if (alertType == 'temperature') {
+                                  alertIcon = Icons.thermostat;
+                                } else if (alertType == 'tank') {
+                                  alertIcon = Icons.local_gas_station;
+                                } else if (alertType == 'smoke') {
+                                  alertIcon = Icons.warning_amber_rounded;
+                                }
+
+                                return AlertCard(
+                                  title: alert['title'] ?? '',
+                                  machine: alert['machine'] ?? '',
+                                  location: alert['location'] ?? '',
+                                  time: _formatTime(alert['time'] ?? ''),
+                                  status: alert['status'] ?? '',
+                                  statusColor: _getStatusColor(alert['status']),
+                                  icon: alertIcon,
+                                );
+                              }).toList(),
+                            ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

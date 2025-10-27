@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../components/navbar.dart';
 import '../components/header.dart';
 import '../components/add_maintenance_modal.dart';
 import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
+import '../utils/responsive_layout.dart';
 import 'dashboard.dart';
 import 'alerts.dart';
 import 'machine.dart';
@@ -149,8 +149,19 @@ class _MaintenancePageState extends State<MaintenancePage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
+    final responsive = ResponsiveHelper(context);
+
+    return AdaptiveScaffold(
+      title: 'Maintenance',
+      currentIndex: 3,
+      onNavigationChanged: (index) => _onNavTap(context, index),
+      navigationItems: const [
+        NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
+        NavigationItem(icon: Icons.memory, label: 'Machine'),
+        NavigationItem(icon: Icons.warning, label: 'Alerts'),
+        NavigationItem(icon: Icons.build, label: 'Maintenance'),
+        NavigationItem(icon: Icons.settings, label: 'Settings'),
+      ],
       floatingActionButton: MouseRegion(
         onEnter: (_) => setState(() => _isHovering = true),
         onExit: (_) => setState(() => _isHovering = false),
@@ -179,126 +190,132 @@ class _MaintenancePageState extends State<MaintenancePage>
           ),
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const Header(),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      'Maintenance',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.getTextPrimary(context),
+      body: ResponsiveLayout(
+        maxWidth: 1600,
+        child: Container(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF121212)
+              : const Color(0xFFF5F5F5),
+          child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.all(responsive.getPadding()),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Only show header on mobile
+                  if (responsive.isMobile) ...[
+                    const Header(),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Title
+                  Text(
+                    'Maintenance',
+                    style: TextStyle(
+                      fontSize: responsive.getValue(
+                        mobile: 22,
+                        tablet: 28,
+                        desktop: 32,
+                      ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // Subtitle
+                  Text(
+                    'Track maintenance activities',
+                    style: TextStyle(
+                      color: AppColors.getTextSecondary(context),
+                      fontSize: responsive.getValue(
+                        mobile: 14,
+                        tablet: 16,
+                        desktop: 16,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    // Subtitle
-                    Text(
-                      'Track maintenance activities',
-                      style: TextStyle(
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Search bar
+                  TextField(
+                    style: TextStyle(color: AppColors.getTextPrimary(context)),
+                    decoration: InputDecoration(
+                      hintText: 'Search maintenance records...',
+                      hintStyle: TextStyle(
+                        color: AppColors.getTextLight(context),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
                         color: AppColors.getTextSecondary(context),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkCardBackground
+                          : AppColors.cardBackground,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Tab Bar
+                  Container(
+                    height: 45,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkCardBackground
+                          : AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkTextLight
+                            : AppColors.textLight,
+                        width: 1,
+                      ),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      indicator: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkGreen
+                            : AppColors.primaryGreen,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      labelColor: Colors.white,
+                      unselectedLabelColor:
+                          Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.cardBackground
+                          : AppColors.getTextSecondary(context),
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
+                      dividerColor: Colors.transparent,
+                      tabs: const [
+                        Tab(text: 'Scheduled'),
+                        Tab(text: 'History'),
+                      ],
                     ),
-                    const SizedBox(height: 12),
+                  ),
 
-                    // Search bar
-                    TextField(
-                      style: TextStyle(
-                        color: AppColors.getTextPrimary(context),
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Search maintenance records...',
-                        hintStyle: TextStyle(
-                          color: AppColors.getTextLight(context),
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: AppColors.getTextSecondary(context),
-                        ),
-                        filled: true,
-                        fillColor:
-                            Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkCardBackground
-                            : AppColors.cardBackground,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
+                  const SizedBox(height: 16),
+
+                  // Tab Content
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [_buildScheduledTab(), _buildHistoryTab()],
                     ),
-                    const SizedBox(height: 12),
-
-                    // Tab Bar
-                    Container(
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkCardBackground
-                            : AppColors.cardBackground,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkTextLight
-                              : AppColors.textLight,
-                          width: 1,
-                        ),
-                      ),
-                      child: TabBar(
-                        controller: _tabController,
-                        indicator: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkGreen
-                              : AppColors.primaryGreen,
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        labelColor: Colors.white,
-                        unselectedLabelColor:
-                            Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.cardBackground
-                            : AppColors.getTextSecondary(context),
-                        labelStyle: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                        dividerColor: Colors.transparent,
-                        tabs: const [
-                          Tab(text: 'Scheduled'),
-                          Tab(text: 'History'),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Tab Content
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [_buildScheduledTab(), _buildHistoryTab()],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
-      bottomNavigationBar: NavBar(
-        currentIndex: 3,
-        onTap: (index) => _onNavTap(context, index),
       ),
     );
   }

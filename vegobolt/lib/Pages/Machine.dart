@@ -4,11 +4,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../utils/api_config.dart';
-import '../components/navbar.dart';
-import '../components/header.dart';
-import '../components/machine_control_button.dart';
 import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
+import '../utils/responsive_layout.dart';
 import 'dashboard.dart';
 import '../components/machine_status_card.dart';
 import 'alerts.dart';
@@ -212,139 +210,138 @@ class _MachinePageState extends State<MachinePage> {
 
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.getCardBackground(context),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.criticalRed.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.power_settings_new,
-                    size: 48,
-                    color: AppColors.criticalRed,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Title
-                Text(
-                  'Shutdown Station',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.getTextPrimary(context),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Message
-                Text(
-                  'Are you sure you want to shutdown this station? This will stop all operations.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: AppColors.getTextSecondary(context),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          side: BorderSide(
-                            color: AppColors.getTextSecondary(context),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.getTextPrimary(context),
-                          ),
-                        ),
-                      ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 450),
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: AppColors.getCardBackground(context),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Icon
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: AppColors.criticalRed.withOpacity(0.12),
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          machineProvider.shutdown();
-                          Navigator.pop(context);
-                          // Show success message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Row(
-                                children: [
-                                  Icon(Icons.check_circle, color: Colors.white),
-                                  SizedBox(width: 12),
-                                  Text('Machine shutdown successfully'),
-                                ],
-                              ),
-                              backgroundColor: AppColors.criticalRed,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                    child: Icon(
+                      Icons.power_settings_new,
+                      size: 40,
+                      color: AppColors.criticalRed,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Title
+                  Text(
+                    'Shutdown Station',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Message
+                  Text(
+                    'Are you sure you want to shutdown this station? This will stop all operations.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.getTextSecondary(context),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          backgroundColor: AppColors.criticalRed,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: AppColors.getTextSecondary(
+                                context,
+                              ).withOpacity(0.3),
+                              width: 1,
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Shutdown',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.getTextPrimary(context),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            machineProvider.shutdown();
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text('Machine shutdown successfully'),
+                                  ],
+                                ),
+                                backgroundColor: AppColors.criticalRed,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: AppColors.criticalRed,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Shutdown',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -360,139 +357,138 @@ class _MachinePageState extends State<MachinePage> {
 
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
           ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.getCardBackground(context),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.power_rounded,
-                    size: 48,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Title
-                Text(
-                  'Activate Machine',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.getTextPrimary(context),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Message
-                Text(
-                  'Are you sure you want to activate this station? This will start all operations.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: AppColors.getTextSecondary(context),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          side: BorderSide(
-                            color: AppColors.getTextSecondary(context),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.getTextPrimary(context),
-                          ),
-                        ),
-                      ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 450),
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: AppColors.getCardBackground(context),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Icon
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(0.12),
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          machineProvider.activate();
-                          Navigator.pop(context);
-                          // Show success message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Row(
-                                children: [
-                                  Icon(Icons.check_circle, color: Colors.white),
-                                  SizedBox(width: 12),
-                                  Text('Machine activated successfully'),
-                                ],
-                              ),
-                              backgroundColor: AppColors.primaryGreen,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                    child: Icon(
+                      Icons.power_rounded,
+                      size: 40,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Title
+                  Text(
+                    'Activate Machine',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Message
+                  Text(
+                    'Are you sure you want to activate this station? This will start all operations.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.getTextSecondary(context),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          backgroundColor: AppColors.primaryGreen,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: AppColors.getTextSecondary(
+                                context,
+                              ).withOpacity(0.3),
+                              width: 1,
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Activate',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.getTextPrimary(context),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            machineProvider.activate();
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text('Machine activated successfully'),
+                                  ],
+                                ),
+                                backgroundColor: AppColors.primaryGreen,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Activate',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -503,112 +499,222 @@ class _MachinePageState extends State<MachinePage> {
   @override
   Widget build(BuildContext context) {
     final machineProvider = Provider.of<MachineProvider>(context);
+    final responsive = ResponsiveHelper(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
-      bottomNavigationBar: NavBar(
-        currentIndex: 1,
-        onTap: (index) => _onNavTap(context, index),
-      ),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Header(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+    return AdaptiveScaffold(
+      title: 'Machine',
+      currentIndex: 1,
+      onNavigationChanged: (index) => _onNavTap(context, index),
+      navigationItems: const [
+        NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
+        NavigationItem(icon: Icons.precision_manufacturing, label: 'Machine'),
+        NavigationItem(icon: Icons.warning_amber, label: 'Alerts'),
+        NavigationItem(icon: Icons.build, label: 'Maintenance'),
+        NavigationItem(icon: Icons.settings, label: 'Settings'),
+      ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+              isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE8F5E9),
+            ],
+          ),
+        ),
+        child: ResponsiveLayout(
+          maxWidth: 1600,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Page header at the top
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 16, tablet: 20, desktop: 24),
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 12, tablet: 16, desktop: 20),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Machine',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.getTextPrimary(context),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Control your VEGOBOLT station remotely',
-                      style: TextStyle(
-                        color: AppColors.getTextSecondary(context),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ✅ Live Machine Card (same data as Dashboard)
-                    MachineStatusCard(
-                      machineId: 'VB-0001',
-                      initialLocation: machineProvider.location,
-                      statusText: machineProvider.statusText,
-                      statusColor: machineProvider.statusColor,
-                      tankLevel: tankLevel,
-                      batteryValue: batteryValue,
-                      temperatureC: temperatureC,
-                      alertStatus: _currentAlertStatus,
-                      isEditable: true, // Enable editing in Machine page
-                      onLocationChanged: (newLocation) {
-                        // Update the provider to sync across pages
-                        machineProvider.updateLocation(newLocation);
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Dynamic Buttons based on machine status - No Restart button
-                    if (machineProvider.isActive)
-                      MachineControlButton(
-                        label: 'Shutdown Machine',
-                        icon: Icons.power_settings_new,
-                        color: AppColors.criticalRed,
-                        onPressed: () => _showShutdownConfirmation(context),
-                      ),
-                    if (!machineProvider.isActive)
-                      MachineControlButton(
-                        label: 'Activate Station',
-                        icon: Icons.power_rounded,
-                        color: AppColors.darkGreen,
-                        onPressed: () => _showActivateConfirmation(context),
-                      ),
-
-                    const SizedBox(height: 20),
-
-                    _buildSectionHeader('Scheduled Maintenance'),
-                    const SizedBox(height: 12),
-
-                    // Display maintenance items or empty state
-                    if (scheduledMaintenanceItems.isEmpty)
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24.0),
-                          child: Text(
-                            'No scheduled maintenance',
-                            style: TextStyle(
-                              color: AppColors.getTextSecondary(context),
-                              fontSize: 16,
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: responsive.getValue(
+                              mobile: 28,
+                              tablet: 32,
+                              desktop: 36,
                             ),
                           ),
-                        ),
-                      )
-                    else
-                      ...scheduledMaintenanceItems.map(
-                        (item) => _buildMaintenanceCard(
-                          title: item['title'],
-                          machineId: item['machineId'],
-                          location: item['location'],
-                          scheduledDate: item['scheduledDate'],
-                          priority: item['priority'],
-                          priorityColor: item['priorityColor'],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Control your VEGOBOLT station remotely',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.getTextSecondary(context),
+                        fontSize: responsive.getValue(
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
-            ),
-          ],
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(responsive.getPadding()),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Live Machine Card
+                      MachineStatusCard(
+                        machineId: 'VB-0001',
+                        initialLocation: machineProvider.location,
+                        statusText: machineProvider.statusText,
+                        statusColor: machineProvider.statusColor,
+                        tankLevel: tankLevel,
+                        batteryValue: batteryValue,
+                        temperatureC: temperatureC,
+                        alertStatus: _currentAlertStatus,
+                        isEditable: true,
+                        onLocationChanged: (newLocation) {
+                          machineProvider.updateLocation(newLocation);
+                        },
+                      ),
+
+                      SizedBox(
+                        height: responsive.getValue(
+                          mobile: 20,
+                          tablet: 24,
+                          desktop: 28,
+                        ),
+                      ),
+
+                      // Shutdown/Activate button - full width
+                      if (machineProvider.isActive)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(
+                              Icons.power_settings_new,
+                              size: 24,
+                            ),
+                            label: Text(
+                              'Shutdown Machine',
+                              style: TextStyle(
+                                fontSize: responsive.getValue(
+                                  mobile: 16,
+                                  tablet: 17,
+                                  desktop: 18,
+                                ),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.criticalRed,
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              shadowColor: AppColors.criticalRed.withOpacity(
+                                0.3,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () => _showShutdownConfirmation(context),
+                          ),
+                        ),
+                      if (!machineProvider.isActive)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.power_rounded, size: 24),
+                            label: Text(
+                              'Activate Station',
+                              style: TextStyle(
+                                fontSize: responsive.getValue(
+                                  mobile: 16,
+                                  tablet: 17,
+                                  desktop: 18,
+                                ),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen,
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              shadowColor: AppColors.primaryGreen.withOpacity(
+                                0.3,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () => _showActivateConfirmation(context),
+                          ),
+                        ),
+
+                      SizedBox(
+                        height: responsive.getValue(
+                          mobile: 24,
+                          tablet: 28,
+                          desktop: 32,
+                        ),
+                      ),
+
+                      _buildSectionHeader('Scheduled Maintenance'),
+                      const SizedBox(height: 16),
+
+                      if (scheduledMaintenanceItems.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24.0),
+                            child: Text(
+                              'No scheduled maintenance',
+                              style: TextStyle(
+                                color: AppColors.getTextSecondary(context),
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ResponsiveGrid(
+                          mobileColumns: 1,
+                          tabletColumns: 2,
+                          desktopColumns: 3,
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: scheduledMaintenanceItems
+                              .map(
+                                (item) => _buildMaintenanceCard(
+                                  title: item['title'],
+                                  machineId: item['machineId'],
+                                  location: item['location'],
+                                  scheduledDate: item['scheduledDate'],
+                                  priority: item['priority'],
+                                  priorityColor: item['priorityColor'],
+                                ),
+                              )
+                              .toList(),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
