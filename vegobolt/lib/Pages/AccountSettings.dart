@@ -6,7 +6,7 @@ import 'dashboard.dart';
 import 'machine.dart';
 import 'alerts.dart';
 import 'maintenance.dart';
-import 'settings.dart';
+import 'Settings.dart';
 
 class AccountSettingsPage extends StatefulWidget {
   const AccountSettingsPage({super.key});

@@ -7,7 +7,7 @@ import 'Pages/dashboard.dart';
 import 'Pages/login.dart';
 import 'Pages/machine.dart';
 import 'Pages/maintenance.dart';
-import 'Pages/settings.dart';
+import 'Pages/Settings.dart';
 import 'Pages/forgetpassword.dart';
 import 'Pages/ResetPassword.dart';
 import 'Pages/signup.dart';

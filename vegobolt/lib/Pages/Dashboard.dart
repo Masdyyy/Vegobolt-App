@@ -8,7 +8,7 @@ import '../components/machine_status_card.dart';
 import 'machine.dart';
 import 'alerts.dart';
 import 'maintenance.dart';
-import 'settings.dart';
+import 'Settings.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:async';

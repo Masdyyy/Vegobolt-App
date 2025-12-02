@@ -87,166 +87,149 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Fixed header at top
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(
-                horizontal: responsive.getValue(
-                  mobile: 12,
-                  tablet: 16,
-                  desktop: 20,
-                ),
-                vertical: responsive.getValue(
-                  mobile: 12,
-                  tablet: 16,
-                  desktop: 20,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Settings',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.getTextPrimary(context),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    child: Text(
-                      'Manage your account and preferences',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.getTextSecondary(context),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Scrollable content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.getValue(
-                    mobile: 12,
-                    tablet: 16,
-                    desktop: 20,
-                  ),
-                  vertical: 8,
+        child: ResponsiveLayout(
+          maxWidth: 1600,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Page header at the top
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 16, tablet: 20, desktop: 24),
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 12, tablet: 16, desktop: 20),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      height: responsive.getValue(
-                        mobile: 20,
-                        tablet: 24,
-                        desktop: 32,
+                    Text(
+                      'Settings',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: responsive.getValue(
+                          mobile: 28,
+                          tablet: 32,
+                          desktop: 36,
+                        ),
                       ),
                     ),
-
-                    // NOTIFICATION SETTINGS
-                    _buildExpandableCard(
-                      title: 'Notification Settings',
-                      icon: Icons.notifications_none_outlined,
-                      expanded: _isNotifExpanded,
-                      onExpand: (v) => setState(() => _isNotifExpanded = v),
-                      children: [
-                        _buildSwitch(
-                          'All Notifications',
-                          'Enable push notifications',
-                          _allNotif,
-                          (v) => setState(() => _allNotif = v),
-                        ),
-                        _buildSwitch(
-                          'Critical Alerts',
-                          'Emergency notifications',
-                          _critical,
-                          (v) => setState(() => _critical = v),
-                        ),
-                        _buildSwitch(
-                          'Maintenance Reminders',
-                          'Scheduled maintenance alerts',
-                          _maintenance,
-                          (v) => setState(() => _maintenance = v),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // APPEARANCE SETTINGS
-                    _buildExpandableCard(
-                      title: 'Appearance',
-                      icon: Icons.palette_outlined,
-                      expanded: false,
-                      onExpand: (v) {},
-                      children: [
-                        Consumer<ThemeProvider>(
-                          builder: (context, themeProvider, child) {
-                            return _buildSwitch(
-                              'Dark Mode',
-                              'Switch between light and dark theme',
-                              themeProvider.isDarkMode,
-                              (v) => themeProvider.toggleTheme(),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ACCOUNT & HELP
-                    _buildTile(Icons.person_outline, 'Account Settings', () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AccountSettingsPage(),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 16),
-                    _buildTile(Icons.help_outline, 'Help & Support', () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const HelpSupportPage(),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 24),
-
-                    // LOG OUT
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.criticalRed,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: _logout,
-                        child: const Text(
-                          'Log out',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Manage your account and preferences',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.getTextSecondary(context),
+                        fontSize: responsive.getValue(
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(responsive.getPadding()),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // NOTIFICATION SETTINGS
+                      _buildExpandableCard(
+                        title: 'Notification Settings',
+                        icon: Icons.notifications_none_outlined,
+                        expanded: _isNotifExpanded,
+                        onExpand: (v) => setState(() => _isNotifExpanded = v),
+                        children: [
+                          _buildSwitch(
+                            'All Notifications',
+                            'Enable push notifications',
+                            _allNotif,
+                            (v) => setState(() => _allNotif = v),
+                          ),
+                          _buildSwitch(
+                            'Critical Alerts',
+                            'Emergency notifications',
+                            _critical,
+                            (v) => setState(() => _critical = v),
+                          ),
+                          _buildSwitch(
+                            'Maintenance Reminders',
+                            'Scheduled maintenance alerts',
+                            _maintenance,
+                            (v) => setState(() => _maintenance = v),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // APPEARANCE SETTINGS
+                      _buildExpandableCard(
+                        title: 'Appearance',
+                        icon: Icons.palette_outlined,
+                        expanded: false,
+                        onExpand: (v) {},
+                        children: [
+                          Consumer<ThemeProvider>(
+                            builder: (context, themeProvider, child) {
+                              return _buildSwitch(
+                                'Dark Mode',
+                                'Switch between light and dark theme',
+                                themeProvider.isDarkMode,
+                                (v) => themeProvider.toggleTheme(),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ACCOUNT & HELP
+                      _buildTile(Icons.person_outline, 'Account Settings', () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AccountSettingsPage(),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 16),
+                      _buildTile(Icons.help_outline, 'Help & Support', () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HelpSupportPage(),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 24),
+
+                      // LOG OUT
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.criticalRed,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: _logout,
+                          child: const Text(
+                            'Log out',
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

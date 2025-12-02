@@ -11,7 +11,7 @@ import '../utils/responsive_layout.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'maintenance.dart';
-import 'settings.dart';
+import 'Settings.dart';
 
 class AlertsPage extends StatefulWidget {
   const AlertsPage({super.key});

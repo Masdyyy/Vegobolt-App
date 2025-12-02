@@ -246,9 +246,36 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       );
     }
 
-    // For mobile, use traditional bottom navigation
+    // For mobile, use traditional bottom navigation with custom app bar
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title), centerTitle: true),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF7BA23F),
+        elevation: 0,
+        toolbarHeight: 70,
+        automaticallyImplyLeading: false,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Logo on the left
+            Image.asset(
+              'assets/img/vegobolt_logo.png',
+              height: 80,
+              fit: BoxFit.contain,
+            ),
+            // Notification bell on the right
+            IconButton(
+              icon: const Icon(
+                Icons.notifications_outlined,
+                color: Colors.white,
+                size: 28,
+              ),
+              onPressed: () {
+                // TODO: Navigate to notifications page
+              },
+            ),
+          ],
+        ),
+      ),
       body: widget.body,
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,

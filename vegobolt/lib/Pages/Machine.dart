@@ -11,7 +11,7 @@ import 'dashboard.dart';
 import '../components/machine_status_card.dart';
 import 'alerts.dart';
 import 'maintenance.dart';
-import 'settings.dart';
+import 'Settings.dart';
 import '../providers/machine_provider.dart';
 
 class MachinePage extends StatefulWidget {
@@ -245,7 +245,7 @@ class _MachinePageState extends State<MachinePage> {
 
                   // Title
                   Text(
-                    'Shutdown Station',
+                    'Shutdown Machine',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -640,7 +640,7 @@ class _MachinePageState extends State<MachinePage> {
                           child: ElevatedButton.icon(
                             icon: const Icon(Icons.power_rounded, size: 24),
                             label: Text(
-                              'Activate Station',
+                              'Activate Machine',
                               style: TextStyle(
                                 fontSize: responsive.getValue(
                                   mobile: 16,

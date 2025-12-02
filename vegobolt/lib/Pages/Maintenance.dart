@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../components/header.dart';
 import '../components/add_maintenance_modal.dart';
 import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
@@ -7,7 +6,7 @@ import '../utils/responsive_layout.dart';
 import 'dashboard.dart';
 import 'alerts.dart';
 import 'machine.dart';
-import 'settings.dart';
+import 'Settings.dart';
 
 class MaintenancePage extends StatefulWidget {
   final List<Map<String, dynamic>>? initialScheduledItems;
@@ -157,7 +156,7 @@ class _MaintenancePageState extends State<MaintenancePage>
       onNavigationChanged: (index) => _onNavTap(context, index),
       navigationItems: const [
         NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
-        NavigationItem(icon: Icons.memory, label: 'Machine'),
+        NavigationItem(icon: Icons.precision_manufacturing, label: 'Machine'),
         NavigationItem(icon: Icons.warning, label: 'Alerts'),
         NavigationItem(icon: Icons.build, label: 'Maintenance'),
         NavigationItem(icon: Icons.settings, label: 'Settings'),
@@ -190,55 +189,73 @@ class _MaintenancePageState extends State<MaintenancePage>
           ),
         ),
       ),
-      body: ResponsiveLayout(
-        maxWidth: 1600,
-        child: Container(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF121212)
-              : const Color(0xFFF5F5F5),
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.all(responsive.getPadding()),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Only show header on mobile
-                  if (responsive.isMobile) ...[
-                    const Header(),
-                    const SizedBox(height: 16),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF121212)
+                  : const Color(0xFFF5F5F5),
+              Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1E1E1E)
+                  : const Color(0xFFE8F5E9),
+            ],
+          ),
+        ),
+        child: ResponsiveLayout(
+          maxWidth: 1600,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Page header at the top
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 16, tablet: 20, desktop: 24),
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 12, tablet: 16, desktop: 20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Maintenance',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: responsive.getValue(
+                          mobile: 28,
+                          tablet: 32,
+                          desktop: 36,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Track maintenance activities',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.getTextSecondary(context),
+                        fontSize: responsive.getValue(
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
+                      ),
+                    ),
                   ],
-
-                  // Title
-                  Text(
-                    'Maintenance',
-                    style: TextStyle(
-                      fontSize: responsive.getValue(
-                        mobile: 22,
-                        tablet: 28,
-                        desktop: 32,
-                      ),
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.getTextPrimary(context),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // Subtitle
-                  Text(
-                    'Track maintenance activities',
-                    style: TextStyle(
-                      color: AppColors.getTextSecondary(context),
-                      fontSize: responsive.getValue(
-                        mobile: 14,
-                        tablet: 16,
-                        desktop: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Search bar
-                  TextField(
-                    style: TextStyle(color: AppColors.getTextPrimary(context)),
+                ),
+              ),
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(responsive.getPadding()),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Search bar
+                      TextField(
+                        style: TextStyle(color: AppColors.getTextPrimary(context)),
                     decoration: InputDecoration(
                       hintText: 'Search maintenance records...',
                       hintStyle: TextStyle(
@@ -258,12 +275,12 @@ class _MaintenancePageState extends State<MaintenancePage>
                         borderSide: BorderSide.none,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
+                      ),
+                      const SizedBox(height: 12),
 
-                  // Tab Bar
-                  Container(
-                    height: 45,
+                      // Tab Bar
+                      Container(
+                        height: 45,
                     decoration: BoxDecoration(
                       color: Theme.of(context).brightness == Brightness.dark
                           ? AppColors.darkCardBackground
@@ -302,18 +319,21 @@ class _MaintenancePageState extends State<MaintenancePage>
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                  // Tab Content
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [_buildScheduledTab(), _buildHistoryTab()],
-                    ),
+                      // Tab Content
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [_buildScheduledTab(), _buildHistoryTab()],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
