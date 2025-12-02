@@ -30,34 +30,8 @@ async function initializeDatabase() {
         console.log(`📦 Found ${collections.length} existing collections:`);
         collections.forEach(col => console.log(`   - ${col.name}`));
 
-        // Create a test user to ensure the users collection is created
-        console.log('\n🔄 Creating users collection...');
-        
-        // Check if admin user already exists
-        const existingAdmin = await User.findByEmail('admin@vegobolt.com');
-        
-        if (!existingAdmin) {
-            // Hash password
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash('Admin123!', salt);
-
-            // Create admin user
-            const adminUser = await User.createUser({
-                email: 'admin@vegobolt.com',
-                password: hashedPassword,
-                displayName: 'Admin User',
-                firebaseUid: 'init-admin-uid-' + Date.now()
-            });
-
-            console.log('✅ Admin user created successfully!');
-            console.log(`   Email: ${adminUser.email}`);
-            console.log(`   Display Name: ${adminUser.displayName}`);
-            console.log(`   User ID: ${adminUser._id}`);
-        } else {
-            console.log('ℹ️  Admin user already exists');
-            console.log(`   Email: ${existingAdmin.email}`);
-            console.log(`   User ID: ${existingAdmin._id}`);
-        }
+        // Ensure the users collection is created
+        console.log('\n✅ Users collection ready');
 
         // List collections after creation
         console.log('\n📦 Final database structure:');

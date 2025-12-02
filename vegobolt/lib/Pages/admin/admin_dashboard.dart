@@ -268,10 +268,335 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   ),
                   const SizedBox(height: 20),
 
+                  // Statistics Cards
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final screenWidth = constraints.maxWidth;
+                      final isSmallScreen = screenWidth < 600;
+
+                      // Responsive font sizes
+                      final titleFontSize = isSmallScreen ? 10.0 : 13.0;
+                      final numberFontSize = isSmallScreen ? 20.0 : 28.0;
+                      final percentFontSize = isSmallScreen ? 9.0 : 11.0;
+                      final iconSize = isSmallScreen ? 16.0 : 20.0;
+                      final badgeIconSize = isSmallScreen ? 10.0 : 12.0;
+                      final cardPadding = isSmallScreen ? 12.0 : 16.0;
+
+                      return IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.all(cardPadding),
+                                decoration: BoxDecoration(
+                                  color: AppColors.cardBackground,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.primaryGreen.withOpacity(
+                                      0.2,
+                                    ),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.group,
+                                          color: AppColors.textSecondary,
+                                          size: iconSize,
+                                        ),
+                                        SizedBox(width: isSmallScreen ? 4 : 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Active Accounts',
+                                            style: TextStyle(
+                                              color: AppColors.textSecondary,
+                                              fontSize: titleFontSize,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.visible,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: isSmallScreen ? 8 : 12),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            '${_machineData.where((user) => user['isDisabled'] != true).length}',
+                                            style: TextStyle(
+                                              fontSize: numberFontSize,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        SizedBox(width: isSmallScreen ? 4 : 8),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: isSmallScreen ? 4 : 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryGreen
+                                                .withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '${(((_machineData.where((user) => user['isDisabled'] != true).length) / _machineData.length) * 100).toStringAsFixed(0)}%',
+                                                style: TextStyle(
+                                                  color: AppColors.primaryGreen,
+                                                  fontSize: percentFontSize,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 2),
+                                              Icon(
+                                                Icons.arrow_upward,
+                                                color: AppColors.primaryGreen,
+                                                size: badgeIconSize,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: isSmallScreen ? 8 : 12),
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.all(cardPadding),
+                                decoration: BoxDecoration(
+                                  color: AppColors.cardBackground,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.criticalRed.withOpacity(
+                                      0.2,
+                                    ),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.notifications_active,
+                                          color: AppColors.textSecondary,
+                                          size: iconSize,
+                                        ),
+                                        SizedBox(width: isSmallScreen ? 4 : 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Total Alerts',
+                                            style: TextStyle(
+                                              color: AppColors.textSecondary,
+                                              fontSize: titleFontSize,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.visible,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: isSmallScreen ? 8 : 12),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            '${_machineData.fold<int>(0, (sum, user) => sum + (user['alerts'] as int))}',
+                                            style: TextStyle(
+                                              fontSize: numberFontSize,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        SizedBox(width: isSmallScreen ? 4 : 8),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: isSmallScreen ? 4 : 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.criticalRed
+                                                .withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '34.0%',
+                                                style: TextStyle(
+                                                  color: AppColors.criticalRed,
+                                                  fontSize: percentFontSize,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 2),
+                                              Icon(
+                                                Icons.arrow_downward,
+                                                color: AppColors.criticalRed,
+                                                size: badgeIconSize,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: isSmallScreen ? 8 : 12),
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.all(cardPadding),
+                                decoration: BoxDecoration(
+                                  color: AppColors.cardBackground,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.primaryGreen.withOpacity(
+                                      0.2,
+                                    ),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.precision_manufacturing,
+                                          color: AppColors.textSecondary,
+                                          size: iconSize,
+                                        ),
+                                        SizedBox(width: isSmallScreen ? 4 : 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Active Machines',
+                                            style: TextStyle(
+                                              color: AppColors.textSecondary,
+                                              fontSize: titleFontSize,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.visible,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: isSmallScreen ? 8 : 12),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            '${_machineData.where((machine) => machine['status']?.toString().toLowerCase() == 'active').length}',
+                                            style: TextStyle(
+                                              fontSize: numberFontSize,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        SizedBox(width: isSmallScreen ? 4 : 8),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: isSmallScreen ? 4 : 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryGreen
+                                                .withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                '${(((_machineData.where((machine) => machine['status']?.toString().toLowerCase() == 'active').length) / _machineData.length) * 100).toStringAsFixed(0)}%',
+                                                style: TextStyle(
+                                                  color: AppColors.primaryGreen,
+                                                  fontSize: percentFontSize,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 2),
+                                              Icon(
+                                                Icons.arrow_upward,
+                                                color: AppColors.primaryGreen,
+                                                size: badgeIconSize,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
                   // Responsive Table
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final isSmallScreen = constraints.maxWidth < 600;
+                      final isMediumScreen = constraints.maxWidth < 800;
+
+                      // Responsive font sizes for table
+                      final headerFontSize = isSmallScreen
+                          ? 9.0
+                          : (isMediumScreen ? 10.0 : 11.0);
+                      final cellFontSize = isSmallScreen
+                          ? 9.0
+                          : (isMediumScreen ? 10.0 : 11.0);
+                      final subTextFontSize = isSmallScreen
+                          ? 7.0
+                          : (isMediumScreen ? 8.0 : 9.0);
+                      final badgeFontSize = isSmallScreen
+                          ? 7.0
+                          : (isMediumScreen ? 8.0 : 9.0);
+                      final alertFontSize = isSmallScreen
+                          ? 8.0
+                          : (isMediumScreen ? 9.0 : 10.0);
+                      final disabledBadgeFontSize = isSmallScreen
+                          ? 6.0
+                          : (isMediumScreen ? 7.0 : 8.0);
+
                       return Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
@@ -295,7 +620,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                 headingRowColor: WidgetStateProperty.all(
                                   AppColors.primaryGreen.withOpacity(0.1),
                                 ),
-                                columns: const [
+                                columns: [
                                   DataColumn(
                                     label: Expanded(
                                       child: Text(
@@ -303,7 +628,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: AppColors.textPrimary,
-                                          fontSize: 11,
+                                          fontSize: headerFontSize,
                                         ),
                                       ),
                                     ),
@@ -314,7 +639,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.textPrimary,
-                                        fontSize: 11,
+                                        fontSize: headerFontSize,
                                       ),
                                     ),
                                   ),
@@ -324,7 +649,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.textPrimary,
-                                        fontSize: 11,
+                                        fontSize: headerFontSize,
                                       ),
                                     ),
                                   ),
@@ -334,7 +659,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.textPrimary,
-                                        fontSize: 11,
+                                        fontSize: headerFontSize,
                                       ),
                                     ),
                                   ),
@@ -344,7 +669,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.textPrimary,
-                                        fontSize: 11,
+                                        fontSize: headerFontSize,
                                       ),
                                     ),
                                   ),
@@ -372,7 +697,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                                                 .textSecondary
                                                           : AppColors
                                                                 .textPrimary,
-                                                      fontSize: 11,
+                                                      fontSize: cellFontSize,
                                                       fontWeight:
                                                           FontWeight.w600,
                                                       decoration:
@@ -382,8 +707,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                                                 .lineThrough
                                                           : null,
                                                     ),
+                                                    maxLines: 2,
                                                     overflow:
-                                                        TextOverflow.ellipsis,
+                                                        TextOverflow.visible,
                                                   ),
                                                 ),
                                                 if (data['isDisabled'] == true)
@@ -405,11 +731,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                                             4,
                                                           ),
                                                     ),
-                                                    child: const Text(
+                                                    child: Text(
                                                       'DISABLED',
                                                       style: TextStyle(
                                                         color: Colors.red,
-                                                        fontSize: 8,
+                                                        fontSize:
+                                                            disabledBadgeFontSize,
                                                         fontWeight:
                                                             FontWeight.bold,
                                                       ),
@@ -431,24 +758,26 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                             children: [
                                               Text(
                                                 data['machine'],
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontWeight: FontWeight.w600,
                                                   color: AppColors.textPrimary,
-                                                  fontSize: 11,
+                                                  fontSize: cellFontSize,
                                                 ),
-                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.visible,
                                               ),
                                               Text(
                                                 data['location'].replaceAll(
                                                   'Barangay ',
                                                   '',
                                                 ),
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   color:
                                                       AppColors.textSecondary,
-                                                  fontSize: 9,
+                                                  fontSize: subTextFontSize,
                                                 ),
-                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.visible,
                                               ),
                                             ],
                                           ),
@@ -479,7 +808,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                                     data['status'],
                                                   ),
                                                   fontWeight: FontWeight.w600,
-                                                  fontSize: 9,
+                                                  fontSize: badgeFontSize,
                                                 ),
                                                 textAlign: TextAlign.center,
                                               ),
@@ -501,7 +830,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                                     ? AppColors.criticalRed
                                                     : AppColors.textSecondary,
                                                 fontWeight: FontWeight.w500,
-                                                fontSize: 10,
+                                                fontSize: alertFontSize,
                                               ),
                                             ),
                                           ),
@@ -543,7 +872,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                                   icon: const Icon(
                                                     Icons.more_vert,
                                                   ),
-                                                  iconSize: 18,
+                                                  iconSize: isSmallScreen
+                                                      ? 16
+                                                      : 18,
                                                   color: AppColors.textPrimary,
                                                   tooltip: 'Actions',
                                                   padding: EdgeInsets.zero,
