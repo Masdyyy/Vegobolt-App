@@ -1217,6 +1217,73 @@ const resetPassword = async (req, res) => {
     }
 };
 
+/**
+ * Change password for authenticated user
+ * Requires current password verification
+ */
+const changePassword = async (req, res) => {
+    try {
+        await connectDB();
+
+        const { currentPassword, newPassword } = req.body;
+
+        // Validate input
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide current password and new password'
+            });
+        }
+
+        // Validate new password strength
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: 'New password must be at least 8 characters long'
+            });
+        }
+
+        // Find user (req.user is set by authMiddleware)
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        // Verify current password
+        const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: 'Current password is incorrect'
+            });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update password
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Password changed successfully'
+        });
+
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error changing password',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -1228,5 +1295,6 @@ module.exports = {
     logout,
     requestPasswordReset,
     showResetPasswordPage,
-    resetPassword
+    resetPassword,
+    changePassword
 };
