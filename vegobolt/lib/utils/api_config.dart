@@ -50,6 +50,11 @@ class ApiConfig {
   static const String authLogout = '/api/auth/logout';
   static const String authPasswordReset = '/api/auth/password-reset';
   static const String authResetPassword = '/api/auth/reset-password';
+  static const String authChangePassword = '/api/auth/change-password';
+
+  // User Endpoints
+  static const String userProfile = '/api/users/profile';
+  static const String userAccount = '/api/users/account';
 
   // Helper method to get full URL
   static String getUrl(String endpoint) {

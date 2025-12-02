@@ -6,7 +6,7 @@ const User = require('../models/User');
 const getUserProfile = async (req, res) => {
     try {
         // req.user is set by authMiddleware
-        const user = await User.findOne({ firebaseUid: req.user.uid });
+        const user = await User.findById(req.user.id);
         
         if (!user) {
             return res.status(404).json({
@@ -34,10 +34,10 @@ const getUserProfile = async (req, res) => {
  */
 const updateUserProfile = async (req, res) => {
     try {
-        const { firstName, lastName, displayName, phoneNumber, profilePicture } = req.body;
+        const { firstName, lastName, displayName, phoneNumber, address, profilePicture } = req.body;
         
-        // Find user by Firebase UID
-        const user = await User.findOne({ firebaseUid: req.user.uid });
+        // Find user by user ID from auth middleware
+        const user = await User.findById(req.user.id);
         
         if (!user) {
             return res.status(404).json({
@@ -51,6 +51,7 @@ const updateUserProfile = async (req, res) => {
         if (lastName) user.lastName = lastName;
         if (displayName) user.displayName = displayName;
         if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
+        if (address !== undefined) user.address = address;
         if (profilePicture !== undefined) user.profilePicture = profilePicture;
         
         await user.save();
@@ -75,8 +76,8 @@ const updateUserProfile = async (req, res) => {
  */
 const deleteUserAccount = async (req, res) => {
     try {
-        // Find and delete user by Firebase UID
-        const user = await User.findOneAndDelete({ firebaseUid: req.user.uid });
+        // Find and delete user by user ID
+        const user = await User.findByIdAndDelete(req.user.id);
         
         if (!user) {
             return res.status(404).json({

@@ -80,4 +80,11 @@ router.get('/reset-password/:token', authController.showResetPasswordPage);
  */
 router.post('/reset-password', authController.resetPassword);
 
+/**
+ * @route   POST /api/auth/change-password
+ * @desc    Change password for authenticated user
+ * @access  Private (requires authentication)
+ */
+router.post('/change-password', authenticateToken, authController.changePassword);
+
 module.exports = router;

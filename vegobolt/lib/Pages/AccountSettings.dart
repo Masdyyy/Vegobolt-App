@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/responsive_layout.dart';
 import '../utils/navigation_helper.dart';
+import '../services/user_service.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'alerts.dart';
@@ -17,6 +18,7 @@ class AccountSettingsPage extends StatefulWidget {
 class _AccountSettingsPageState extends State<AccountSettingsPage> {
   final _formKey = GlobalKey<FormState>();
   final _passwordFormKey = GlobalKey<FormState>();
+  final _userService = UserService();
 
   // Profile Information Controllers
   final _emailController = TextEditingController();
@@ -29,6 +31,59 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
+  bool _isLoadingProfile = true;
+  bool _isSavingProfile = false;
+  bool _isSavingPassword = false;
+
+  // Store original user data
+  String? _userId;
+  String? _userEmail;
+  String? _firstName;
+  String? _lastName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    setState(() {
+      _isLoadingProfile = true;
+    });
+
+    final result = await _userService.getProfile();
+
+    if (result['success'] == true && mounted) {
+      final user = result['data']['user'];
+      setState(() {
+        _userId = user['_id'];
+        _userEmail = user['email'];
+        _firstName = user['firstName'];
+        _lastName = user['lastName'];
+
+        // Populate form fields
+        _emailController.text = user['email'] ?? '';
+        _nameController.text =
+            '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}'.trim();
+        _addressController.text = user['address'] ?? '';
+
+        _isLoadingProfile = false;
+      });
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoadingProfile = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Failed to load profile'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -53,14 +108,49 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     NavigationHelper.navigateWithoutAnimation(context, pages[i]);
   }
 
-  void _saveProfileChanges() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile information updated successfully!'),
-          backgroundColor: AppColors.primaryGreen,
-        ),
-      );
+  Future<void> _saveProfileChanges() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isSavingProfile = true;
+    });
+
+    // Parse full name into first and last name
+    final fullName = _nameController.text.trim();
+    final nameParts = fullName.split(' ');
+    final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
+    final result = await _userService.updateProfile(
+      firstName: firstName,
+      lastName: lastName,
+      address: _addressController.text.trim(),
+    );
+
+    if (mounted) {
+      setState(() {
+        _isSavingProfile = false;
+      });
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile information updated successfully!'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+        // Reload profile to get updated data
+        await _loadUserProfile();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Failed to update profile'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -96,16 +186,44 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     return null;
   }
 
-  void _savePassword() {
-    if (_passwordFormKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password changed successfully!'),
-          backgroundColor: AppColors.primaryGreen,
-        ),
-      );
-      _currentPasswordController.clear();
-      _newPasswordController.clear();
+  Future<void> _savePassword() async {
+    if (!_passwordFormKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isSavingPassword = true;
+    });
+
+    final result = await _userService.changePassword(
+      currentPassword: _currentPasswordController.text,
+      newPassword: _newPasswordController.text,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isSavingPassword = false;
+      });
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password changed successfully!'),
+            backgroundColor: AppColors.primaryGreen,
+          ),
+        );
+        _currentPasswordController.clear();
+        _newPasswordController.clear();
+        // Reset form validation state
+        _passwordFormKey.currentState?.reset();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Failed to change password'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -198,30 +316,36 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
               const SizedBox(height: 12),
               // Scrollable Content
               Expanded(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: responsivePadding,
+                child: _isLoadingProfile
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryGreen,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // PROFILE INFORMATION CARD
-                            _buildProfileSection(),
-                            const SizedBox(height: 24),
+                      )
+                    : Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1200),
+                          child: SingleChildScrollView(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: responsivePadding,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // PROFILE INFORMATION CARD
+                                  _buildProfileSection(),
+                                  const SizedBox(height: 24),
 
-                            // SECURITY CARD
-                            _buildSecuritySection(),
-                            const SizedBox(height: 24),
-                          ],
+                                  // SECURITY CARD
+                                  _buildSecuritySection(),
+                                  const SizedBox(height: 24),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
               ),
             ],
           ),
@@ -269,11 +393,22 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 color: AppColors.getTextPrimary(context),
               ),
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Email cannot be changed',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.getTextSecondary(context),
+              ),
+            ),
             const SizedBox(height: 8),
             TextFormField(
               controller: _emailController,
+              enabled: false,
               keyboardType: TextInputType.emailAddress,
-              style: TextStyle(color: AppColors.getTextPrimary(context)),
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context).withOpacity(0.6),
+              ),
               decoration: InputDecoration(
                 hintText: 'Email Address',
                 hintStyle: TextStyle(
@@ -281,8 +416,8 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 ),
                 filled: true,
                 fillColor: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkCardBackground
-                    : Colors.white,
+                    ? AppColors.darkCardBackground.withOpacity(0.5)
+                    : Colors.grey.shade100,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
@@ -299,11 +434,12 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                         : Colors.grey.shade300,
                   ),
                 ),
-                focusedBorder: OutlineInputBorder(
+                disabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: AppColors.primaryGreen,
-                    width: 2,
+                  borderSide: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade800
+                        : Colors.grey.shade300,
                   ),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
@@ -311,15 +447,6 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                   vertical: 14,
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!value.contains('@')) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 16),
 
@@ -455,15 +582,24 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: _saveProfileChanges,
-                  child: const Text(
-                    'Save Changes',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  onPressed: _isSavingProfile ? null : _saveProfileChanges,
+                  child: _isSavingProfile
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Save Changes',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -678,15 +814,24 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: _savePassword,
-                  child: const Text(
-                    'Save Password',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  onPressed: _isSavingPassword ? null : _savePassword,
+                  child: _isSavingPassword
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Save Password',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ),
