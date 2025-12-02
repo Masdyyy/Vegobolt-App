@@ -30,9 +30,9 @@ const createAdminUser = async () => {
     try {
         await connectDB();
 
-        const adminEmail = 'admin@vegobolt.com';
-        const adminPassword = 'Admin@123';
-        const adminDisplayName = 'Admin User';
+        const adminEmail = 'vegobolt@gmail.com';
+        const adminPassword = 'Pass@123';
+        const adminDisplayName = 'Vegobolt Admin';
 
         // Check if admin already exists
         const existingAdmin = await User.findByEmail(adminEmail);
