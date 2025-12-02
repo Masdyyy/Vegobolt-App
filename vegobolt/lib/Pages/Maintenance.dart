@@ -3,6 +3,7 @@ import '../components/add_maintenance_modal.dart';
 import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
 import '../utils/responsive_layout.dart';
+import '../services/maintenance_service.dart';
 import 'dashboard.dart';
 import 'alerts.dart';
 import 'machine.dart';
@@ -28,12 +29,53 @@ class _MaintenancePageState extends State<MaintenancePage>
   // History items
   List<Map<String, dynamic>> historyItems = [];
 
+  final MaintenanceService _maintenanceService = MaintenanceService();
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // Initialize with items from machine page if provided, otherwise empty
-    scheduledItems = widget.initialScheduledItems ?? [];
+    // Initialize with empty list then load from backend
+    scheduledItems = [];
+    _loadMaintenance();
+  }
+
+  Future<void> _loadMaintenance() async {
+    final items = await _maintenanceService.list();
+
+    final scheduled = <Map<String, dynamic>>[];
+    final history = <Map<String, dynamic>>[];
+
+    for (final it in items) {
+      final scheduledDate = it['scheduledDate'] != null ? DateTime.tryParse(it['scheduledDate']) : null;
+      final priority = (it['priority'] ?? 'Medium') as String;
+      final priorityColor = priority == 'High'
+          ? AppColors.criticalRed
+          : priority == 'Low'
+              ? AppColors.darkGreen
+              : const Color(0xFFFFD700);
+
+      final mapped = {
+        'id': it['_id'] ?? it['id'],
+        'title': it['title'] ?? 'Maintenance',
+        'machineId': it['machineId'] ?? '',
+        'location': it['location'] ?? '',
+        'priority': priority,
+        'priorityColor': priorityColor,
+        'scheduledDate': scheduledDate,
+      };
+
+      if ((it['status'] ?? 'Scheduled') == 'Resolved') {
+        history.add({...mapped, 'resolvedDate': it['updatedAt'] ?? DateTime.now().toIso8601String()});
+      } else {
+        scheduled.add(mapped);
+      }
+    }
+
+    setState(() {
+      scheduledItems = scheduled;
+      historyItems = history;
+    });
   }
 
   @override
@@ -43,14 +85,21 @@ class _MaintenancePageState extends State<MaintenancePage>
   }
 
   void _resolveItem(Map<String, dynamic> item) {
-    setState(() {
-      scheduledItems.remove(item);
-      historyItems.insert(0, {
-        ...item,
-        'resolvedDate': 'August 18, 2025',
-        'status': 'Resolved',
-      });
-      _tabController.animateTo(1); // Switch to History tab
+    _maintenanceService.resolve(item['id']).then((updated) {
+      if (updated != null) {
+        setState(() {
+          scheduledItems.remove(item);
+          final resolvedDate = updated['updatedAt'] ?? DateTime.now().toIso8601String();
+          historyItems.insert(0, {
+            ...item,
+            'resolvedDate': resolvedDate is String ? resolvedDate : resolvedDate.toString(),
+            'status': 'Resolved',
+          });
+          _tabController.animateTo(1);
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to resolve')));
+      }
     });
   }
 
@@ -60,14 +109,35 @@ class _MaintenancePageState extends State<MaintenancePage>
       builder: (context) => AddMaintenanceModal(
         isEdit: true,
         initialData: item,
-        onAdd: (updatedData) {
-          setState(() {
-            // Find and update the item
-            final index = scheduledItems.indexOf(item);
-            if (index != -1) {
-              scheduledItems[index] = updatedData;
-            }
+        onAdd: (updatedData) async {
+          final id = item['id'];
+          final success = await _maintenanceService.update(id, {
+            'title': updatedData['title'],
+            'machineId': updatedData['machineId'],
+            'location': updatedData['location'],
+            'priority': updatedData['priority'],
+            'scheduledDate': updatedData['scheduledDate']?.toIso8601String(),
           });
+
+          if (success) {
+            setState(() {
+              final index = scheduledItems.indexOf(item);
+              if (index != -1) {
+                scheduledItems[index] = {
+                  ...scheduledItems[index],
+                  'title': updatedData['title'],
+                  'machineId': updatedData['machineId'],
+                  'location': updatedData['location'],
+                  'priority': updatedData['priority'],
+                  'priorityColor': updatedData['priorityColor'],
+                  'scheduledDate': updatedData['scheduledDate'],
+                };
+              }
+            });
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Maintenance updated')));
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update maintenance')));
+          }
         },
       ),
     );
@@ -88,17 +158,24 @@ class _MaintenancePageState extends State<MaintenancePage>
           ),
           TextButton(
             onPressed: () {
-              setState(() {
-                scheduledItems.remove(item);
+              // Call backend to delete
+              _maintenanceService.delete(item['id']).then((ok) {
+                if (ok) {
+                  setState(() {
+                    scheduledItems.remove(item);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Maintenance item deleted'),
+                      backgroundColor: AppColors.criticalRed,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete')));
+                }
+                Navigator.pop(context);
               });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Maintenance item deleted'),
-                  backgroundColor: AppColors.criticalRed,
-                  duration: Duration(seconds: 2),
-                ),
-              );
             },
             child: const Text(
               'Delete',
@@ -173,10 +250,25 @@ class _MaintenancePageState extends State<MaintenancePage>
               showDialog(
                 context: context,
                 builder: (context) => AddMaintenanceModal(
-                  onAdd: (maintenanceData) {
-                    setState(() {
-                      scheduledItems.insert(0, maintenanceData);
-                    });
+                  onAdd: (maintenanceData) async {
+                    final created = await _maintenanceService.create(maintenanceData);
+                    if (created != null) {
+                      final mapped = {
+                        'id': created['_id'] ?? created['id'],
+                        'title': created['title'],
+                        'machineId': created['machineId'],
+                        'location': created['location'],
+                        'priority': created['priority'] ?? 'Medium',
+                        'priorityColor': maintenanceData['priorityColor'],
+                        'scheduledDate': created['scheduledDate'] != null ? DateTime.tryParse(created['scheduledDate']) : maintenanceData['scheduledDate'],
+                      };
+                      setState(() {
+                        scheduledItems.insert(0, mapped);
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Maintenance scheduled')));
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to schedule maintenance')));
+                    }
                   },
                 ),
               );

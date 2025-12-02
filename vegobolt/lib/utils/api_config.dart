@@ -60,4 +60,8 @@ class ApiConfig {
   static String getUrl(String endpoint) {
     return '$baseUrl$endpoint';
   }
+
+  // Maintenance endpoints
+  static const String maintenanceBase = '/api/maintenance';
+  static const String maintenanceList = maintenanceBase + '/';
 }
