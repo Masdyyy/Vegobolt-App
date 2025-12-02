@@ -48,10 +48,6 @@ class Header extends StatelessWidget {
               const SizedBox(width: 12),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: onNotificationTap,
-          ),
         ],
       ),
     );
