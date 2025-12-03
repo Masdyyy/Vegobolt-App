@@ -6,6 +6,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const tankRoutes = require('./routes/tankRoutes');  // 👈 Added for ESP32 data
 const alertRoutes = require('./routes/alertRoutes'); // 👈 Added alerts routes
+const maintenanceRoutes = require('./routes/maintenanceRoutes'); // maintenance endpoints
 const errorHandler = require('./utils/errorHandler');
 
 const app = express();
@@ -38,6 +39,8 @@ app.get('/health', (req, res) => {
 
 // ✅ New ESP32 Tank Data Route
 app.use('/api/tank', tankRoutes);
+// Maintenance endpoints
+app.use('/api/maintenance', maintenanceRoutes);
 
 // Existing routes
 app.use('/api/alerts', alertRoutes); // 👈 Wire up alerts route

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../components/navbar.dart';
-import '../components/header.dart';
 import '../components/add_maintenance_modal.dart';
 import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
+import '../utils/responsive_layout.dart';
+import '../services/maintenance_service.dart';
 import 'dashboard.dart';
 import 'alerts.dart';
 import 'machine.dart';
-import 'settings.dart';
+import 'Settings.dart';
 
 class MaintenancePage extends StatefulWidget {
   final List<Map<String, dynamic>>? initialScheduledItems;
@@ -29,12 +29,53 @@ class _MaintenancePageState extends State<MaintenancePage>
   // History items
   List<Map<String, dynamic>> historyItems = [];
 
+  final MaintenanceService _maintenanceService = MaintenanceService();
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // Initialize with items from machine page if provided, otherwise empty
-    scheduledItems = widget.initialScheduledItems ?? [];
+    // Initialize with empty list then load from backend
+    scheduledItems = [];
+    _loadMaintenance();
+  }
+
+  Future<void> _loadMaintenance() async {
+    final items = await _maintenanceService.list();
+
+    final scheduled = <Map<String, dynamic>>[];
+    final history = <Map<String, dynamic>>[];
+
+    for (final it in items) {
+      final scheduledDate = it['scheduledDate'] != null ? DateTime.tryParse(it['scheduledDate']) : null;
+      final priority = (it['priority'] ?? 'Medium') as String;
+      final priorityColor = priority == 'High'
+          ? AppColors.criticalRed
+          : priority == 'Low'
+              ? AppColors.darkGreen
+              : const Color(0xFFFFD700);
+
+      final mapped = {
+        'id': it['_id'] ?? it['id'],
+        'title': it['title'] ?? 'Maintenance',
+        'machineId': it['machineId'] ?? '',
+        'location': it['location'] ?? '',
+        'priority': priority,
+        'priorityColor': priorityColor,
+        'scheduledDate': scheduledDate,
+      };
+
+      if ((it['status'] ?? 'Scheduled') == 'Resolved') {
+        history.add({...mapped, 'resolvedDate': it['updatedAt'] ?? DateTime.now().toIso8601String()});
+      } else {
+        scheduled.add(mapped);
+      }
+    }
+
+    setState(() {
+      scheduledItems = scheduled;
+      historyItems = history;
+    });
   }
 
   @override
@@ -44,14 +85,21 @@ class _MaintenancePageState extends State<MaintenancePage>
   }
 
   void _resolveItem(Map<String, dynamic> item) {
-    setState(() {
-      scheduledItems.remove(item);
-      historyItems.insert(0, {
-        ...item,
-        'resolvedDate': 'August 18, 2025',
-        'status': 'Resolved',
-      });
-      _tabController.animateTo(1); // Switch to History tab
+    _maintenanceService.resolve(item['id']).then((updated) {
+      if (updated != null) {
+        setState(() {
+          scheduledItems.remove(item);
+          final resolvedDate = updated['updatedAt'] ?? DateTime.now().toIso8601String();
+          historyItems.insert(0, {
+            ...item,
+            'resolvedDate': resolvedDate is String ? resolvedDate : resolvedDate.toString(),
+            'status': 'Resolved',
+          });
+          _tabController.animateTo(1);
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to resolve')));
+      }
     });
   }
 
@@ -61,14 +109,35 @@ class _MaintenancePageState extends State<MaintenancePage>
       builder: (context) => AddMaintenanceModal(
         isEdit: true,
         initialData: item,
-        onAdd: (updatedData) {
-          setState(() {
-            // Find and update the item
-            final index = scheduledItems.indexOf(item);
-            if (index != -1) {
-              scheduledItems[index] = updatedData;
-            }
+        onAdd: (updatedData) async {
+          final id = item['id'];
+          final success = await _maintenanceService.update(id, {
+            'title': updatedData['title'],
+            'machineId': updatedData['machineId'],
+            'location': updatedData['location'],
+            'priority': updatedData['priority'],
+            'scheduledDate': updatedData['scheduledDate']?.toIso8601String(),
           });
+
+          if (success) {
+            setState(() {
+              final index = scheduledItems.indexOf(item);
+              if (index != -1) {
+                scheduledItems[index] = {
+                  ...scheduledItems[index],
+                  'title': updatedData['title'],
+                  'machineId': updatedData['machineId'],
+                  'location': updatedData['location'],
+                  'priority': updatedData['priority'],
+                  'priorityColor': updatedData['priorityColor'],
+                  'scheduledDate': updatedData['scheduledDate'],
+                };
+              }
+            });
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Maintenance updated')));
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update maintenance')));
+          }
         },
       ),
     );
@@ -89,17 +158,24 @@ class _MaintenancePageState extends State<MaintenancePage>
           ),
           TextButton(
             onPressed: () {
-              setState(() {
-                scheduledItems.remove(item);
+              // Call backend to delete
+              _maintenanceService.delete(item['id']).then((ok) {
+                if (ok) {
+                  setState(() {
+                    scheduledItems.remove(item);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Maintenance item deleted'),
+                      backgroundColor: AppColors.criticalRed,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete')));
+                }
+                Navigator.pop(context);
               });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Maintenance item deleted'),
-                  backgroundColor: AppColors.criticalRed,
-                  duration: Duration(seconds: 2),
-                ),
-              );
             },
             child: const Text(
               'Delete',
@@ -149,8 +225,19 @@ class _MaintenancePageState extends State<MaintenancePage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
+    final responsive = ResponsiveHelper(context);
+
+    return AdaptiveScaffold(
+      title: 'Maintenance',
+      currentIndex: 3,
+      onNavigationChanged: (index) => _onNavTap(context, index),
+      navigationItems: const [
+        NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
+        NavigationItem(icon: Icons.precision_manufacturing, label: 'Machine'),
+        NavigationItem(icon: Icons.warning, label: 'Alerts'),
+        NavigationItem(icon: Icons.build, label: 'Maintenance'),
+        NavigationItem(icon: Icons.settings, label: 'Settings'),
+      ],
       floatingActionButton: MouseRegion(
         onEnter: (_) => setState(() => _isHovering = true),
         onExit: (_) => setState(() => _isHovering = false),
@@ -163,10 +250,25 @@ class _MaintenancePageState extends State<MaintenancePage>
               showDialog(
                 context: context,
                 builder: (context) => AddMaintenanceModal(
-                  onAdd: (maintenanceData) {
-                    setState(() {
-                      scheduledItems.insert(0, maintenanceData);
-                    });
+                  onAdd: (maintenanceData) async {
+                    final created = await _maintenanceService.create(maintenanceData);
+                    if (created != null) {
+                      final mapped = {
+                        'id': created['_id'] ?? created['id'],
+                        'title': created['title'],
+                        'machineId': created['machineId'],
+                        'location': created['location'],
+                        'priority': created['priority'] ?? 'Medium',
+                        'priorityColor': maintenanceData['priorityColor'],
+                        'scheduledDate': created['scheduledDate'] != null ? DateTime.tryParse(created['scheduledDate']) : maintenanceData['scheduledDate'],
+                      };
+                      setState(() {
+                        scheduledItems.insert(0, mapped);
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Maintenance scheduled')));
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to schedule maintenance')));
+                    }
                   },
                 ),
               );
@@ -179,126 +281,153 @@ class _MaintenancePageState extends State<MaintenancePage>
           ),
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const Header(),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF121212)
+                  : const Color(0xFFF5F5F5),
+              Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1E1E1E)
+                  : const Color(0xFFE8F5E9),
+            ],
+          ),
+        ),
+        child: ResponsiveLayout(
+          maxWidth: 1600,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Page header at the top
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 16, tablet: 20, desktop: 24),
+                  responsive.getPadding(),
+                  responsive.getValue(mobile: 12, tablet: 16, desktop: 20),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title
                     Text(
                       'Maintenance',
-                      style: TextStyle(
-                        fontSize: 22,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.getTextPrimary(context),
+                        fontSize: responsive.getValue(
+                          mobile: 28,
+                          tablet: 32,
+                          desktop: 36,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    // Subtitle
+                    const SizedBox(height: 8),
                     Text(
                       'Track maintenance activities',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppColors.getTextSecondary(context),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Search bar
-                    TextField(
-                      style: TextStyle(
-                        color: AppColors.getTextPrimary(context),
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Search maintenance records...',
-                        hintStyle: TextStyle(
-                          color: AppColors.getTextLight(context),
+                        fontSize: responsive.getValue(
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
                         ),
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: AppColors.getTextSecondary(context),
-                        ),
-                        filled: true,
-                        fillColor:
-                            Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkCardBackground
-                            : AppColors.cardBackground,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Tab Bar
-                    Container(
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkCardBackground
-                            : AppColors.cardBackground,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkTextLight
-                              : AppColors.textLight,
-                          width: 1,
-                        ),
-                      ),
-                      child: TabBar(
-                        controller: _tabController,
-                        indicator: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkGreen
-                              : AppColors.primaryGreen,
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        labelColor: Colors.white,
-                        unselectedLabelColor:
-                            Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.cardBackground
-                            : AppColors.getTextSecondary(context),
-                        labelStyle: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                        dividerColor: Colors.transparent,
-                        tabs: const [
-                          Tab(text: 'Scheduled'),
-                          Tab(text: 'History'),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Tab Content
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [_buildScheduledTab(), _buildHistoryTab()],
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(responsive.getPadding()),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Search bar
+                      TextField(
+                        style: TextStyle(color: AppColors.getTextPrimary(context)),
+                    decoration: InputDecoration(
+                      hintText: 'Search maintenance records...',
+                      hintStyle: TextStyle(
+                        color: AppColors.getTextLight(context),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: AppColors.getTextSecondary(context),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkCardBackground
+                          : AppColors.cardBackground,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Tab Bar
+                      Container(
+                        height: 45,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkCardBackground
+                          : AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkTextLight
+                            : AppColors.textLight,
+                        width: 1,
+                      ),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      indicator: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkGreen
+                            : AppColors.primaryGreen,
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      labelColor: Colors.white,
+                      unselectedLabelColor:
+                          Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.cardBackground
+                          : AppColors.getTextSecondary(context),
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      dividerColor: Colors.transparent,
+                      tabs: const [
+                        Tab(text: 'Scheduled'),
+                        Tab(text: 'History'),
+                      ],
+                    ),
+                  ),
+
+                      const SizedBox(height: 16),
+
+                      // Tab Content
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [_buildScheduledTab(), _buildHistoryTab()],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: NavBar(
-        currentIndex: 3,
-        onTap: (index) => _onNavTap(context, index),
       ),
     );
   }

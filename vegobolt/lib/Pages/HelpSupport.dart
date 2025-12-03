@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import '../components/navbar.dart';
-import '../components/header.dart';
 import '../utils/colors.dart';
+import '../utils/responsive_layout.dart';
 import '../utils/navigation_helper.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'alerts.dart';
 import 'maintenance.dart';
-import 'settings.dart';
+import 'Settings.dart';
 
 class HelpSupportPage extends StatefulWidget {
   const HelpSupportPage({super.key});
@@ -18,29 +17,16 @@ class HelpSupportPage extends StatefulWidget {
 class _HelpSupportPageState extends State<HelpSupportPage> {
   bool _isGuideExpanded = false;
   bool _isContactExpanded = false;
-  final ScrollController _scrollController = ScrollController();
-  final GlobalKey _guideKey = GlobalKey();
-  final GlobalKey _contactKey = GlobalKey();
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
 
   void _onNavTap(BuildContext context, int i) {
-    if (i == 4) {
-      NavigationHelper.navigateWithoutAnimation(
-        context,
-        const SettingsPage(),
-      );
-      return;
-    }
+    if (i == 4) return; // Already on Settings-related page
+
     final pages = [
       const DashboardPage(),
       const MachinePage(),
       const AlertsPage(),
       const MaintenancePage(),
+      const SettingsPage(),
     ];
     NavigationHelper.navigateWithoutAnimation(context, pages[i]);
   }
@@ -49,114 +35,126 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
     setState(() {
       _isGuideExpanded = !_isGuideExpanded;
     });
-
-    if (_isGuideExpanded) {
-      // Scroll to the guide card after expansion animation
-      Future.delayed(const Duration(milliseconds: 350), () {
-        final RenderBox? renderBox =
-            _guideKey.currentContext?.findRenderObject() as RenderBox?;
-        if (renderBox != null) {
-          final position = renderBox.localToGlobal(Offset.zero).dy;
-          final scrollPosition =
-              _scrollController.position.pixels + position - 100;
-
-          _scrollController.animateTo(
-            scrollPosition,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        }
-      });
-    }
   }
 
   void _toggleContactInfo() {
     setState(() {
       _isContactExpanded = !_isContactExpanded;
     });
-
-    if (_isContactExpanded) {
-      // Scroll to the contact card after expansion animation
-      Future.delayed(const Duration(milliseconds: 350), () {
-        final RenderBox? renderBox =
-            _contactKey.currentContext?.findRenderObject() as RenderBox?;
-        if (renderBox != null) {
-          final position = renderBox.localToGlobal(Offset.zero).dy;
-          final scrollPosition =
-              _scrollController.position.pixels + position - 100;
-
-          _scrollController.animateTo(
-            scrollPosition,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        }
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
-      bottomNavigationBar: NavBar(
-        currentIndex: 4,
-        onTap: (i) => _onNavTap(context, i),
-      ),
-      body: SafeArea(
+    final responsive = ResponsiveHelper(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AdaptiveScaffold(
+      title: 'Help & Support',
+      currentIndex: 4,
+      onNavigationChanged: (index) => _onNavTap(context, index),
+      navigationItems: const [
+        NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
+        NavigationItem(icon: Icons.precision_manufacturing, label: 'Machine'),
+        NavigationItem(icon: Icons.warning_amber, label: 'Alerts'),
+        NavigationItem(icon: Icons.build, label: 'Maintenance'),
+        NavigationItem(icon: Icons.settings, label: 'Settings'),
+      ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
+              isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE8F5E9),
+            ],
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Header(),
+            // Fixed header at top
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                horizontal: responsive.getValue(
+                  mobile: 12,
+                  tablet: 16,
+                  desktop: 20,
+                ),
+                vertical: responsive.getValue(
+                  mobile: 12,
+                  tablet: 16,
+                  desktop: 20,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Back button
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                    onPressed: () {
+                      NavigationHelper.navigateWithoutAnimation(
+                        context,
+                        const SettingsPage(),
+                      );
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    alignment: Alignment.centerLeft,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Help & Support',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Find answers, contact support, and explore guides',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.getTextSecondary(context),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+            // Scrollable content
             Expanded(
               child: SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Back button
-                    IconButton(
-                      icon: Icon(
-                        Icons.arrow_back,
-                        color: AppColors.getTextPrimary(context),
-                      ),
-                      onPressed: () {
-                        NavigationHelper.navigateWithoutAnimation(
-                          context,
-                          const SettingsPage(),
-                        );
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      alignment: Alignment.centerLeft,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Help & Support',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.getTextPrimary(context),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Find answers, contact support, and explore guides.',
-                      style: TextStyle(
-                        color: AppColors.getTextSecondary(context),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.getValue(
+                    mobile: 12,
+                    tablet: 16,
+                    desktop: 20,
+                  ),
+                  vertical: 8,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // TROUBLESHOOTING GUIDE CARD
+                        _buildTroubleshootingCard(),
+                        const SizedBox(height: 16),
 
-                    // TROUBLESHOOTING GUIDE CARD
-                    _buildTroubleshootingCard(),
-                    const SizedBox(height: 16),
-
-                    // CONTACT TECHNICAL SUPPORT CARD
-                    _buildContactSupportCard(),
-                  ],
+                        // CONTACT TECHNICAL SUPPORT CARD
+                        _buildContactSupportCard(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -169,7 +167,6 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
   // 🔧 Troubleshooting Guide Card with Expandable Content
   Widget _buildTroubleshootingCard() {
     return Container(
-      key: _guideKey,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
@@ -265,83 +262,73 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
             curve: Curves.easeInOut,
             child: _isGuideExpanded
                 ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF2A2A2A)
-                              : const Color(0xFFFFF9E6),
-                          borderRadius: BorderRadius.circular(8),
+                      const Divider(),
+                      const SizedBox(height: 16),
+
+                      // Common Issues Section
+                      Text(
+                        'Common Issues:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.getTextPrimary(context),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Common Issues Section
-                            Text(
-                              'Common Issues:',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.getTextPrimary(context),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
+                      ),
+                      const SizedBox(height: 12),
 
-                            _buildIssueItem(
-                              'Issue 1: Machine not responding.',
-                              'Make sure the vendo machine is powered on and the container is properly placed. Check that there\'s no blockage in the oil dispensing system.',
-                            ),
-                            const SizedBox(height: 12),
+                      _buildIssueItem(
+                        'Issue 1: Machine not responding.',
+                        'Make sure the vendo machine is powered on and the container is properly placed. Check that there\'s no blockage in the oil dispensing system.',
+                      ),
+                      const SizedBox(height: 12),
 
-                            _buildIssueItem(
-                              'Issue 2: App not showing updated data.',
-                              'If the collected oil amount is not updating, refresh the app or log out and log back in. Ensure the machine has finished processing the oil before checking.',
-                            ),
-                            const SizedBox(height: 12),
+                      _buildIssueItem(
+                        'Issue 2: App not showing updated data.',
+                        'If the collected oil amount is not updating, refresh the app or log out and log back in. Ensure the machine has finished processing the oil before checking.',
+                      ),
+                      const SizedBox(height: 12),
 
-                            _buildIssueItem(
-                              'Issue 3: Oil not being measured correctly.',
-                              'Verify that the oil container is clean and free from sediment. Ensure you are using the required limit for accurate measurement.',
-                            ),
-                            const SizedBox(height: 20),
+                      _buildIssueItem(
+                        'Issue 3: Oil not being measured correctly.',
+                        'Verify that the oil container is clean and free from sediment. Ensure you are using the required limit for accurate measurement.',
+                      ),
+                      const SizedBox(height: 20),
 
-                            // FAQs Section
-                            Text(
-                              'FAQs:',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.getTextPrimary(context),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-
-                            _buildFAQItem(
-                              'Q: Can I use the machine without internet?',
-                              'Yes, the machine works offline. Data will update in the app once it\'s synced.',
-                            ),
-                            const SizedBox(height: 12),
-
-                            _buildFAQItem(
-                              'Q: Do I need to pay with money?',
-                              'No. Payment is done by depositing used cooking oil, which the machine measures.',
-                            ),
-                            const SizedBox(height: 12),
-
-                            _buildFAQItem(
-                              'Q: What type of oil can I bring?',
-                              'Only used cooking oil.',
-                            ),
-                            const SizedBox(height: 12),
-
-                            _buildFAQItem(
-                              'Q: How will I know my oil was accepted?',
-                              'Check the app to view the collected amount and confirm the transaction once processing is complete.',
-                            ),
-                          ],
+                      // FAQs Section
+                      Text(
+                        'FAQs:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.getTextPrimary(context),
                         ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildFAQItem(
+                        'Q: Can I use the machine without internet?',
+                        'Yes, the machine works offline. Data will update in the app once it\'s synced.',
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildFAQItem(
+                        'Q: Do I need to pay with money?',
+                        'No. Payment is done by depositing used cooking oil, which the machine measures.',
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildFAQItem(
+                        'Q: What type of oil can I bring?',
+                        'Only used cooking oil.',
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildFAQItem(
+                        'Q: How will I know my oil was accepted?',
+                        'Check the app to view the collected amount and confirm the transaction once processing is complete.',
                       ),
                     ],
                   )
@@ -410,7 +397,6 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
   // 🔧 Reusable Support Card Widget
   Widget _buildContactSupportCard() {
     return Container(
-      key: _contactKey,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
