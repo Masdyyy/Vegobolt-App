@@ -14,7 +14,6 @@ class AdminSettingsPage extends StatefulWidget {
 
 class _AdminSettingsPageState extends State<AdminSettingsPage> {
   bool _enableNotifications = true;
-  bool _autoRefresh = true;
   final int _currentIndex = 1; // Settings tab
 
   void _onNavTap(int index) {
@@ -74,16 +73,6 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                       value: _enableNotifications,
                       onChanged: (v) =>
                           setState(() => _enableNotifications = v),
-                      activeThumbColor: AppColors.primaryGreen,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSettingTile(
-                    icon: Icons.refresh_outlined,
-                    title: 'Auto Refresh',
-                    trailing: Switch(
-                      value: _autoRefresh,
-                      onChanged: (v) => setState(() => _autoRefresh = v),
                       activeThumbColor: AppColors.primaryGreen,
                     ),
                   ),
