@@ -80,8 +80,6 @@ class _AlertsPageState extends State<AlertsPage> {
         return _alerts.where((a) => a['status'] == 'Critical').toList();
       case 2:
         return _alerts.where((a) => a['status'] == 'Warning').toList();
-      case 3:
-        return _alerts.where((a) => a['status'] == 'Resolved').toList();
       default:
         return _alerts;
     }
@@ -286,7 +284,7 @@ class _AlertsPageState extends State<AlertsPage> {
   }
 
   Widget _buildTabs() {
-    final List<String> tabs = ['All', 'Critical', 'Warning', 'Resolved'];
+    final List<String> tabs = ['All', 'Critical', 'Warning'];
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark

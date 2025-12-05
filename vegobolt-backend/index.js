@@ -39,12 +39,32 @@ if (require.main === module) {
     const PORT = process.env.PORT || 3000;
     
     connectDB().then(() => {
-        app.listen(PORT, '0.0.0.0', () => {
+        const server = app.listen(PORT, '0.0.0.0', () => {
             console.log(`🚀 Local server running at http://localhost:${PORT}`);
             console.log(`📍 Health check: http://localhost:${PORT}/health`);
             console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
             console.log(`📱 ESP32 API: http://localhost:${PORT}/api/tank`);
             console.log(`🚨 Alerts API: http://localhost:${PORT}/api/alerts`);
+            
+            // Setup mDNS/Bonjour for automatic network discovery
+            try {
+                const Bonjour = require('bonjour-service');
+                const instance = new Bonjour.Bonjour();
+                instance.publish({
+                    name: 'Vegobolt Server',
+                    type: 'http',
+                    port: PORT,
+                    txt: {
+                        path: '/api'
+                    }
+                });
+                
+                console.log(`🌐 mDNS: Server discoverable as 'vegobolt.local:${PORT}'`);
+                console.log(`📱 Flutter app can now use: http://vegobolt.local:${PORT}`);
+            } catch (err) {
+                console.log(`⚠️  mDNS not available: ${err.message}`);
+                console.log(`📱 Use manual IP address in Flutter app instead`);
+            }
         });
     }).catch(err => {
         console.error('Failed to start server:', err);

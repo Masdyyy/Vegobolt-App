@@ -12,32 +12,65 @@ class ApiConfig {
   // 🧪 LOCAL DEVELOPMENT URL
   static const String developmentUrl = 'http://localhost:3000';
 
+  // 🌐 mDNS LOCAL NETWORK URL (auto-discovery)
+  // Works automatically when backend and app are on same WiFi
+  static const String mdnsUrl = 'http://vegobolt.local:3000';
+
+  // 📍 FALLBACK: Manual IP (change this to your computer's IP if mDNS doesn't work)
+  static const String manualIpUrl = 'http://192.168.1.23:3000';
+
   // Toggle between production and development
   // Set to true for production, false for local testing
-  static const bool useProduction = false;
+  static const bool useProduction = true;
+
+  // Use manual IP instead of mDNS (for troubleshooting on mobile)
+  static const bool useManualIp = false;
 
   // Automatically detect platform and use correct URL
   static String get baseUrl {
+    print('🔍 Detecting platform...');
+
     // Use production if enabled
     if (useProduction) {
+      print('✅ Using PRODUCTION: $productionUrl');
       return productionUrl;
     }
 
     // Otherwise use local development URLs
     if (kIsWeb) {
       // Web browser (Chrome, Edge, etc.)
+      print('🌐 Platform: Web Browser → using localhost');
       return 'http://localhost:3000';
+    } else if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      // Desktop platforms
+      print(
+        '🖥️ Platform: Desktop (${Platform.operatingSystem}) → using localhost',
+      );
+      return developmentUrl;
     } else if (Platform.isAndroid) {
-      // Android real device (use your PC's LAN IP)
-
-      return 'http://192.168.1.20:3000';
+      // Android real device
+      print('📱 Platform: Android');
+      if (useManualIp) {
+        print('   → using manual IP: $manualIpUrl');
+        return manualIpUrl;
+      } else {
+        print('   → using mDNS: $mdnsUrl');
+        return mdnsUrl;
+      }
     } else if (Platform.isIOS) {
-      // iOS Simulator
-      return 'http://localhost:3000';
+      // iOS devices
+      print('📱 Platform: iOS');
+      if (useManualIp) {
+        print('   → using manual IP: $manualIpUrl');
+        return manualIpUrl;
+      } else {
+        print('   → using mDNS: $mdnsUrl');
+        return mdnsUrl;
+      }
     } else {
-      // Physical devices on same WiFi network
-
-      return 'http://192.168.1.20:3000';
+      // Unknown platform
+      print('❓ Platform: Unknown → using localhost');
+      return developmentUrl;
     }
   }
 
