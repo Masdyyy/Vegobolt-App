@@ -3,6 +3,8 @@ import '../utils/colors.dart';
 import '../utils/responsive_layout.dart';
 import '../utils/navigation_helper.dart';
 import '../services/user_service.dart';
+import '../components/header.dart';
+import '../components/admin_navbar.dart';
 import 'dashboard.dart';
 import 'machine.dart';
 import 'alerts.dart';
@@ -10,7 +12,10 @@ import 'maintenance.dart';
 import 'Settings.dart';
 
 class AccountSettingsPage extends StatefulWidget {
-  const AccountSettingsPage({super.key});
+  final bool isAdmin;
+
+  const AccountSettingsPage({super.key, this.isAdmin = false});
+
   @override
   State<AccountSettingsPage> createState() => _AccountSettingsPageState();
 }
@@ -236,6 +241,11 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
       desktop: 20.0,
     );
 
+    // Admin users should use a different layout with admin navbar
+    if (widget.isAdmin) {
+      return _buildAdminLayout(responsivePadding);
+    }
+
     return AdaptiveScaffold(
       title: 'Account Settings',
       currentIndex: 4,
@@ -394,12 +404,9 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              'Email cannot be changed',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.getTextSecondary(context),
-              ),
+            const Text(
+              '*Email cannot be changed',
+              style: TextStyle(fontSize: 12, color: Colors.red),
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -837,6 +844,109 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Admin layout with admin navbar
+  Widget _buildAdminLayout(double responsivePadding) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundColor,
+      body: Column(
+        children: [
+          const Header(),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF1A1A1A)
+                        : const Color(0xFFF5F5F5),
+                    Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2D2D2D)
+                        : Colors.white,
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Fixed Header
+                    Padding(
+                      padding: EdgeInsets.all(responsivePadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Back button
+                          IconButton(
+                            icon: Icon(
+                              Icons.arrow_back,
+                              color: AppColors.getTextPrimary(context),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                          const SizedBox(height: 16),
+                          // Title
+                          Text(
+                            'Account Settings',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.getTextPrimary(context),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Manage your account information and security',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.getTextSecondary(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Scrollable Content
+                    Expanded(
+                      child: _isLoadingProfile
+                          ? const Center(child: CircularProgressIndicator())
+                          : SingleChildScrollView(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: responsivePadding,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildProfileSection(),
+                                  const SizedBox(height: 20),
+                                  _buildSecuritySection(),
+                                  const SizedBox(height: 80),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: AdminNavBar(
+        currentIndex: 1, // Settings tab
+        onTap: (index) {
+          if (index == 0) {
+            // Navigate to Admin Dashboard
+            Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          }
+        },
       ),
     );
   }

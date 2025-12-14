@@ -43,9 +43,20 @@ class AuthService {
           );
         }
 
+        // Save isAdmin flag
+        final isAdmin = responseData['data']['user']['isAdmin'] == true;
+        await _secureStorage.write(key: 'is_admin', value: isAdmin.toString());
+
+        // Save full user data
+        await _secureStorage.write(
+          key: 'user_data',
+          value: jsonEncode(responseData['data']['user']),
+        );
+
         return {
           'success': true,
           'message': responseData['message'] ?? 'Login successful',
+          'user': responseData['data']['user'],
           'data': responseData['data'],
         };
       } else {
@@ -89,11 +100,20 @@ class AuthService {
               value: user['displayName'],
             );
           }
+          // Save isAdmin flag
+          final isAdmin = user['isAdmin'] == true;
+          await _secureStorage.write(
+            key: 'is_admin',
+            value: isAdmin.toString(),
+          );
+          // Save full user data
+          await _secureStorage.write(key: 'user_data', value: jsonEncode(user));
         }
 
         return {
           'success': true,
           'message': responseData['message'] ?? 'Login successful',
+          'user': responseData['data']['user'],
           'data': responseData['data'],
         };
       } else {
@@ -142,7 +162,7 @@ class AuthService {
 
         // Save user data
         await _secureStorage.write(key: 'user_email', value: email);
-        
+
         // Save display name (auto-generated from firstName + lastName by backend)
         if (responseData['data']['user']['displayName'] != null) {
           await _secureStorage.write(
@@ -289,7 +309,9 @@ class AuthService {
   ///
   /// Resets the user's password using the token from email
   Future<Map<String, dynamic>> resetPassword(
-      String token, String newPassword) async {
+    String token,
+    String newPassword,
+  ) async {
     try {
       final url = Uri.parse(ApiConfig.getUrl(ApiConfig.authResetPassword));
 

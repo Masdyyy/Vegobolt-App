@@ -13,6 +13,8 @@ import 'Pages/ResetPassword.dart';
 import 'Pages/signup.dart';
 import 'Pages/HelpSupport.dart';
 import 'Pages/AccountSettings.dart';
+import 'Pages/admin/admin_dashboard.dart';
+import 'Pages/admin/admin_settings.dart';
 import 'utils/theme_provider.dart';
 import 'providers/machine_provider.dart';
 
@@ -46,6 +48,9 @@ class MyApp extends StatelessWidget {
       '/settings': (context) => const SettingsPage(),
       '/helpsupport': (context) => const HelpSupportPage(),
       '/accountsettings': (context) => const AccountSettingsPage(),
+      // Admin pages
+      '/admin-dashboard': (context) => const AdminDashboardPage(),
+      '/admin-settings': (context) => const AdminSettingsPage(),
     };
 
     return MaterialApp(
