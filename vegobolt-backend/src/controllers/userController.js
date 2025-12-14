@@ -1,6 +1,52 @@
 const User = require('../models/User');
 
 /**
+ * List all users (admin)
+ */
+const listUsers = async (req, res) => {
+    try {
+        const users = await User.find().select('-password');
+        res.status(200).json({ success: true, data: users });
+    } catch (error) {
+        console.error('List users error:', error);
+        res.status(500).json({ success: false, message: 'Error listing users', error: error.message });
+    }
+};
+
+/**
+ * Admin: delete user by id
+ */
+const adminDeleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findByIdAndDelete(id);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        res.status(200).json({ success: true, message: 'User deleted' });
+    } catch (error) {
+        console.error('Admin delete user error:', error);
+        res.status(500).json({ success: false, message: 'Error deleting user', error: error.message });
+    }
+};
+
+/**
+ * Admin: set user active/inactive
+ */
+const setUserActive = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { active } = req.body;
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        user.isActive = !!active;
+        await user.save();
+        res.status(200).json({ success: true, data: user });
+    } catch (error) {
+        console.error('Set user active error:', error);
+        res.status(500).json({ success: false, message: 'Error updating user', error: error.message });
+    }
+};
+
+/**
  * Get user profile by Firebase UID
  */
 const getUserProfile = async (req, res) => {
@@ -103,5 +149,8 @@ const deleteUserAccount = async (req, res) => {
 module.exports = {
     getUserProfile,
     updateUserProfile,
-    deleteUserAccount
+    deleteUserAccount,
+    listUsers,
+    adminDeleteUser,
+    setUserActive
 };

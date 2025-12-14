@@ -24,4 +24,9 @@ router.put('/profile', authenticateToken, userController.updateUserProfile);
  */
 router.delete('/account', authenticateToken, userController.deleteUserAccount);
 
+// Admin endpoints
+router.get('/', authenticateToken, userController.listUsers);
+router.delete('/:id', authenticateToken, userController.adminDeleteUser);
+router.put('/:id/active', authenticateToken, userController.setUserActive);
+
 module.exports = router;

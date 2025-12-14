@@ -3,6 +3,7 @@ import '../../components/header.dart';
 import '../../components/admin_navbar.dart';
 import '../../components/add_maintenance_modal.dart';
 import '../../utils/colors.dart';
+import '../../services/admin_user_service.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -20,10 +21,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       // Navigate to Settings
       Navigator.pushReplacementNamed(context, '/admin-settings');
     }
+    // When switching tabs, reload users to reflect changes
+    _loadUsers();
   }
 
-  // Sample data for the admin table
-  final List<Map<String, dynamic>> _machineData = [
+  final AdminUserService _adminService = AdminUserService();
+
+  // Table data (will be loaded from backend)
+  List<Map<String, dynamic>> _machineData = [
     {
       'fullname': 'John Lorezo',
       'machine': 'VB-001',
@@ -187,17 +192,64 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _loadUsers();
+  }
+
+  Future<void> _loadUsers() async {
+    final users = await _adminService.listUsers();
+    if (users.isEmpty) return;
+
+    final mapped = users.map((u) {
+      final fullname = '${u['firstName'] ?? ''} ${u['lastName'] ?? ''}'.trim();
+      return {
+        'id': u['_id'] ?? u['id'],
+        'fullname': fullname.isEmpty ? (u['displayName'] ?? u['email'] ?? 'Unknown') : fullname,
+        'machine': u['machine'] ?? 'VB-0000',
+        'location': u['address'] ?? 'Unknown',
+        'status': u['isActive'] == true ? 'Active' : 'Inactive',
+        'alerts': u['alerts'] ?? 0,
+        'isDisabled': u['isActive'] == false,
+      };
+    }).toList();
+
+    setState(() {
+      _machineData = mapped.cast<Map<String, dynamic>>();
+    });
+  }
+
   void _toggleAccountStatus(
     int index,
     String fullname,
     bool isCurrentlyDisabled,
   ) {
-    setState(() {
-      _machineData[index]['isDisabled'] = !isCurrentlyDisabled;
-    });
+    final id = _machineData[index]['id'];
 
-    final newStatus = !isCurrentlyDisabled ? 'disabled' : 'enabled';
-    _showMsg('Account for $fullname has been $newStatus');
+    // If we don't have an id (sample/local), just toggle locally
+    if (id == null) {
+      setState(() {
+        _machineData[index]['isDisabled'] = !isCurrentlyDisabled;
+      });
+      final newStatusLocal = !isCurrentlyDisabled ? 'disabled' : 'enabled';
+      _showMsg('Account for $fullname has been $newStatusLocal');
+      return;
+    }
+
+    final newActive = isCurrentlyDisabled; // enabling -> active=true
+    _adminService.setActive(id, newActive).then((ok) {
+      if (ok) {
+        setState(() {
+          _machineData[index]['isDisabled'] = !isCurrentlyDisabled;
+          _machineData[index]['status'] = newActive ? 'Active' : 'Inactive';
+        });
+        final newStatus = !isCurrentlyDisabled ? 'disabled' : 'enabled';
+        _showMsg('Account for $fullname has been $newStatus');
+      } else {
+        _showMsg('Failed to update account status for $fullname');
+      }
+    });
   }
 
   void _confirmDeleteAccount(int index, String fullname) {
@@ -229,10 +281,26 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   void _deleteAccount(int index, String fullname) {
-    setState(() {
-      _machineData.removeAt(index);
+    final id = _machineData[index]['id'];
+
+    if (id == null) {
+      setState(() {
+        _machineData.removeAt(index);
+      });
+      _showMsg('Account for $fullname has been deleted');
+      return;
+    }
+
+    _adminService.adminDeleteUser(id).then((ok) {
+      if (ok) {
+        setState(() {
+          _machineData.removeAt(index);
+        });
+        _showMsg('Account for $fullname has been deleted');
+      } else {
+        _showMsg('Failed to delete account for $fullname');
+      }
     });
-    _showMsg('Account for $fullname has been deleted');
   }
 
   @override
