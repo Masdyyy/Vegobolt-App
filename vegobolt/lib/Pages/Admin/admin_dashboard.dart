@@ -4,6 +4,7 @@ import '../../components/admin_navbar.dart';
 import '../../components/add_maintenance_modal.dart';
 import '../../utils/colors.dart';
 import '../../services/admin_user_service.dart';
+import '../../services/maintenance_service.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -26,6 +27,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   final AdminUserService _adminService = AdminUserService();
+  final MaintenanceService _maintenanceService = MaintenanceService();
 
   // Table data (will be loaded from backend)
   List<Map<String, dynamic>> _machineData = [
@@ -180,8 +182,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     showDialog(
       context: context,
       builder: (context) => AddMaintenanceModal(
-        onAdd: (data) {
-          _showMsg('Maintenance scheduled for $machine');
+        onAdd: (data) async {
+          // Save maintenance to backend so Maintenance page reflects it
+          final created = await _maintenanceService.create(data);
+          if (created != null) {
+            _showMsg('Maintenance scheduled for $machine');
+          } else {
+            _showMsg('Failed to schedule maintenance for $machine');
+          }
         },
         initialData: {'machineId': machine, 'location': 'Barangay 171'},
       ),

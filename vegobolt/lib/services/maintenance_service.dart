@@ -30,7 +30,12 @@ class MaintenanceService {
         'machineId': data['machineId'],
         'location': data['location'],
         'priority': data['priority'],
-        'scheduledDate': data['scheduledDate']?.toIso8601String(),
+        // Ensure date is sent in UTC ISO format to avoid timezone shifts on server
+        'scheduledDate': data['scheduledDate'] != null
+            ? (data['scheduledDate'] is DateTime
+                ? data['scheduledDate'].toUtc().toIso8601String()
+                : data['scheduledDate'])
+            : null,
       };
       final response = await http.post(uri,
           headers: {
@@ -52,7 +57,7 @@ class MaintenanceService {
     try {
       final token = await _auth.getToken();
       final uri = Uri.parse(ApiConfig.getUrl('${ApiConfig.maintenanceBase}/$id'));
-      if (updates['scheduledDate'] is DateTime) updates['scheduledDate'] = updates['scheduledDate'].toIso8601String();
+      if (updates['scheduledDate'] is DateTime) updates['scheduledDate'] = updates['scheduledDate'].toUtc().toIso8601String();
       final response = await http.put(uri,
           headers: {
             'Content-Type': 'application/json',

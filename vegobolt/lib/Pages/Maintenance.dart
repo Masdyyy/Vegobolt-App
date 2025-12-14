@@ -47,7 +47,8 @@ class _MaintenancePageState extends State<MaintenancePage>
     final history = <Map<String, dynamic>>[];
 
     for (final it in items) {
-      final scheduledDate = it['scheduledDate'] != null ? DateTime.tryParse(it['scheduledDate']) : null;
+      final parsed = it['scheduledDate'] != null ? DateTime.tryParse(it['scheduledDate']) : null;
+      final scheduledDate = parsed != null ? (parsed.isUtc ? parsed.toLocal() : parsed) : null;
       final priority = (it['priority'] ?? 'Medium') as String;
       final priorityColor = priority == 'High'
           ? AppColors.criticalRed
@@ -253,6 +254,14 @@ class _MaintenancePageState extends State<MaintenancePage>
                   onAdd: (maintenanceData) async {
                     final created = await _maintenanceService.create(maintenanceData);
                     if (created != null) {
+                      DateTime? createdDate;
+                      if (created['scheduledDate'] != null) {
+                        final parsed = DateTime.tryParse(created['scheduledDate']);
+                        createdDate = parsed != null ? (parsed.isUtc ? parsed.toLocal() : parsed) : null;
+                      } else {
+                        createdDate = maintenanceData['scheduledDate'];
+                      }
+
                       final mapped = {
                         'id': created['_id'] ?? created['id'],
                         'title': created['title'],
@@ -260,7 +269,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                         'location': created['location'],
                         'priority': created['priority'] ?? 'Medium',
                         'priorityColor': maintenanceData['priorityColor'],
-                        'scheduledDate': created['scheduledDate'] != null ? DateTime.tryParse(created['scheduledDate']) : maintenanceData['scheduledDate'],
+                        'scheduledDate': createdDate,
                       };
                       setState(() {
                         scheduledItems.insert(0, mapped);
