@@ -7,6 +7,7 @@ const userRoutes = require('./routes/userRoutes');
 const tankRoutes = require('./routes/tankRoutes');  // 👈 Added for ESP32 data
 const alertRoutes = require('./routes/alertRoutes'); // 👈 Added alerts routes
 const maintenanceRoutes = require('./routes/maintenanceRoutes'); // maintenance endpoints
+const configRoutes = require('./routes/configRoutes'); // configuration endpoints
 const errorHandler = require('./utils/errorHandler');
 
 const app = express();
@@ -46,6 +47,7 @@ app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/alerts', alertRoutes); // 👈 Wire up alerts route
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/config', configRoutes); // 👈 Configuration endpoints
 
 // 404 handler
 app.use((req, res) => {

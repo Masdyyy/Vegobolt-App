@@ -6,6 +6,7 @@
 require('dotenv').config();
 const app = require('./src/app');
 const connectDB = require('./src/config/mongodb');
+const { getLocalIpAddress, getAutoBackendUrl } = require('./src/utils/networkUtils');
 
 // Initialize MongoDB connection (cached for serverless)
 let isConnected = false;
@@ -40,11 +41,23 @@ if (require.main === module) {
     
     connectDB().then(() => {
         app.listen(PORT, '0.0.0.0', () => {
-            console.log(`🚀 Local server running at http://localhost:${PORT}`);
-            console.log(`📍 Health check: http://localhost:${PORT}/health`);
-            console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
-            console.log(`📱 ESP32 API: http://localhost:${PORT}/api/tank`);
-            console.log(`🚨 Alerts API: http://localhost:${PORT}/api/alerts`);
+            const localIp = getLocalIpAddress();
+            const autoBackendUrl = getAutoBackendUrl(PORT);
+            
+            console.log(`🚀 Local server running`);
+            console.log(`   - Localhost: http://localhost:${PORT}`);
+            console.log(`   - Network: http://${localIp}:${PORT}`);
+            console.log(`   - Auto-detected URL: ${autoBackendUrl}`);
+            console.log(`📍 Health check: http://${localIp}:${PORT}/health`);
+            console.log(`🔐 Auth endpoints: http://${localIp}:${PORT}/api/auth`);
+            console.log(`📱 ESP32 API: http://${localIp}:${PORT}/api/tank`);
+            console.log(`🚨 Alerts API: http://${localIp}:${PORT}/api/alerts`);
+            
+            // Set the auto-detected backend URL as an environment variable for email service
+            if (!process.env.BACKEND_URL) {
+                process.env.BACKEND_URL = autoBackendUrl;
+                console.log(`✅ Auto-set BACKEND_URL to: ${autoBackendUrl}`);
+            }
         });
     }).catch(err => {
         console.error('Failed to start server:', err);
