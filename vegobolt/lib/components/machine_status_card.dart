@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MachineStatusCard extends StatefulWidget {
   final String machineId;
@@ -48,11 +49,80 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
   late String currentLocation;
   bool isEditingLocation = false;
   late TextEditingController locationController;
+  
+  // List of North Caloocan barangays only (164-188)
+  final List<String> caloocanBarangays = [
+    'Select Barangay',
+    'Barangay 164',
+    'Barangay 165',
+    'Barangay 166',
+    'Barangay 167',
+    'Barangay 168',
+    'Barangay 169',
+    'Barangay 170',
+    'Barangay 171',
+    'Barangay 172',
+    'Barangay 173',
+    'Barangay 174',
+    'Barangay 175',
+    'Barangay 176-A',
+    'Barangay 176-B',
+    'Barangay 176-C',
+    'Barangay 176-D',
+    'Barangay 176-E',
+    'Barangay 176-F',
+    'Barangay 177',
+    'Barangay 178',
+    'Barangay 179',
+    'Barangay 180',
+    'Barangay 181',
+    'Barangay 182',
+    'Barangay 183',
+    'Barangay 184',
+    'Barangay 185',
+    'Barangay 186',
+    'Barangay 187',
+    'Barangay 188',
+  ];
+
+  // Map of barangay numbers to full location names
+  final Map<String, String> barangayLocations = {
+    'Barangay 164': 'Barangay 164 Talipapa',
+    'Barangay 165': 'Barangay 165 Bagbaguin',
+    'Barangay 166': 'Barangay 166 Kaybiga',
+    'Barangay 167': 'Barangay 167 Llano',
+    'Barangay 168': 'Barangay 168 Deparo',
+    'Barangay 169': 'Barangay 169 BF Homes Caloocan',
+    'Barangay 170': 'Barangay 170 Deparo 2',
+    'Barangay 171': 'Barangay 171 Bagumbong',
+    'Barangay 172': 'Barangay 172 Urduja Village',
+    'Barangay 173': 'Barangay 173 Congress',
+    'Barangay 174': 'Barangay 174 Camarin Central',
+    'Barangay 175': 'Barangay 175 Camarin',
+    'Barangay 176-A': 'Barangay 176-A Bagong Silang',
+    'Barangay 176-B': 'Barangay 176-B Bagong Silang',
+    'Barangay 176-C': 'Barangay 176-C Bagong Silang',
+    'Barangay 176-D': 'Barangay 176-D Bagong Silang',
+    'Barangay 176-E': 'Barangay 176-E Bagong Silang',
+    'Barangay 176-F': 'Barangay 176-F Bagong Silang',
+    'Barangay 177': 'Barangay 177 Camarin Cielito',
+    'Barangay 178': 'Barangay 178 Camarin Kiko',
+    'Barangay 179': 'Barangay 179 Amparo',
+    'Barangay 180': 'Barangay 180 Tala',
+    'Barangay 181': 'Barangay 181 Pangarap Village Tala',
+    'Barangay 182': 'Barangay 182 Tala',
+    'Barangay 183': 'Barangay 183 Tala',
+    'Barangay 184': 'Barangay 184 Tala',
+    'Barangay 185': 'Barangay 185 Tala',
+    'Barangay 186': 'Barangay 186 Tala',
+    'Barangay 187': 'Barangay 187 Tala',
+    'Barangay 188': 'Barangay 188 Tala',
+  };
 
   @override
   void initState() {
     super.initState();
-    currentLocation = widget.initialLocation;
+    currentLocation = widget.initialLocation.isEmpty ? 'Select Barangay' : widget.initialLocation;
     locationController = TextEditingController(text: currentLocation);
   }
 
@@ -212,21 +282,42 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
               ? Row(
                   children: [
                     Expanded(
-                      child: TextField(
-                        controller: locationController,
-                        decoration: InputDecoration(
-                          hintText: 'Enter location',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.primaryGreen),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        style: TextStyle(
-                          color: AppColors.getTextPrimary(context),
-                          fontSize: 14,
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: caloocanBarangays.contains(currentLocation) 
+                                ? currentLocation 
+                                : 'Select Barangay',
+                            isExpanded: true,
+                            isDense: true,
+                            style: TextStyle(
+                              color: AppColors.getTextPrimary(context),
+                              fontSize: 14,
+                            ),
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: AppColors.getTextSecondary(context),
+                            ),
+                            items: caloocanBarangays.map((String barangay) {
+                              return DropdownMenuItem<String>(
+                                value: barangay,
+                                child: Text(barangay),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setState(() {
+                                  currentLocation = newValue;
+                                  locationController.text = newValue;
+                                });
+                              }
+                            },
+                          ),
                         ),
                       ),
                     ),
@@ -258,12 +349,25 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
                       color: AppColors.getTextSecondary(context),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      currentLocation,
-                      style: TextStyle(
-                        color: AppColors.getTextPrimary(context),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                    GestureDetector(
+                      onTap: () async {
+                        // Get full location name for the barangay
+                        final fullLocation = barangayLocations[currentLocation] ?? currentLocation;
+                        // Open Google Maps with the full location
+                        final query = Uri.encodeComponent('$fullLocation, Caloocan City, Philippines');
+                        final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      child: Text(
+                        currentLocation,
+                        style: const TextStyle(
+                          color: Colors.blue,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),

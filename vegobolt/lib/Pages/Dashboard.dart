@@ -289,7 +289,10 @@ class _DashboardPageState extends State<DashboardPage> {
                         batteryValue: batteryValue,
                         temperatureC: temperatureC,
                         alertStatus: _currentAlertStatus,
-                        isEditable: false,
+                        isEditable: true,
+                        onLocationChanged: (newLocation) {
+                          machineProvider.updateLocation(newLocation);
+                        },
                       ),
 
                       SizedBox(
