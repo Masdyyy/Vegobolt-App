@@ -31,7 +31,7 @@ class _MachinePageState extends State<MachinePage> {
   bool isLoading = true;
   Timer? _pollTimer;
   String _currentAlertStatus = 'normal'; // Track current alert status
-  
+
   // Tank states
   bool isOilTankOpen = true;
   bool isDieselTankOpen = true;
@@ -644,215 +644,240 @@ class _MachinePageState extends State<MachinePage> {
     required ResponsiveHelper responsive,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
-      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark 
-            ? AppColors.darkCardBackground 
-            : const Color(0xFFFFFAED), // Light cream/beige color like in the image
+        color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(16),
+        border: Border(
+          left: BorderSide(
+            color: _currentAlertStatus == 'critical'
+                ? AppColors.criticalRed
+                : _currentAlertStatus == 'warning'
+                ? const Color(0xFFF59E0B)
+                : AppColors.primaryGreen,
+            width: 5,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row with warning icon, machine ID and status badge
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left side: Warning icon and info
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Warning triangle icon
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      color: _currentAlertStatus == 'critical'
-                          ? AppColors.criticalRed
-                          : _currentAlertStatus == 'warning'
-                              ? AppColors.warningYellow
-                              : AppColors.primaryGreen,
-                      size: 32,
-                    ),
-                    const SizedBox(width: 12),
-                    // Machine info column
-                    Expanded(
-                      child: Column(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row with warning icon, machine ID and status badge
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Left side: Warning icon and info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Warning icon and Machine ID row
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Warning triangle icon
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: _currentAlertStatus == 'critical'
+                                ? AppColors.criticalRed
+                                : _currentAlertStatus == 'warning'
+                                ? const Color(0xFFF59E0B)
+                                : AppColors.primaryGreen,
+                            size: 32,
+                          ),
+                          const SizedBox(width: 12),
                           // Machine ID
-                          Text(
-                            'VB-0001',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black,
+                          Expanded(
+                            child: Text(
+                              'VB-0001',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.getTextPrimary(context),
+                                letterSpacing: 0.3,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          // Location
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: 16,
-                                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Baranggay 171',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          // Timestamp
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.access_time_outlined,
-                                size: 16,
-                                color: isDark ? Colors.grey[500] : Colors.grey[500],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '5 minutes ago',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: isDark ? Colors.grey[500] : Colors.grey[500],
-                                ),
-                              ),
-                            ],
                           ),
                         ],
                       ),
+                      const SizedBox(height: 8),
+                      // Location row
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: AppColors.getTextSecondary(context),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Baranggay 171',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.getTextSecondary(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Timestamp row
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_outlined,
+                            size: 16,
+                            color: AppColors.getTextLight(context),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '5 minutes ago',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.getTextLight(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Warning status badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: _currentAlertStatus == 'critical'
+                          ? AppColors.criticalRed
+                          : _currentAlertStatus == 'warning'
+                          ? const Color(0xFFF59E0B)
+                          : AppColors.primaryGreen,
+                      width: 2,
                     ),
-                  ],
-                ),
-              ),
-              // Warning status badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _currentAlertStatus == 'critical'
-                        ? AppColors.criticalRed
+                  ),
+                  child: Text(
+                    _currentAlertStatus == 'critical'
+                        ? 'Warning'
                         : _currentAlertStatus == 'warning'
-                            ? AppColors.warningYellow
-                            : AppColors.primaryGreen,
-                    width: 2,
-                  ),
-                ),
-                child: Text(
-                  _currentAlertStatus == 'critical'
-                      ? 'Warning'
-                      : _currentAlertStatus == 'warning'
-                          ? 'Warning'
-                          : 'Normal',
-                  style: TextStyle(
-                    color: _currentAlertStatus == 'critical'
-                        ? AppColors.criticalRed
-                        : _currentAlertStatus == 'warning'
-                            ? AppColors.warningYellow
-                            : AppColors.primaryGreen,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          // Tank control buttons
-          Row(
-            children: [
-              // Oil Tank Button
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        isOilTankOpen = !isOilTankOpen;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isOilTankOpen
-                          ? const Color(0xFF7AB93F) // Use exact green from theme
-                          : isDark
-                              ? Colors.grey[700]
-                              : Colors.grey[400],
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(
-                      isOilTankOpen ? 'Oil Tank - Open' : 'Oil Tank - Closed',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+                        ? 'Warning'
+                        : 'Normal',
+                    style: TextStyle(
+                      color: _currentAlertStatus == 'critical'
+                          ? AppColors.criticalRed
+                          : _currentAlertStatus == 'warning'
+                          ? const Color(0xFFF59E0B)
+                          : AppColors.primaryGreen,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              // Diesel Tank Button
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        isDieselTankOpen = !isDieselTankOpen;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDieselTankOpen
-                          ? const Color(0xFFFFD700) // Gold/Yellow color
-                          : isDark
-                              ? Colors.grey[700]
-                              : Colors.grey[400],
-                      foregroundColor: isDieselTankOpen
-                          ? Colors.black
-                          : Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Tank control buttons
+            Row(
+              children: [
+                // Oil Tank Button
+                Expanded(
+                  child: SizedBox(
+                    height: 45,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          isOilTankOpen = !isOilTankOpen;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isOilTankOpen
+                            ? AppColors.primaryGreen
+                            : isDark
+                            ? Colors.grey[700]
+                            : const Color(0xFFE5E7EB),
+                        foregroundColor: isOilTankOpen
+                            ? Colors.white
+                            : AppColors.getTextSecondary(context),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                       ),
-                    ),
-                    child: Text(
-                      isDieselTankOpen ? 'Diesel Tank - Open' : 'Diesel Tank - Closed',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          isOilTankOpen ? 'Oil Tank - Open' : 'Oil Tank - Closed',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 12),
+                // Diesel Tank Button
+                Expanded(
+                  child: SizedBox(
+                    height: 45,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          isDieselTankOpen = !isDieselTankOpen;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDieselTankOpen
+                            ? const Color(0xFFFFD700)
+                            : isDark
+                            ? Colors.grey[700]
+                            : const Color(0xFFE5E7EB),
+                        foregroundColor: isDieselTankOpen
+                            ? Colors.white
+                            : AppColors.getTextSecondary(context),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          isDieselTankOpen
+                              ? 'Diesel Tank - Open'
+                              : 'Diesel Tank - Closed',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
