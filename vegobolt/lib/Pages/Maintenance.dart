@@ -234,7 +234,7 @@ class _MaintenancePageState extends State<MaintenancePage>
       onNavigationChanged: (index) => _onNavTap(context, index),
       navigationItems: const [
         NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
-        NavigationItem(icon: Icons.precision_manufacturing, label: 'Machine'),
+        NavigationItem(icon: Icons.oil_barrel, label: 'Tanks'),
         NavigationItem(icon: Icons.warning, label: 'Alerts'),
         NavigationItem(icon: Icons.build, label: 'Maintenance'),
         NavigationItem(icon: Icons.settings, label: 'Settings'),
@@ -349,7 +349,7 @@ class _MaintenancePageState extends State<MaintenancePage>
               ),
               // Scrollable content
               Expanded(
-                child: SingleChildScrollView(
+                child: Padding(
                   padding: EdgeInsets.all(responsive.getPadding()),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,9 +422,8 @@ class _MaintenancePageState extends State<MaintenancePage>
 
                       const SizedBox(height: 16),
 
-                      // Tab Content
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.5,
+                      // Tab Content - fills remaining space
+                      Expanded(
                         child: TabBarView(
                           controller: _tabController,
                           children: [_buildScheduledTab(), _buildHistoryTab()],

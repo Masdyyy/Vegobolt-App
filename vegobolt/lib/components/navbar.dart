@@ -22,7 +22,7 @@ class NavBar extends StatelessWidget {
           icon: Icon(Icons.dashboard),
           label: "Dashboard",
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.memory), label: "Machine"),
+        BottomNavigationBarItem(icon: Icon(Icons.oil_barrel), label: "Tanks"),
         BottomNavigationBarItem(icon: Icon(Icons.warning), label: "Alerts"),
         BottomNavigationBarItem(icon: Icon(Icons.build), label: "Maintenance"),
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),

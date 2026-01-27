@@ -20,7 +20,7 @@ class ExampleResponsivePage extends StatelessWidget {
       },
       navigationItems: const [
         NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
-        NavigationItem(icon: Icons.memory, label: 'Machine'),
+        NavigationItem(icon: Icons.oil_barrel, label: 'Tanks'),
         NavigationItem(icon: Icons.warning, label: 'Alerts'),
         NavigationItem(icon: Icons.build, label: 'Maintenance'),
         NavigationItem(icon: Icons.settings, label: 'Settings'),

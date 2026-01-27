@@ -121,7 +121,7 @@ class _AlertsPageState extends State<AlertsPage> {
       onNavigationChanged: (index) => _onNavTap(context, index),
       navigationItems: const [
         NavigationItem(icon: Icons.dashboard, label: 'Dashboard'),
-        NavigationItem(icon: Icons.precision_manufacturing, label: 'Machine'),
+        NavigationItem(icon: Icons.oil_barrel, label: 'Tanks'),
         NavigationItem(icon: Icons.warning_amber, label: 'Alerts'),
         NavigationItem(icon: Icons.build, label: 'Maintenance'),
         NavigationItem(icon: Icons.settings, label: 'Settings'),
