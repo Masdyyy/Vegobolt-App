@@ -25,6 +25,7 @@ dependencies:
   url_launcher: ^6.2.5
   geolocator: ^13.0.2
   geocoding: ^3.0.0
+  mqtt_client: ^10.2.0
 
 dev_dependencies:
   flutter_test:

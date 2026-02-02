@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_server_client.dart';
 import '../utils/api_config.dart';
 import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
@@ -36,9 +38,14 @@ class _MachinePageState extends State<MachinePage> {
   bool isOilTankOpen = true;
   bool isDieselTankOpen = true;
 
+  // MQTT Client
+  MqttServerClient? _mqttClient;
+  bool _isMqttConnected = false;
+
   @override
   void initState() {
     super.initState();
+    _initializeMqtt();
     fetchTankData();
     fetchAlerts();
     // Auto-refresh every 5 seconds
@@ -52,12 +59,140 @@ class _MachinePageState extends State<MachinePage> {
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _mqttClient?.disconnect();
     super.dispose();
   }
 
   // Get base URL from centralized config
   String _getBaseUrl() {
     return ApiConfig.baseUrl;
+  }
+
+  // Initialize MQTT Connection
+  Future<void> _initializeMqtt() async {
+    try {
+      print('🔄 Attempting MQTT connection to broker.hivemq.com:1883...');
+
+      _mqttClient = MqttServerClient.withPort(
+        'broker.hivemq.com',
+        'vegobolt_app_${DateTime.now().millisecondsSinceEpoch}',
+        1883,
+      );
+      _mqttClient!.logging(on: true);
+      _mqttClient!.setProtocolV311();
+      _mqttClient!.keepAlivePeriod = 20;
+      _mqttClient!.connectTimeoutPeriod = 5000; // 5 seconds timeout
+      _mqttClient!.autoReconnect = true;
+      _mqttClient!.onConnected = _onMqttConnected;
+      _mqttClient!.onDisconnected = _onMqttDisconnected;
+      _mqttClient!.onAutoReconnect = () {
+        print('🔄 Auto-reconnecting to MQTT broker...');
+      };
+      _mqttClient!.onAutoReconnected = () {
+        print('✅ Auto-reconnected to MQTT broker');
+        setState(() {
+          _isMqttConnected = true;
+        });
+      };
+
+      final connMessage = MqttConnectMessage()
+          .withClientIdentifier(
+            'vegobolt_app_${DateTime.now().millisecondsSinceEpoch}',
+          )
+          .withWillTopic('vegobolt/will')
+          .withWillMessage('Flutter app disconnected')
+          .startClean()
+          .withWillQos(MqttQos.atLeastOnce);
+      _mqttClient!.connectionMessage = connMessage;
+
+      print('🔌 Connecting to MQTT broker...');
+      final status = await _mqttClient!.connect();
+
+      if (status?.state == MqttConnectionState.connected) {
+        print('✅ Successfully connected to broker.hivemq.com');
+      } else {
+        print('❌ Connection failed with state: ${status?.state}');
+        print('❌ Return code: ${status?.returnCode}');
+        _mqttClient?.disconnect();
+      }
+    } catch (e) {
+      print('⚠️ MQTT Connection Error: $e');
+      if (_mqttClient != null) {
+        _mqttClient!.disconnect();
+      }
+    }
+  }
+
+  void _onMqttConnected() {
+    setState(() {
+      _isMqttConnected = true;
+    });
+    print('✅ MQTT Connected to broker.hivemq.com');
+
+    // Subscribe to status topics to listen for ESP32 responses
+    _mqttClient!.subscribe('vegobolt/tank/valve1/status', MqttQos.atLeastOnce);
+    _mqttClient!.subscribe('vegobolt/tank/valve2/status', MqttQos.atLeastOnce);
+    _mqttClient!.subscribe('vegobolt/tank/sensors', MqttQos.atLeastOnce);
+
+    print('📥 Subscribed to valve status topics');
+
+    // Set up message listener
+    _mqttClient!.updates!.listen((List<MqttReceivedMessage<MqttMessage>> c) {
+      final MqttPublishMessage message = c[0].payload as MqttPublishMessage;
+      final payload = MqttPublishPayload.bytesToStringAsString(
+        message.payload.message,
+      );
+      print('📩 Received message: ${c[0].topic} -> $payload');
+    });
+  }
+
+  void _onMqttDisconnected() {
+    setState(() {
+      _isMqttConnected = false;
+    });
+    print('❌ MQTT Disconnected - Attempting reconnect in 5 seconds...');
+    // Auto-reconnect after 5 seconds
+    Future.delayed(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      _initializeMqtt();
+    });
+  }
+
+  // Send valve control command via MQTT
+  void _sendValveCommand(String action, {int valve = 1}) {
+    if (_mqttClient == null || !_isMqttConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.warning_amber, color: Colors.white),
+              SizedBox(width: 12),
+              Text('MQTT not connected. Please check connection.'),
+            ],
+          ),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final topic = valve == 1
+        ? 'vegobolt/tank/valve1/control'
+        : 'vegobolt/tank/valve2/control';
+
+    final builder = MqttClientPayloadBuilder();
+    builder.addString('{"action":"$action"}');
+
+    print('📤 Publishing to topic: $topic');
+    print('📤 Message: {"action":"$action"}');
+
+    _mqttClient!.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
+
+    print('✅ MQTT command published successfully');
   }
 
   Future<void> fetchTankData() async {
@@ -790,6 +925,46 @@ class _MachinePageState extends State<MachinePage> {
               ],
             ),
             const SizedBox(height: 20),
+            // MQTT Connection Status
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: _isMqttConnected
+                    ? AppColors.primaryGreen.withOpacity(0.1)
+                    : Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _isMqttConnected
+                      ? AppColors.primaryGreen
+                      : Colors.orange,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isMqttConnected ? Icons.cloud_done : Icons.cloud_off,
+                    size: 16,
+                    color: _isMqttConnected
+                        ? AppColors.primaryGreen
+                        : Colors.orange,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isMqttConnected ? 'MQTT Connected' : 'MQTT Connecting...',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _isMqttConnected
+                          ? AppColors.primaryGreen
+                          : Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             // Tank control buttons
             Row(
               children: [
@@ -799,9 +974,39 @@ class _MachinePageState extends State<MachinePage> {
                     height: 45,
                     child: ElevatedButton(
                       onPressed: () {
+                        final newState = !isOilTankOpen;
                         setState(() {
-                          isOilTankOpen = !isOilTankOpen;
+                          isOilTankOpen = newState;
                         });
+                        // Send MQTT command to ESP32 for oil tank (valve1)
+                        _sendValveCommand(
+                          newState ? 'open' : 'close',
+                          valve: 1,
+                        );
+
+                        // Show confirmation
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(
+                                  newState ? Icons.check_circle : Icons.lock,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 12),
+                                Text('Valve ${newState ? "opened" : "closed"}'),
+                              ],
+                            ),
+                            backgroundColor: newState
+                                ? AppColors.primaryGreen
+                                : Colors.grey[700],
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isOilTankOpen
@@ -821,7 +1026,9 @@ class _MachinePageState extends State<MachinePage> {
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          isOilTankOpen ? 'Oil Tank - Open' : 'Oil Tank - Closed',
+                          isOilTankOpen
+                              ? 'Oil Tank - Open'
+                              : 'Oil Tank - Closed',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -839,9 +1046,41 @@ class _MachinePageState extends State<MachinePage> {
                     height: 45,
                     child: ElevatedButton(
                       onPressed: () {
+                        final newState = !isDieselTankOpen;
                         setState(() {
-                          isDieselTankOpen = !isDieselTankOpen;
+                          isDieselTankOpen = newState;
                         });
+                        // Send MQTT command to ESP32 for diesel tank (valve2)
+                        _sendValveCommand(
+                          newState ? 'open' : 'close',
+                          valve: 2,
+                        );
+
+                        // Show confirmation
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(
+                                  newState ? Icons.check_circle : Icons.lock,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Diesel valve ${newState ? "opened" : "closed"}',
+                                ),
+                              ],
+                            ),
+                            backgroundColor: newState
+                                ? const Color(0xFFFFD700)
+                                : Colors.grey[700],
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isDieselTankOpen
