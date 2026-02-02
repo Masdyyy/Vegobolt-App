@@ -47,14 +47,18 @@ class _MaintenancePageState extends State<MaintenancePage>
     final history = <Map<String, dynamic>>[];
 
     for (final it in items) {
-      final parsed = it['scheduledDate'] != null ? DateTime.tryParse(it['scheduledDate']) : null;
-      final scheduledDate = parsed != null ? (parsed.isUtc ? parsed.toLocal() : parsed) : null;
+      final parsed = it['scheduledDate'] != null
+          ? DateTime.tryParse(it['scheduledDate'])
+          : null;
+      final scheduledDate = parsed != null
+          ? (parsed.isUtc ? parsed.toLocal() : parsed)
+          : null;
       final priority = (it['priority'] ?? 'Medium') as String;
       final priorityColor = priority == 'High'
           ? AppColors.criticalRed
           : priority == 'Low'
-              ? AppColors.darkGreen
-              : const Color(0xFFFFD700);
+          ? AppColors.darkGreen
+          : const Color(0xFFFFD700);
 
       final mapped = {
         'id': it['_id'] ?? it['id'],
@@ -67,7 +71,10 @@ class _MaintenancePageState extends State<MaintenancePage>
       };
 
       if ((it['status'] ?? 'Scheduled') == 'Resolved') {
-        history.add({...mapped, 'resolvedDate': it['updatedAt'] ?? DateTime.now().toIso8601String()});
+        history.add({
+          ...mapped,
+          'resolvedDate': it['updatedAt'] ?? DateTime.now().toIso8601String(),
+        });
       } else {
         scheduled.add(mapped);
       }
@@ -90,16 +97,21 @@ class _MaintenancePageState extends State<MaintenancePage>
       if (updated != null) {
         setState(() {
           scheduledItems.remove(item);
-          final resolvedDate = updated['updatedAt'] ?? DateTime.now().toIso8601String();
+          final resolvedDate =
+              updated['updatedAt'] ?? DateTime.now().toIso8601String();
           historyItems.insert(0, {
             ...item,
-            'resolvedDate': resolvedDate is String ? resolvedDate : resolvedDate.toString(),
+            'resolvedDate': resolvedDate is String
+                ? resolvedDate
+                : resolvedDate.toString(),
             'status': 'Resolved',
           });
           _tabController.animateTo(1);
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to resolve')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to resolve')));
       }
     });
   }
@@ -135,9 +147,13 @@ class _MaintenancePageState extends State<MaintenancePage>
                 };
               }
             });
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Maintenance updated')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Maintenance updated')),
+            );
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update maintenance')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to update maintenance')),
+            );
           }
         },
       ),
@@ -173,7 +189,9 @@ class _MaintenancePageState extends State<MaintenancePage>
                     ),
                   );
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Failed to delete')),
+                  );
                 }
                 Navigator.pop(context);
               });
@@ -252,12 +270,18 @@ class _MaintenancePageState extends State<MaintenancePage>
                 context: context,
                 builder: (context) => AddMaintenanceModal(
                   onAdd: (maintenanceData) async {
-                    final created = await _maintenanceService.create(maintenanceData);
+                    final created = await _maintenanceService.create(
+                      maintenanceData,
+                    );
                     if (created != null) {
                       DateTime? createdDate;
                       if (created['scheduledDate'] != null) {
-                        final parsed = DateTime.tryParse(created['scheduledDate']);
-                        createdDate = parsed != null ? (parsed.isUtc ? parsed.toLocal() : parsed) : null;
+                        final parsed = DateTime.tryParse(
+                          created['scheduledDate'],
+                        );
+                        createdDate = parsed != null
+                            ? (parsed.isUtc ? parsed.toLocal() : parsed)
+                            : null;
                       } else {
                         createdDate = maintenanceData['scheduledDate'];
                       }
@@ -274,9 +298,15 @@ class _MaintenancePageState extends State<MaintenancePage>
                       setState(() {
                         scheduledItems.insert(0, mapped);
                       });
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Maintenance scheduled')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Maintenance scheduled')),
+                      );
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to schedule maintenance')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Failed to schedule maintenance'),
+                        ),
+                      );
                     }
                   },
                 ),
@@ -323,14 +353,15 @@ class _MaintenancePageState extends State<MaintenancePage>
                   children: [
                     Text(
                       'Maintenance',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: responsive.getValue(
-                          mobile: 28,
-                          tablet: 32,
-                          desktop: 36,
-                        ),
-                      ),
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: responsive.getValue(
+                              mobile: 28,
+                              tablet: 32,
+                              desktop: 36,
+                            ),
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -354,71 +385,48 @@ class _MaintenancePageState extends State<MaintenancePage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Search bar
-                      TextField(
-                        style: TextStyle(color: AppColors.getTextPrimary(context)),
-                    decoration: InputDecoration(
-                      hintText: 'Search maintenance records...',
-                      hintStyle: TextStyle(
-                        color: AppColors.getTextLight(context),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: AppColors.getTextSecondary(context),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.darkCardBackground
-                          : AppColors.cardBackground,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                      ),
-                      const SizedBox(height: 12),
-
                       // Tab Bar
                       Container(
                         height: 45,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.darkCardBackground
-                          : AppColors.cardBackground,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkTextLight
-                            : AppColors.textLight,
-                        width: 1,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.darkCardBackground
+                              : AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkTextLight
+                                : AppColors.textLight,
+                            width: 1,
+                          ),
+                        ),
+                        child: TabBar(
+                          controller: _tabController,
+                          indicator: BoxDecoration(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkGreen
+                                : AppColors.primaryGreen,
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          labelColor: Colors.white,
+                          unselectedLabelColor:
+                              Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.cardBackground
+                              : AppColors.getTextSecondary(context),
+                          labelStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          dividerColor: Colors.transparent,
+                          tabs: const [
+                            Tab(text: 'Scheduled'),
+                            Tab(text: 'History'),
+                          ],
+                        ),
                       ),
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      indicator: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.darkGreen
-                            : AppColors.primaryGreen,
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      labelColor: Colors.white,
-                      unselectedLabelColor:
-                          Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.cardBackground
-                          : AppColors.getTextSecondary(context),
-                      labelStyle: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                      dividerColor: Colors.transparent,
-                      tabs: const [
-                        Tab(text: 'Scheduled'),
-                        Tab(text: 'History'),
-                      ],
-                    ),
-                  ),
 
                       const SizedBox(height: 16),
 

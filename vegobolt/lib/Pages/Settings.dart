@@ -19,9 +19,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _isNotifExpanded = false;
-  bool _allNotif = true, _critical = true, _maintenance = false;
-
   void _onNavTap(BuildContext context, int i) {
     if (i == 4) return;
     final pages = [
@@ -105,14 +102,15 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     Text(
                       'Settings',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: responsive.getValue(
-                          mobile: 28,
-                          tablet: 32,
-                          desktop: 36,
-                        ),
-                      ),
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: responsive.getValue(
+                              mobile: 28,
+                              tablet: 32,
+                              desktop: 36,
+                            ),
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -136,35 +134,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // NOTIFICATION SETTINGS
-                      _buildExpandableCard(
-                        title: 'Notification Settings',
-                        icon: Icons.notifications_none_outlined,
-                        expanded: _isNotifExpanded,
-                        onExpand: (v) => setState(() => _isNotifExpanded = v),
-                        children: [
-                          _buildSwitch(
-                            'All Notifications',
-                            'Enable push notifications',
-                            _allNotif,
-                            (v) => setState(() => _allNotif = v),
-                          ),
-                          _buildSwitch(
-                            'Critical Alerts',
-                            'Emergency notifications',
-                            _critical,
-                            (v) => setState(() => _critical = v),
-                          ),
-                          _buildSwitch(
-                            'Maintenance Reminders',
-                            'Scheduled maintenance alerts',
-                            _maintenance,
-                            (v) => setState(() => _maintenance = v),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
                       // APPEARANCE SETTINGS
                       _buildExpandableCard(
                         title: 'Appearance',

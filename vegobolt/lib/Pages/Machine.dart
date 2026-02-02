@@ -9,6 +9,7 @@ import '../utils/api_config.dart';
 import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
 import '../utils/responsive_layout.dart';
+import '../services/maintenance_service.dart';
 import 'dashboard.dart';
 import '../components/machine_status_card.dart';
 import 'alerts.dart';
@@ -42,12 +43,15 @@ class _MachinePageState extends State<MachinePage> {
   MqttServerClient? _mqttClient;
   bool _isMqttConnected = false;
 
+  final MaintenanceService _maintenanceService = MaintenanceService();
+
   @override
   void initState() {
     super.initState();
     _initializeMqtt();
     fetchTankData();
     fetchAlerts();
+    _loadMaintenanceData();
     // Auto-refresh every 5 seconds
     _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted) return;
@@ -66,6 +70,42 @@ class _MachinePageState extends State<MachinePage> {
   // Get base URL from centralized config
   String _getBaseUrl() {
     return ApiConfig.baseUrl;
+  }
+
+  Future<void> _loadMaintenanceData() async {
+    final items = await _maintenanceService.list();
+    final scheduled = <Map<String, dynamic>>[];
+
+    for (final it in items) {
+      if ((it['status'] ?? 'Scheduled') != 'Resolved') {
+        final parsed = it['scheduledDate'] != null
+            ? DateTime.tryParse(it['scheduledDate'])
+            : null;
+        final scheduledDate = parsed != null
+            ? (parsed.isUtc ? parsed.toLocal() : parsed)
+            : null;
+        final priority = (it['priority'] ?? 'Medium') as String;
+        final priorityColor = priority == 'High'
+            ? AppColors.criticalRed
+            : priority == 'Low'
+            ? AppColors.darkGreen
+            : const Color(0xFFFFD700);
+
+        scheduled.add({
+          'id': it['_id'] ?? it['id'],
+          'title': it['title'] ?? 'Maintenance',
+          'machineId': it['machineId'] ?? '',
+          'location': it['location'] ?? '',
+          'priority': priority,
+          'priorityColor': priorityColor,
+          'scheduledDate': scheduledDate,
+        });
+      }
+    }
+
+    setState(() {
+      scheduledMaintenanceItems = scheduled;
+    });
   }
 
   // Initialize MQTT Connection
@@ -303,9 +343,19 @@ class _MachinePageState extends State<MachinePage> {
     }
   }
 
-  void _onNavTap(BuildContext context, int index) async {
+  void _onNavTap(BuildContext context, int index) {
     if (index == 1) return;
 
+    // Special handling for maintenance page to reload data on return
+    if (index == 3) {
+      NavigationHelper.navigateWithoutAnimation(
+        context,
+        MaintenancePage(initialScheduledItems: scheduledMaintenanceItems),
+      );
+      return;
+    }
+
+    // Handle other navigation
     Widget destination;
     switch (index) {
       case 0:
@@ -314,23 +364,6 @@ class _MachinePageState extends State<MachinePage> {
       case 2:
         destination = const AlertsPage();
         break;
-      case 3:
-        // Pass current items to maintenance page and get updated items back
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => MaintenancePage(
-              initialScheduledItems: scheduledMaintenanceItems,
-            ),
-          ),
-        );
-        // Update items if we received data back
-        if (result != null && result is List<Map<String, dynamic>>) {
-          setState(() {
-            scheduledMaintenanceItems = result;
-          });
-        }
-        return; // Don't use pushReplacement for maintenance page
       case 4:
         destination = const SettingsPage();
         break;
@@ -861,25 +894,6 @@ class _MachinePageState extends State<MachinePage> {
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.getTextSecondary(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      // Timestamp row
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time_outlined,
-                            size: 16,
-                            color: AppColors.getTextLight(context),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '5 minutes ago',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.getTextLight(context),
                             ),
                           ),
                         ],

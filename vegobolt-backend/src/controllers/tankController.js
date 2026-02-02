@@ -61,27 +61,37 @@ exports.getAlerts = async (req, res) => {
 
     const alerts = [];
 
-    // Show smoke alert if detected
-    if (latest.alert === "smoke" || latest.alert === "overheating+smoke") {
+    // Temperature alerts based on thresholds
+    if (latest.temperature >= 90) {
+      // Critical overheating at 90°C and above
       alerts.push({
-        title: 'Smoke Detected',
+        title: 'Overheating',
         machine: 'VB-0001',
         location: 'Barangay 171',
         time: latest.createdAt,
         status: 'Critical',
-        type: 'smoke',
-        details: 'Smoke detected by MQ2 sensor.'
+        type: 'temperature',
+        details: `Temperature: ${latest.temperature}°C`
       });
-    }
-
-    // Show overheating alert if currently overheating (even if combined with smoke)
-    if (latest.alert === "overheating" || latest.alert === "overheating+smoke" || latest.temperature > 50) {
+    } else if (latest.temperature >= 85) {
+      // Warning at 85°C
       alerts.push({
-        title: 'Overheating Alert',
+        title: 'Warning',
         machine: 'VB-0001',
         location: 'Barangay 171',
         time: latest.createdAt,
-        status: 'Critical',
+        status: 'Warning',
+        type: 'temperature',
+        details: `Temperature: ${latest.temperature}°C`
+      });
+    } else if (latest.temperature >= 80) {
+      // Heat temp reached at 80°C
+      alerts.push({
+        title: 'Heat Temp Reached',
+        machine: 'VB-0001',
+        location: 'Barangay 171',
+        time: latest.createdAt,
+        status: 'Warning',
         type: 'temperature',
         details: `Temperature: ${latest.temperature}°C`
       });
