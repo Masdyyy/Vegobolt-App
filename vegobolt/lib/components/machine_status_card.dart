@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 class MachineStatusCard extends StatefulWidget {
   final String machineId;
   final String initialLocation;
+  final String? detectedBarangay;
   final String statusText;
   final Color statusColor;
   final double tankLevel;
@@ -18,6 +19,7 @@ class MachineStatusCard extends StatefulWidget {
     super.key,
     required this.machineId,
     required this.initialLocation,
+    this.detectedBarangay,
     required this.statusText,
     required this.statusColor,
     required this.tankLevel,
@@ -122,7 +124,11 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
   @override
   void initState() {
     super.initState();
-    currentLocation = widget.initialLocation.isEmpty ? 'Select Barangay' : widget.initialLocation;
+    // Prefer detected barangay (from device) when available, else initialLocation
+    final starting = (widget.detectedBarangay != null && widget.detectedBarangay!.isNotEmpty)
+        ? widget.detectedBarangay!
+        : widget.initialLocation;
+    currentLocation = starting.isEmpty ? 'Select Barangay' : starting;
     locationController = TextEditingController(text: currentLocation);
   }
 
@@ -134,6 +140,14 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
       setState(() {
         currentLocation = widget.initialLocation;
         locationController.text = widget.initialLocation;
+      });
+    }
+
+    // If a detectedBarangay was provided or changed, prefer it for display
+    if (oldWidget.detectedBarangay != widget.detectedBarangay && widget.detectedBarangay != null) {
+      setState(() {
+        currentLocation = widget.detectedBarangay!.isEmpty ? widget.initialLocation : widget.detectedBarangay!;
+        locationController.text = currentLocation;
       });
     }
   }
@@ -371,20 +385,6 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Only show edit button if isEditable is true
-                    if (widget.isEditable)
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isEditingLocation = true;
-                          });
-                        },
-                        child: Icon(
-                          Icons.edit,
-                          size: 18,
-                          color: AppColors.getTextSecondary(context),
-                        ),
-                      ),
                   ],
                 ),
           const SizedBox(height: 16),

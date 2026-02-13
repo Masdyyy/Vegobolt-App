@@ -15,6 +15,9 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 import '../providers/machine_provider.dart';
 import '../utils/api_config.dart';
+// removed modal import — location is displayed inline
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -32,6 +35,8 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _alertsLoading = true;
   Timer? _pollTimer;
   String _currentAlertStatus = 'normal'; // Track current alert status
+  bool _isFabHovering = false;
+  String _detectedBarangay = '';
 
   @override
   void initState() {
@@ -106,6 +111,67 @@ class _DashboardPageState extends State<DashboardPage> {
       temperatureC = 96;
       isLoading = false;
     });
+  }
+
+  Future<String> _getCurrentLocationString() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
+        return 'Location permission denied';
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      ).timeout(const Duration(seconds: 8));
+
+      try {
+        final places = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+        if (places.isNotEmpty) {
+          final p = places.first;
+          // Debug: print placemark fields (helpful during testing)
+          // ignore: avoid_print
+          print('Reverse geocode placemark: subLocality=${p.subLocality}, subAdmin=${p.subAdministrativeArea}, locality=${p.locality}, name=${p.name}, thoroughfare=${p.thoroughfare}');
+
+          // Prefer barangay (subLocality). Then try subAdministrativeArea, locality, name.
+          String? barangay;
+          if (p.subLocality != null && p.subLocality!.trim().isNotEmpty) {
+            barangay = p.subLocality!.trim();
+          } else if (p.subAdministrativeArea != null && p.subAdministrativeArea!.trim().isNotEmpty) {
+            barangay = p.subAdministrativeArea!.trim();
+          } else if (p.locality != null && p.locality!.trim().isNotEmpty) {
+            barangay = p.locality!.trim();
+          } else if (p.name != null && p.name!.trim().isNotEmpty) {
+            barangay = p.name!.trim();
+          }
+
+          if (barangay != null && barangay.isNotEmpty) return barangay;
+
+          // If no single field is suitable, build a short address from available parts
+          final parts = [
+            p.subLocality,
+            p.subAdministrativeArea,
+            p.locality,
+            p.thoroughfare,
+            p.name,
+            p.administrativeArea,
+            p.country,
+          ].where((s) => s != null && s.trim().isNotEmpty).map((s) => s!.trim()).toList();
+
+          if (parts.isNotEmpty) return parts.take(2).join(', ');
+        }
+      } catch (e) {
+        // ignore reverse geocode errors; fall back to lat/lng
+      }
+
+      return '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
+    } catch (e) {
+      return 'Unable to get location';
+    }
   }
 
   // ✅ Determine alert status based on recent alerts
@@ -210,6 +276,34 @@ class _DashboardPageState extends State<DashboardPage> {
         NavigationItem(icon: Icons.build, label: 'Maintenance'),
         NavigationItem(icon: Icons.settings, label: 'Settings'),
       ],
+      floatingActionButton: MouseRegion(
+        onEnter: (_) => setState(() => _isFabHovering = true),
+        onExit: (_) => setState(() => _isFabHovering = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: Matrix4.identity()..scale(_isFabHovering ? 1.06 : 1.0),
+          child: FloatingActionButton(
+            onPressed: () async {
+              // Attempt to get the current device barangay (or fallback) and
+              // display it inline in the dashboard container.
+              String locationText = await _getCurrentLocationString();
+              if (locationText == 'Location permission denied' ||
+                  locationText == 'Unable to get location') {
+                setState(() {
+                  _detectedBarangay = machineProvider.location;
+                });
+              } else {
+                setState(() {
+                  _detectedBarangay = locationText;
+                });
+              }
+            },
+            backgroundColor:
+                _isFabHovering ? AppColors.darkGreen : AppColors.primaryGreen,
+            child: const Icon(Icons.location_on, color: Colors.white),
+          ),
+        ),
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -264,6 +358,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
               ),
+              // detected barangay is shown inside the MachineStatusCard
               // Scrollable content
               Expanded(
                 child: SingleChildScrollView(
@@ -283,6 +378,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       MachineStatusCard(
                         machineId: 'VB-0001',
                         initialLocation: machineProvider.location,
+                        detectedBarangay: _detectedBarangay.isNotEmpty ? _detectedBarangay : null,
                         statusText: machineProvider.statusText,
                         statusColor: machineProvider.statusColor,
                         tankLevel: tankLevel,
