@@ -10,6 +10,7 @@ import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
 import '../utils/responsive_layout.dart';
 import '../services/maintenance_service.dart';
+import '../services/tank_service.dart';
 import 'dashboard.dart';
 import '../components/machine_status_card.dart';
 import 'alerts.dart';
@@ -38,6 +39,10 @@ class _MachinePageState extends State<MachinePage> {
   // Tank states
   bool isOilTankOpen = true;
   bool isDieselTankOpen = true;
+
+  // Tapo Socket state
+  bool isSocketOn = false;
+  bool isSocketLoading = false;
 
   // MQTT Client
   MqttServerClient? _mqttClient;
@@ -233,6 +238,92 @@ class _MachinePageState extends State<MachinePage> {
     _mqttClient!.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
 
     print('✅ MQTT command published successfully');
+  }
+
+  // Control Tapo socket/plug
+  Future<void> _controlSocket(bool turnOn) async {
+    setState(() {
+      isSocketLoading = true;
+    });
+
+    try {
+      final result = turnOn
+          ? await TankService.turnPumpOn()
+          : await TankService.turnPumpOff();
+
+      if (result['success'] == true) {
+        setState(() {
+          isSocketOn = turnOn;
+          isSocketLoading = false;
+        });
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  turnOn ? Icons.power : Icons.power_off,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 12),
+                Text('Socket turned ${turnOn ? "ON" : "OFF"}'),
+              ],
+            ),
+            backgroundColor: turnOn ? Colors.blue : Colors.grey[700],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        setState(() {
+          isSocketLoading = false;
+        });
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 12),
+                Text('Failed: ${result['error'] ?? "Unknown error"}'),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        isSocketLoading = false;
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error, color: Colors.white),
+              const SizedBox(width: 12),
+              Text('Error: $e'),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> fetchTankData() async {
@@ -1128,6 +1219,61 @@ class _MachinePageState extends State<MachinePage> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            // Tapo Socket Control Button
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: isSocketLoading
+                    ? null
+                    : () {
+                        _controlSocket(!isSocketOn);
+                      },
+                icon: isSocketLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(
+                        isSocketOn ? Icons.power : Icons.power_off,
+                        size: 24,
+                      ),
+                label: Text(
+                  isSocketLoading
+                      ? 'Processing...'
+                      : isSocketOn
+                      ? 'Tapo Socket - ON'
+                      : 'Tapo Socket - OFF',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isSocketOn
+                      ? Colors.blue
+                      : isDark
+                      ? Colors.grey[700]
+                      : const Color(0xFFE5E7EB),
+                  foregroundColor: isSocketOn
+                      ? Colors.white
+                      : AppColors.getTextSecondary(context),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  disabledBackgroundColor: isDark
+                      ? Colors.grey[800]
+                      : Colors.grey[300],
+                  disabledForegroundColor: Colors.grey[500],
+                ),
+              ),
             ),
           ],
         ),
