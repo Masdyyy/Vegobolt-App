@@ -1,4 +1,5 @@
 const mqtt = require('mqtt');
+const tapoService = require('./tapoService');
 
 class MqttService {
   constructor() {
@@ -33,13 +34,20 @@ class MqttService {
           console.log('📡 Subscribed to: vegobolt/tank/sensor/data');
         }
       });
+
+      // Subscribe to pump control topic (for Tapo plug control)
+      this.client.subscribe('vegobolt/tank/pump/control', (err) => {
+        if (!err) {
+          console.log('📡 Subscribed to: vegobolt/tank/pump/control');
+        }
+      });
     });
 
     this.client.on('message', (topic, message) => {
       const payload = message.toString();
       console.log(`📥 MQTT Message on ${topic}:`, payload);
       
-      // You can add logic here to store sensor data to database
+      // Handle sensor data from ESP32
       if (topic === 'vegobolt/tank/sensor/data') {
         try {
           const data = JSON.parse(payload);
@@ -48,6 +56,11 @@ class MqttService {
         } catch (e) {
           console.error('❌ Error parsing sensor data:', e);
         }
+      }
+
+      // Handle pump control (Tapo plug ON/OFF)
+      if (topic === 'vegobolt/tank/pump/control') {
+        this.handlePumpControl(payload);
       }
     });
 
@@ -81,6 +94,54 @@ class MqttService {
     });
 
     return true;
+  }
+
+  /**
+   * Handle pump control via MQTT -> Tapo plug
+   * Expected payload: {"command": "ON"} or {"command": "OFF"} or "ON" / "OFF"
+   */
+  async handlePumpControl(payload) {
+    try {
+      let command;
+      
+      // Try to parse as JSON first
+      try {
+        const data = JSON.parse(payload);
+        command = data.command || data.state || data.action;
+      } catch (e) {
+        // If not JSON, treat as plain text
+        command = payload.toUpperCase();
+      }
+
+      console.log(`🔌 Pump control command received: ${command}`);
+
+      if (command === 'ON' || command === '1' || command === 'true') {
+        const result = await tapoService.turnOn();
+        if (result.success) {
+          console.log('✅ Pump/Plug turned ON via MQTT');
+          // Publish status feedback
+          this.publish('vegobolt/tank/pump/status', JSON.stringify({ state: 'ON', timestamp: new Date().toISOString() }));
+        }
+      } else if (command === 'OFF' || command === '0' || command === 'false') {
+        const result = await tapoService.turnOff();
+        if (result.success) {
+          console.log('✅ Pump/Plug turned OFF via MQTT');
+          // Publish status feedback
+          this.publish('vegobolt/tank/pump/status', JSON.stringify({ state: 'OFF', timestamp: new Date().toISOString() }));
+        }
+      } else if (command === 'TOGGLE') {
+        const result = await tapoService.toggle();
+        if (result.success) {
+          console.log(`✅ Pump/Plug toggled to ${result.state} via MQTT`);
+          // Publish status feedback
+          this.publish('vegobolt/tank/pump/status', JSON.stringify({ state: result.state, timestamp: new Date().toISOString() }));
+        }
+      } else {
+        console.warn(`⚠️ Unknown pump command: ${command}`);
+      }
+    } catch (error) {
+      console.error('❌ Error handling pump control:', error);
+    }
   }
 
   disconnect() {

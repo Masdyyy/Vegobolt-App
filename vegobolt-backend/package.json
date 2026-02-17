@@ -19,7 +19,8 @@
     "mongodb": "^6.20.0",
     "mongoose": "^6.13.8",
     "mqtt": "^5.14.1",
-    "nodemailer": "^7.0.9"
+    "nodemailer": "^7.0.9",
+    "tp-link-tapo-connect": "^2.0.8"
   },
   "devDependencies": {
     "axios": "^1.12.2",

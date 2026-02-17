@@ -7,6 +7,7 @@ const userRoutes = require('./routes/userRoutes');
 const tankRoutes = require('./routes/tankRoutes');  // 👈 Added for ESP32 data
 const alertRoutes = require('./routes/alertRoutes'); // 👈 Added alerts routes
 const maintenanceRoutes = require('./routes/maintenanceRoutes'); // maintenance endpoints
+const pumpRoutes = require('./routes/pumpRoutes'); // 👈 Added pump/Tapo control routes
 const errorHandler = require('./utils/errorHandler');
 
 const app = express();
@@ -39,6 +40,8 @@ app.get('/health', (req, res) => {
 
 // ✅ New ESP32 Tank Data Route
 app.use('/api/tank', tankRoutes);
+// Pump/Tapo control routes
+app.use('/api/pump', pumpRoutes);
 // Maintenance endpoints
 app.use('/api/maintenance', maintenanceRoutes);
 
