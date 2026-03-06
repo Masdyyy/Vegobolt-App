@@ -130,48 +130,168 @@ class _DashboardPageState extends State<DashboardPage> {
       ).timeout(const Duration(seconds: 8));
 
       try {
-        final places = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+        final places = await placemarkFromCoordinates(
+          pos.latitude, 
+          pos.longitude,
+        ).timeout(const Duration(seconds: 10));
+        
         if (places.isNotEmpty) {
           final p = places.first;
-          // Debug: print placemark fields (helpful during testing)
-          // ignore: avoid_print
-          print('Reverse geocode placemark: subLocality=${p.subLocality}, subAdmin=${p.subAdministrativeArea}, locality=${p.locality}, name=${p.name}, thoroughfare=${p.thoroughfare}');
+          
+          // Debug: print ALL placemark fields
+          print('=== Geocoding Debug ===');
+          print('subLocality: ${p.subLocality}');
+          print('locality: ${p.locality}');
+          print('subAdministrativeArea: ${p.subAdministrativeArea}');
+          print('administrativeArea: ${p.administrativeArea}');
+          print('thoroughfare: ${p.thoroughfare}');
+          print('subThoroughfare: ${p.subThoroughfare}');
+          print('name: ${p.name}');
+          print('street: ${p.street}');
+          print('country: ${p.country}');
+          print('postalCode: ${p.postalCode}');
+          print('======================');
 
-          // Prefer barangay (subLocality). Then try subAdministrativeArea, locality, name.
-          String? barangay;
+          // Priority 1: Try subLocality (typical barangay field)
           if (p.subLocality != null && p.subLocality!.trim().isNotEmpty) {
-            barangay = p.subLocality!.trim();
-          } else if (p.subAdministrativeArea != null && p.subAdministrativeArea!.trim().isNotEmpty) {
-            barangay = p.subAdministrativeArea!.trim();
-          } else if (p.locality != null && p.locality!.trim().isNotEmpty) {
-            barangay = p.locality!.trim();
-          } else if (p.name != null && p.name!.trim().isNotEmpty) {
-            barangay = p.name!.trim();
+            return p.subLocality!.trim();
           }
-
-          if (barangay != null && barangay.isNotEmpty) return barangay;
-
-          // If no single field is suitable, build a short address from available parts
+          
+          // Priority 2: Try thoroughfare or street (may contain barangay)
+          if (p.street != null && p.street!.trim().isNotEmpty) {
+            return p.street!.trim();
+          }
+          if (p.thoroughfare != null && p.thoroughfare!.trim().isNotEmpty) {
+            return p.thoroughfare!.trim();
+          }
+          
+          // Priority 3: Try locality (city/municipality)
+          if (p.locality != null && p.locality!.trim().isNotEmpty) {
+            // If we have subAdministrativeArea, combine them
+            if (p.subAdministrativeArea != null && p.subAdministrativeArea!.trim().isNotEmpty) {
+              return '${p.locality!.trim()}, ${p.subAdministrativeArea!.trim()}';
+            }
+            return p.locality!.trim();
+          }
+          
+          // Priority 4: Try subAdministrativeArea (district)
+          if (p.subAdministrativeArea != null && p.subAdministrativeArea!.trim().isNotEmpty) {
+            return p.subAdministrativeArea!.trim();
+          }
+          
+          // Priority 5: Try administrativeArea (province/state)
+          if (p.administrativeArea != null && p.administrativeArea!.trim().isNotEmpty) {
+            if (p.country != null && p.country!.trim().isNotEmpty) {
+              return '${p.administrativeArea!.trim()}, ${p.country!.trim()}';
+            }
+            return p.administrativeArea!.trim();
+          }
+          
+          // Priority 6: Try name field
+          if (p.name != null && p.name!.trim().isNotEmpty && p.name != '${pos.latitude}, ${pos.longitude}') {
+            return p.name!.trim();
+          }
+          
+          // Priority 7: Build from any available parts
           final parts = [
             p.subLocality,
-            p.subAdministrativeArea,
-            p.locality,
+            p.street,
             p.thoroughfare,
-            p.name,
+            p.locality,
+            p.subAdministrativeArea,
             p.administrativeArea,
             p.country,
           ].where((s) => s != null && s.trim().isNotEmpty).map((s) => s!.trim()).toList();
-
-          if (parts.isNotEmpty) return parts.take(2).join(', ');
+          
+          if (parts.isNotEmpty) {
+            return parts.take(2).join(', ');
+          }
+        } else {
+          print('Geocoding returned empty places list');
         }
       } catch (e) {
-        // ignore reverse geocode errors; fall back to lat/lng
+        print('Geocoding error: $e');
       }
 
-      return '${pos.latitude.toStringAsFixed(6)}, ${pos.longitude.toStringAsFixed(6)}';
+      // If all geocoding fails, show approximate region based on coordinates
+      String region = _getRegionFromCoordinates(pos.latitude, pos.longitude);
+      return region;
     } catch (e) {
+      print('Location error: $e');
       return 'Unable to get location';
     }
+  }
+
+  // Get nearest barangay based on actual coordinates (Caloocan City)
+  String _getRegionFromCoordinates(double lat, double lng) {
+    // Known Caloocan City barangay coordinates
+    final barangays = [
+      {'name': 'Bagong Silang (Barangay 176)', 'lat': 14.7753, 'lng': 121.0456},
+      {'name': 'Camarin (Barangay 174)', 'lat': 14.7617, 'lng': 121.0536},
+      {'name': 'Camarin (Barangay 175)', 'lat': 14.7590, 'lng': 121.0500},
+      {'name': 'Camarin (Barangay 177)', 'lat': 14.7545, 'lng': 121.0565},
+      {'name': 'Camarin (Barangay 178)', 'lat': 14.7525, 'lng': 121.0600},
+      {'name': 'Tala (Barangay 183)', 'lat': 14.7830, 'lng': 121.0600},
+      {'name': 'Tala (Barangay 184)', 'lat': 14.7815, 'lng': 121.0620},
+      {'name': 'Tala (Barangay 185)', 'lat': 14.7840, 'lng': 121.0650},
+      {'name': 'Tala (Barangay 186)', 'lat': 14.7865, 'lng': 121.0665},
+      {'name': 'Tala (Barangay 187)', 'lat': 14.7890, 'lng': 121.0690},
+      {'name': 'Tala (Barangay 188)', 'lat': 14.7905, 'lng': 121.0710},
+      {'name': 'Bagumbong / Pag-asa (Barangay 171)', 'lat': 14.7592, 'lng': 121.0175},
+      {'name': 'Bagumbong / Pag-asa (Barangay 172)', 'lat': 14.7555, 'lng': 121.0220},
+      {'name': 'Bagumbong / Pag-asa (Barangay 173)', 'lat': 14.7568, 'lng': 121.0310},
+      {'name': 'Kaybiga / Deparo (Barangay 164)', 'lat': 14.7485, 'lng': 121.0160},
+      {'name': 'Kaybiga / Deparo (Barangay 165)', 'lat': 14.7500, 'lng': 121.0185},
+      {'name': 'Kaybiga / Deparo (Barangay 166)', 'lat': 14.7520, 'lng': 121.0210},
+      {'name': 'Kaybiga / Deparo (Barangay 167)', 'lat': 14.7540, 'lng': 121.0240},
+      {'name': 'Kaybiga / Deparo (Barangay 168)', 'lat': 14.7530, 'lng': 121.0280},
+      {'name': 'Capri / Amparo (Barangay 179)', 'lat': 14.7565, 'lng': 121.0640},
+      {'name': 'Nagkaisang Nayon (Barangay 170)', 'lat': 14.7480, 'lng': 121.0335},
+      {'name': 'Nagkaisang Nayon (Barangay 180)', 'lat': 14.7630, 'lng': 121.0645},
+      {'name': 'Pangarap Village (Barangay 181)', 'lat': 14.7680, 'lng': 121.0700},
+      {'name': 'Pangarap Village (Barangay 182)', 'lat': 14.7705, 'lng': 121.0725},
+      {'name': 'Baesa / Libis Baesa (Barangay 158)', 'lat': 14.6575, 'lng': 120.9835},
+      {'name': 'Baesa / Libis Baesa (Barangay 159)', 'lat': 14.6590, 'lng': 120.9850},
+      {'name': 'Baesa / Libis Baesa (Barangay 160)', 'lat': 14.6605, 'lng': 120.9870},
+      {'name': 'Baesa / Libis Baesa (Barangay 161)', 'lat': 14.6620, 'lng': 120.9890},
+      {'name': 'Santa Quiteria (Barangay 162)', 'lat': 14.6510, 'lng': 120.9895},
+      {'name': 'Santa Quiteria (Barangay 163)', 'lat': 14.6530, 'lng': 120.9910},
+    ];
+
+    // Find the nearest barangay using distance calculation
+    double minDistance = double.infinity;
+    String? nearestBarangay;
+
+    for (var brgy in barangays) {
+      // Calculate approximate distance using Euclidean distance
+      // (Good enough for small areas like city barangays)
+      double distance = _calculateDistance(
+        lat, lng, 
+        brgy['lat'] as double, 
+        brgy['lng'] as double
+      );
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestBarangay = brgy['name'] as String;
+      }
+    }
+
+    // If nearest barangay is within reasonable distance (0.02 degrees ≈ 2km)
+    // return the barangay name, otherwise return "Unknown Location"
+    if (nearestBarangay != null && minDistance < 0.02) {
+      return nearestBarangay;
+    }
+
+    return 'Unknown Location';
+  }
+
+  // Calculate approximate distance between two coordinates
+  double _calculateDistance(double lat1, double lng1, double lat2, double lng2) {
+    // Simple Euclidean distance (sufficient for small geographic areas)
+    double dLat = lat1 - lat2;
+    double dLng = lng1 - lng2;
+    return (dLat * dLat + dLng * dLng);
   }
 
   // ✅ Determine alert status based on recent alerts

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "scan-tapo": "node scan-tapo-devices.js"
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.2",

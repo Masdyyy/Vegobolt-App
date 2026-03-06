@@ -8,6 +8,7 @@ const app = require('./src/app');
 const connectDB = require('./src/config/mongodb');
 const mqttService = require('./src/services/mqttService');
 const tapoService = require('./src/services/tapoService');
+const { getLocalIpAddress, getBackendUrl } = require('./src/utils/networkUtils');
 
 // Initialize MongoDB connection (cached for serverless)
 let isConnected = false;
@@ -49,13 +50,22 @@ if (require.main === module) {
             console.warn('⚠️ Tapo connection failed (will retry on command):', err.message);
         });
         
+        const localIp = getLocalIpAddress();
+        const backendUrl = getBackendUrl(PORT);
+        
         app.listen(PORT, '0.0.0.0', () => {
-            console.log(`🚀 Local server running at http://localhost:${PORT}`);
-            console.log(`📍 Health check: http://localhost:${PORT}/health`);
-            console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
-            console.log(`📱 ESP32 API: http://localhost:${PORT}/api/tank`);
-            console.log(`🚨 Alerts API: http://localhost:${PORT}/api/alerts`);
-            console.log(`🔌 Pump API: http://localhost:${PORT}/api/pump`);
+            console.log(`\n📡 Network Information:`);
+            console.log(`   Local IP: ${localIp}`);
+            console.log(`   Backend URL: ${backendUrl}`);
+            console.log(`\n🚀 Server Endpoints:`);
+            console.log(`   Local: http://localhost:${PORT}`);
+            console.log(`   Network: http://${localIp}:${PORT}`);
+            console.log(`\n📍 API Endpoints:`);
+            console.log(`   Health: http://${localIp}:${PORT}/health`);
+            console.log(`   Auth: http://${localIp}:${PORT}/api/auth`);
+            console.log(`   ESP32: http://${localIp}:${PORT}/api/tank`);
+            console.log(`   Alerts: http://${localIp}:${PORT}/api/alerts`);
+            console.log(`   Pump: http://${localIp}:${PORT}/api/pump`);
         });
     }).catch(err => {
         console.error('Failed to start server:', err);

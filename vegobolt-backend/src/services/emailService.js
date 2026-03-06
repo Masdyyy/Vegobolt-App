@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const { getBackendUrl } = require('../utils/networkUtils');
 
 /**
  * Create email transporter based on environment configuration
@@ -49,20 +50,11 @@ const generateVerificationToken = () => {
 
 /**
  * Resolve the backend base URL for building API links in emails.
- * Priority:
- * 1) BACKEND_URL (explicit backend hostname)
- * 2) API_BASE_URL (common alias)
- * 3) VERCEL_URL (provided by Vercel) prefixed with https://
- * 4) FRONTEND_URL (legacy fallback, in case API is hosted together)
- * 5) http://localhost:3000 (local dev default)
+ * Uses auto-detected local IP in development mode.
  */
 const getBackendBaseUrl = () => {
-    let base =
-        process.env.BACKEND_URL ||
-        process.env.API_BASE_URL ||
-        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
-        process.env.FRONTEND_URL ||
-        'http://localhost:3000';
+    const port = process.env.PORT || 3000;
+    let base = getBackendUrl(port);
 
     // Trim trailing slash if present to avoid double slashes in URLs
     if (base.endsWith('/')) base = base.slice(0, -1);
