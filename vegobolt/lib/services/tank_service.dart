@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class TankService {
   // 👇 Replace this with your actual computer’s local IP
-  static const String baseUrl = "http://192.168.87.224:3000";
+  static const String baseUrl = "http://10.59.172.224:3000";
 
   /// Get current tank data (from Node backend or ESP32)
   static Future<Map<String, dynamic>> getTankStatus() async {
