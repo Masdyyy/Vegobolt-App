@@ -33,6 +33,8 @@ const createAdminUser = async () => {
         const adminEmail = 'vegobolt@gmail.com';
         const adminPassword = 'Pass@123';
         const adminDisplayName = 'Vegobolt Admin';
+        const adminFirstName = 'Vegobolt';
+        const adminLastName = 'Admin';
 
         // Check if admin already exists
         const existingAdmin = await User.findByEmail(adminEmail);
@@ -47,6 +49,8 @@ const createAdminUser = async () => {
             // Update user to admin with new password
             existingAdmin.password = hashedPassword;
             existingAdmin.isAdmin = true;
+            if (!existingAdmin.firstName) existingAdmin.firstName = adminFirstName;
+            if (!existingAdmin.lastName) existingAdmin.lastName = adminLastName;
             existingAdmin.isEmailVerified = true; // Also verify email
             existingAdmin.isActive = true; // Make sure active
             await existingAdmin.save();
@@ -69,6 +73,8 @@ const createAdminUser = async () => {
         const adminUser = new User({
             email: adminEmail,
             password: hashedPassword,
+            firstName: adminFirstName,
+            lastName: adminLastName,
             displayName: adminDisplayName,
             isAdmin: true,
             isEmailVerified: true, // Auto-verify admin

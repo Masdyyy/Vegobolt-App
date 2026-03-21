@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const InviteCode = require('../models/InviteCode');
 const { generateToken, verifyToken: verifyJWT } = require('../services/jwtService');
 const { generateVerificationToken, sendVerificationEmail } = require('../services/emailService');
 const connectDB = require('../config/mongodb');
@@ -15,7 +16,7 @@ const register = async (req, res, next) => {
         // Ensure MongoDB is connected (for serverless environments)
         await connectDB();
         
-        const { email, password, firstName, lastName } = req.body;
+        const { email, password, firstName, lastName, inviteCode } = req.body;
         console.log('🔵 Parsed data:', { email, firstName, lastName, hasPassword: !!password });
 
         // Validate input
@@ -23,6 +24,15 @@ const register = async (req, res, next) => {
             return res.status(400).json({
                 success: false,
                 message: 'Please provide email, password, first name, and last name'
+            });
+        }
+
+        // Enforce admin-generated invite code
+        const trimmedInviteCode = String(inviteCode || '').trim().toUpperCase();
+        if (!trimmedInviteCode) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide the admin signup code'
             });
         }
 
@@ -43,6 +53,26 @@ const register = async (req, res, next) => {
             });
         }
 
+        // Atomically claim the invite code (prevents reuse)
+        const claimedInvite = await InviteCode.findOneAndUpdate(
+            InviteCode.isValidForSignupQuery(trimmedInviteCode),
+            {
+                $set: {
+                    isUsed: true,
+                    usedAt: new Date(),
+                    usedByEmail: String(email).toLowerCase(),
+                }
+            },
+            { new: true }
+        );
+
+        if (!claimedInvite) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid or already used admin signup code'
+            });
+        }
+
         // Hash password for MongoDB
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -52,15 +82,32 @@ const register = async (req, res, next) => {
         const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
         // Create user in MongoDB
-        const mongoUser = await User.createUser({
-            email,
-            password: hashedPassword,
-            firstName,
-            lastName,
-            emailVerificationToken: verificationToken,
-            emailVerificationExpires: verificationExpires,
-            isEmailVerified: false
-        });
+        let mongoUser;
+        try {
+            mongoUser = await User.createUser({
+                email,
+                password: hashedPassword,
+                firstName,
+                lastName,
+                inviteCodeUsed: trimmedInviteCode,
+                emailVerificationToken: verificationToken,
+                emailVerificationExpires: verificationExpires,
+                isEmailVerified: false
+            });
+        } catch (createErr) {
+            // Rollback claimed invite code if user creation fails
+            await InviteCode.updateOne(
+                { _id: claimedInvite._id, usedByEmail: String(email).toLowerCase() },
+                { $set: { isUsed: false, usedAt: null, usedByEmail: null, usedByUserId: null } }
+            );
+            throw createErr;
+        }
+
+        // Attach usedByUserId now that we have a user id
+        await InviteCode.updateOne(
+            { _id: claimedInvite._id },
+            { $set: { usedByUserId: mongoUser._id } }
+        );
 
         // Send verification email
         try {
@@ -84,6 +131,7 @@ const register = async (req, res, next) => {
                     firstName: mongoUser.firstName,
                     lastName: mongoUser.lastName,
                     displayName: mongoUser.displayName,
+                    isAdmin: mongoUser.isAdmin === true,
                     isEmailVerified: mongoUser.isEmailVerified,
                     createdAt: mongoUser.createdAt
                 },
@@ -168,7 +216,8 @@ const login = async (req, res) => {
                     email: user.email,
                     firstName: user.firstName,
                     lastName: user.lastName,
-                    displayName: user.displayName
+                    displayName: user.displayName,
+                    isAdmin: user.isAdmin === true,
                 },
                 token: token
             }
@@ -193,7 +242,7 @@ const googleLogin = async (req, res) => {
         // Ensure MongoDB is connected (for serverless environments)
         await connectDB();
 
-        const { idToken } = req.body;
+        const { idToken, inviteCode } = req.body;
 
         if (!idToken) {
             return res.status(400).json({
@@ -224,17 +273,59 @@ const googleLogin = async (req, res) => {
         // Find or create user
         let user = await User.findByEmail(email);
         if (!user) {
-            user = await User.createUser({
-                email,
-                // store a non-usable password placeholder for social login
-                password: `google:${payload.sub}`,
-                firstName,
-                lastName,
-                profilePicture: picture,
-                isEmailVerified: emailVerified,
-                emailVerificationToken: null,
-                emailVerificationExpires: null,
-            });
+            // Enforce invite/admin code for first-time Google signups
+            const trimmedInviteCode = String(inviteCode || '').trim().toUpperCase();
+            if (!trimmedInviteCode) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Please provide the admin signup code'
+                });
+            }
+
+            const claimedInvite = await InviteCode.findOneAndUpdate(
+                InviteCode.isValidForSignupQuery(trimmedInviteCode),
+                {
+                    $set: {
+                        isUsed: true,
+                        usedAt: new Date(),
+                        usedByEmail: String(email).toLowerCase(),
+                    }
+                },
+                { new: true }
+            );
+
+            if (!claimedInvite) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid or already used admin signup code'
+                });
+            }
+
+            try {
+                user = await User.createUser({
+                    email,
+                    // store a non-usable password placeholder for social login
+                    password: `google:${payload.sub}`,
+                    firstName,
+                    lastName,
+                    profilePicture: picture,
+                    inviteCodeUsed: trimmedInviteCode,
+                    isEmailVerified: emailVerified,
+                    emailVerificationToken: null,
+                    emailVerificationExpires: null,
+                });
+            } catch (createErr) {
+                await InviteCode.updateOne(
+                    { _id: claimedInvite._id, usedByEmail: String(email).toLowerCase() },
+                    { $set: { isUsed: false, usedAt: null, usedByEmail: null, usedByUserId: null } }
+                );
+                throw createErr;
+            }
+
+            await InviteCode.updateOne(
+                { _id: claimedInvite._id },
+                { $set: { usedByUserId: user._id } }
+            );
         } else {
             // Update existing profile with Google info
             if (!user.firstName && firstName) user.firstName = firstName;
@@ -259,6 +350,7 @@ const googleLogin = async (req, res) => {
                     lastName: user.lastName,
                     displayName: user.displayName,
                     profilePicture: user.profilePicture,
+                    isAdmin: user.isAdmin === true,
                 },
                 token,
             },
@@ -313,7 +405,8 @@ const verifyToken = async (req, res) => {
                     email: user.email,
                     firstName: user.firstName,
                     lastName: user.lastName,
-                    displayName: user.displayName
+                    displayName: user.displayName,
+                    isAdmin: user.isAdmin === true,
                 },
                 tokenInfo: {
                     id: decodedToken.id,

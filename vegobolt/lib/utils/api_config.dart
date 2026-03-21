@@ -29,15 +29,15 @@ class ApiConfig {
       return 'http://localhost:3000';
     } else if (Platform.isAndroid) {
       // Android real device (use your PC's LAN IP)
-
-      return 'http://192.168.1.8:3000';
+      // TODO: Replace with your actual LAN IP address
+      return 'http://192.168.1.100:3000';
     } else if (Platform.isIOS) {
       // iOS Simulator
       return 'http://localhost:3000';
     } else {
       // Physical devices on same WiFi network
-
-      return 'http://192.168.1.8:3000';
+      // TODO: Replace with your actual LAN IP address
+      return 'http://192.168.1.100:3000';
     }
   }
 

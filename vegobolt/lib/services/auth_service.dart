@@ -138,6 +138,7 @@ class AuthService {
     String password,
     String firstName,
     String lastName,
+    String inviteCode,
   ) async {
     try {
       final url = Uri.parse(ApiConfig.getUrl(ApiConfig.authRegister));
@@ -150,6 +151,7 @@ class AuthService {
           'password': password,
           'firstName': firstName,
           'lastName': lastName,
+          'inviteCode': inviteCode,
         }),
       );
 

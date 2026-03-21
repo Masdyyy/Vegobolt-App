@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../components/header.dart';
 import '../../components/admin_navbar.dart';
 import '../../components/add_maintenance_modal.dart';
 import '../../utils/colors.dart';
 import '../../services/admin_user_service.dart';
+import '../../services/invite_code_service.dart';
 import '../../services/maintenance_service.dart';
 import '../../services/alerts_repository.dart';
 
@@ -29,6 +31,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   final AdminUserService _adminService = AdminUserService();
   final MaintenanceService _maintenanceService = MaintenanceService();
+  final InviteCodeService _inviteCodeService = InviteCodeService();
+
+  bool _isGeneratingSignupCode = false;
+  String? _latestSignupCode;
 
   // Table data (will be loaded from backend)
   List<Map<String, dynamic>> _machineData = [
@@ -189,6 +195,33 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   void _showMsg(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _generateSignupCode() async {
+    if (_isGeneratingSignupCode) return;
+    setState(() => _isGeneratingSignupCode = true);
+
+    try {
+      final result = await _inviteCodeService.generate();
+      if (!mounted) return;
+
+      if (result['success'] == true) {
+        final code = result['code']?.toString();
+        setState(() => _latestSignupCode = code);
+        _showMsg('Signup code generated');
+      } else {
+        _showMsg(result['message']?.toString() ?? 'Failed to generate code');
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingSignupCode = false);
+    }
+  }
+
+  void _copySignupCode() {
+    final code = _latestSignupCode;
+    if (code == null || code.isEmpty) return;
+    Clipboard.setData(ClipboardData(text: code));
+    _showMsg('Copied code to clipboard');
   }
 
   void _showEditMachineNameDialog(int dataIndex, String currentMachine) {
@@ -539,6 +572,122 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
+
+                  // Signup code generator (minimal)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.getCardBackground(context),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primaryGreen.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.vpn_key_outlined,
+                              color: AppColors.getTextSecondary(context),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Signup Code',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.getTextPrimary(context),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 36,
+                              child: ElevatedButton(
+                                onPressed: _isGeneratingSignupCode
+                                    ? null
+                                    : _generateSignupCode,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryGreen,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: _isGeneratingSignupCode
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Generate',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Generate a one-time code required for new user registration.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.getTextSecondary(context),
+                          ),
+                        ),
+                        if ((_latestSignupCode ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: AppColors.getTextLight(
+                                  context,
+                                ).withOpacity(0.35),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: SelectableText(
+                                    _latestSignupCode!,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.2,
+                                      color: AppColors.getTextPrimary(context),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: _copySignupCode,
+                                  tooltip: 'Copy',
+                                  icon: const Icon(Icons.copy),
+                                  color: AppColors.primaryGreen,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 20),
 
                   // Statistics Cards

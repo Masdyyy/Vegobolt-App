@@ -127,6 +127,7 @@ class _SignupPageState extends State<SignupPage> {
       final firstName = _firstNameController.text.trim();
       final lastName = _lastNameController.text.trim();
       final password = _passwordController.text;
+      final inviteCode = _machineKeyController.text.trim();
 
       // Call backend API to register with firstName and lastName
       final result = await _authService.register(
@@ -134,6 +135,7 @@ class _SignupPageState extends State<SignupPage> {
         password,
         firstName,
         lastName,
+        inviteCode,
       );
 
       if (!mounted) return;
@@ -483,20 +485,21 @@ class _SignupPageState extends State<SignupPage> {
 
                   const SizedBox(height: 16),
 
-                  // Machine Key field
+                  // Admin invite code field
                   TextFormField(
                     controller: _machineKeyController,
                     decoration: _buildInputDecoration(
-                      hint: 'Machine Key',
+                      hint: 'Admin Signup Code',
                       prefixIcon: Icons.vpn_key_outlined,
                     ),
                     validator: (v) {
                       final value = v?.trim() ?? '';
-                      if (value.isEmpty) return 'Please enter the Machine Key';
+                      if (value.isEmpty)
+                        return 'Please enter the admin signup code';
                       // simple validation: allow alphanumeric and dashes/underscores, min 4 chars
                       final keyRegex = RegExp(r"^[A-Za-z0-9_-]{4,}");
                       if (!keyRegex.hasMatch(value))
-                        return 'Invalid machine key';
+                        return 'Invalid signup code';
                       return null;
                     },
                   ),

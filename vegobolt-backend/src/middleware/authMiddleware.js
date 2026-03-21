@@ -40,7 +40,8 @@ const authenticateToken = async (req, res, next) => {
         req.user = {
             id: decoded.id,
             email: decoded.email,
-            displayName: decoded.displayName
+            displayName: decoded.displayName,
+            isAdmin: user.isAdmin === true,
         };
         
         next();
@@ -53,6 +54,20 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
+/**
+ * Middleware to require admin privileges
+ * Must be used after authenticateToken
+ */
+const requireAdmin = (req, res, next) => {
+    if (req.user?.isAdmin === true) return next();
+
+    return res.status(403).json({
+        success: false,
+        message: 'Admin access required'
+    });
+};
+
 module.exports = {
     authenticateToken,
+    requireAdmin,
 };

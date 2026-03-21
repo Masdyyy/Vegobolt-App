@@ -2,5 +2,6 @@
   "email": "testuser@vegobolt.com",
   "password": "Test123!",
   "firstName": "Test",
-  "lastName": "User"
+  "lastName": "User",
+  "inviteCode": "PUT_INVITE_CODE_HERE"
 }

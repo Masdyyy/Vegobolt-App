@@ -38,9 +38,26 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    // Admin flag (used to protect admin-only endpoints)
+    isAdmin: {
+        type: Boolean,
+        default: false,
+    },
     isActive: {
         type: Boolean,
         default: true,
+    },
+    // Optional machine display name (used by admin endpoints)
+    machine: {
+        type: String,
+        default: null,
+        trim: true,
+    },
+    // Track which invite/admin code was used to sign up
+    inviteCodeUsed: {
+        type: String,
+        default: null,
+        trim: true,
     },
     isEmailVerified: {
         type: Boolean,

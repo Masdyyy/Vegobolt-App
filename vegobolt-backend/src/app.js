@@ -8,6 +8,7 @@ const tankRoutes = require('./routes/tankRoutes');  // 👈 Added for ESP32 data
 const alertRoutes = require('./routes/alertRoutes'); // 👈 Added alerts routes
 const maintenanceRoutes = require('./routes/maintenanceRoutes'); // maintenance endpoints
 const pumpRoutes = require('./routes/pumpRoutes'); // 👈 Added pump/Tapo control routes
+const inviteCodeRoutes = require('./routes/inviteCodeRoutes');
 const errorHandler = require('./utils/errorHandler');
 
 const app = express();
@@ -49,6 +50,7 @@ app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/alerts', alertRoutes); // 👈 Wire up alerts route
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/invite-codes', inviteCodeRoutes);
 
 // 404 handler
 app.use((req, res) => {

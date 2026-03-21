@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const { authenticateToken } = require('../middleware/authMiddleware');
+const { authenticateToken, requireAdmin } = require('../middleware/authMiddleware');
 
 /**
  * @route   GET /api/users/profile
@@ -25,9 +25,9 @@ router.put('/profile', authenticateToken, userController.updateUserProfile);
 router.delete('/account', authenticateToken, userController.deleteUserAccount);
 
 // Admin endpoints
-router.get('/', authenticateToken, userController.listUsers);
-router.delete('/:id', authenticateToken, userController.adminDeleteUser);
-router.put('/:id/active', authenticateToken, userController.setUserActive);
-router.put('/:id/machine', authenticateToken, userController.updateMachine);
+router.get('/', authenticateToken, requireAdmin, userController.listUsers);
+router.delete('/:id', authenticateToken, requireAdmin, userController.adminDeleteUser);
+router.put('/:id/active', authenticateToken, requireAdmin, userController.setUserActive);
+router.put('/:id/machine', authenticateToken, requireAdmin, userController.updateMachine);
 
 module.exports = router;

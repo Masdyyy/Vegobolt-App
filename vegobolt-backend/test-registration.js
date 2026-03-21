@@ -4,7 +4,9 @@ const data = JSON.stringify({
   email: 'testuser@vegobolt.com',
   password: 'Test123!',
   firstName: 'Test',
-  lastName: 'User'
+  lastName: 'User',
+  // Required: admin-generated signup code (set INVITE_CODE env var)
+  inviteCode: process.env.INVITE_CODE || 'PUT_INVITE_CODE_HERE'
 });
 
 const options = {
