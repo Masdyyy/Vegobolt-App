@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../components/header.dart';
 import '../../components/admin_navbar.dart';
 import '../../components/add_maintenance_modal.dart';
 import '../../utils/colors.dart';
+import '../../utils/api_config.dart';
 import '../../services/admin_user_service.dart';
 import '../../services/invite_code_service.dart';
 import '../../services/maintenance_service.dart';
-import '../../services/alerts_repository.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -35,6 +37,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   bool _isGeneratingSignupCode = false;
   String? _latestSignupCode;
+  List<dynamic> _alerts = [];
+  bool _alertsLoading = false;
 
   // Table data (will be loaded from backend)
   List<Map<String, dynamic>> _machineData = [
@@ -112,7 +116,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 color: AppColors.primaryGreen,
               ),
               SizedBox(width: 8),
-              Text('Edit Machine Name'),
+              Text('Edit Machine ID'),
             ],
           ),
           onTap: () {
@@ -287,7 +291,75 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     }
   }
 
-  void _showAllAlerts() {
+  String _getBaseUrl() {
+    return ApiConfig.baseUrl;
+  }
+
+  Future<void> _loadAlerts() async {
+    setState(() {
+      _alertsLoading = true;
+    });
+
+    try {
+      final response = await http
+          .get(Uri.parse('${_getBaseUrl()}/api/tank/alerts'))
+          .timeout(const Duration(seconds: 3));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> alertsData = json.decode(response.body);
+        if (!mounted) return;
+        setState(() {
+          _alerts = alertsData;
+          _alertsLoading = false;
+        });
+      } else {
+        if (!mounted) return;
+        setState(() {
+          _alerts = [];
+          _alertsLoading = false;
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _alerts = [];
+        _alertsLoading = false;
+      });
+    }
+  }
+
+  Color _getAlertColor(Map<String, dynamic> alert) {
+    final status = (alert['status'] ?? '').toString().toLowerCase();
+    if (status == 'critical') return AppColors.criticalRed;
+    if (status == 'warning') return AppColors.warningYellow;
+    if (status == 'resolved') return AppColors.primaryGreen;
+    return AppColors.getTextSecondary(context);
+  }
+
+  IconData _getAlertIcon(Map<String, dynamic> alert) {
+    final type = (alert['type'] ?? '').toString().toLowerCase();
+    if (type == 'temperature') return Icons.thermostat;
+    if (type == 'tank') return Icons.local_gas_station;
+    return Icons.warning_amber_rounded;
+  }
+
+  String _resolveAlertStaff(Map<String, dynamic> alert) {
+    final explicitStaff = (alert['staff'] ?? '').toString().trim();
+    if (explicitStaff.isNotEmpty) return explicitStaff;
+
+    final machineId = (alert['machine'] ?? '').toString().trim();
+    if (machineId.isEmpty) return 'Unknown Staff';
+
+    final matched = _machineData.where((m) => m['machine'] == machineId);
+    if (matched.isEmpty) return 'Unknown Staff';
+
+    final name = (matched.first['fullname'] ?? '').toString().trim();
+    return name.isEmpty ? 'Unknown Staff' : name;
+  }
+
+  Future<void> _showAllAlerts() async {
+    await _loadAlerts();
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -325,92 +397,125 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               const Divider(height: 1),
               // Alerts List
               Expanded(
-                child: ListView.builder(
-                  itemCount: sampleAlerts.length,
-                  itemBuilder: (context, index) {
-                    final alert = sampleAlerts[index];
-                    return Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: AppColors.getTextLight(
-                              context,
-                            ).withOpacity(0.2),
+                child: _alertsLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _alerts.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No alerts detected.',
+                          style: TextStyle(
+                            color: AppColors.getTextSecondary(context),
                           ),
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
+                      )
+                    : ListView.builder(
+                        itemCount: _alerts.length,
+                        itemBuilder: (context, index) {
+                          final alert = _alerts[index] as Map<String, dynamic>;
+                          final staffName = _resolveAlertStaff(alert);
+                          final alertColor = _getAlertColor(alert);
+                          final alertIcon = _getAlertIcon(alert);
+
+                          return Container(
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: (alert['color'] as Color).withOpacity(0.2),
-                              shape: BoxShape.circle,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: AppColors.getTextLight(
+                                    context,
+                                  ).withOpacity(0.2),
+                                ),
+                              ),
                             ),
-                            child: Icon(
-                              alert['icon'] as IconData,
-                              color: alert['color'] as Color,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
                               children: [
-                                Text(
-                                  alert['title'] as String,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.getTextPrimary(context),
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: alertColor.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    alertIcon,
+                                    color: alertColor,
+                                    size: 20,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${alert['machine']} • ${alert['location']}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.getTextSecondary(context),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        (alert['title'] ?? 'Alert').toString(),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.getTextPrimary(
+                                            context,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${alert['machine'] ?? 'Unknown'} • ${alert['location'] ?? '-'}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.getTextSecondary(
+                                            context,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Staff: $staffName',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.getTextSecondary(
+                                            context,
+                                          ),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        (alert['time'] ?? '-').toString(),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.getTextLight(
+                                            context,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  alert['time'] as String,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.getTextLight(context),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: alertColor.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    (alert['status'] ?? '').toString(),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: alertColor,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: (alert['color'] as Color).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              alert['status'] as String,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: alert['color'] as Color,
-                              ),
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
             ],
           ),
@@ -423,6 +528,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void initState() {
     super.initState();
     _loadUsers();
+    _loadAlerts();
   }
 
   Future<void> _loadUsers() async {
