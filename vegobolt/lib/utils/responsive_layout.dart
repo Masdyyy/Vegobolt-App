@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 
 /// Global state for sidebar expansion
@@ -148,20 +149,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
                             vertical: 40,
                             horizontal: 12,
                           ),
-                          child:
-                              (SidebarState.isExpanded && responsive.isDesktop)
-                              ? Image.asset(
-                                  'assets/img/vegobolt_logo.png',
-                                  height: 120,
-                                  fit: BoxFit.contain,
-                                )
-                              : Center(
-                                  child: Image.asset(
-                                    'assets/img/vegobolt_logo.png',
-                                    height: 100,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
+                          child: _getLogoImage(responsive),
                         ),
                         // Toggle button
                         if (responsive.isDesktop)
@@ -293,6 +281,39 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       ),
       floatingActionButton: widget.floatingActionButton,
     );
+  }
+
+  /// Get logo image based on platform and sidebar state (Windows desktop only)
+  Widget _getLogoImage(ResponsiveHelper responsive) {
+    final isWindowsDesktop = Platform.isWindows && responsive.isDesktop;
+
+    if (isWindowsDesktop) {
+      // Windows desktop: swap logos based on sidebar state
+      if (SidebarState.isExpanded) {
+        // Expanded: show VEGOBOLT text logo (larger for better visibility)
+        return Image.asset(
+          'assets/img/vegobolt_logo.png',
+          height: 120,
+          fit: BoxFit.contain,
+        );
+      } else {
+        // Collapsed: show VB icon logo centered
+        return Center(
+          child: Image.asset(
+            'assets/img/vegobolt2_logo.png',
+            height: 70,
+            fit: BoxFit.contain,
+          ),
+        );
+      }
+    } else {
+      // Mobile, tablet, or other platforms: use original logo
+      return Image.asset(
+        'assets/img/vegobolt_logo.png',
+        height: responsive.isDesktop ? 120 : 100,
+        fit: BoxFit.contain,
+      );
+    }
   }
 }
 

@@ -37,3 +37,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/img/vegobolt_logo.png
+    - assets/img/vegobolt2_logo.png
