@@ -15,6 +15,7 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 import '../providers/machine_provider.dart';
 import '../utils/api_config.dart';
+import '../services/user_service.dart';
 // removed modal import — location is displayed inline
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -37,12 +38,16 @@ class _DashboardPageState extends State<DashboardPage> {
   String _currentAlertStatus = 'normal'; // Track current alert status
   bool _isFabHovering = false;
   String _detectedBarangay = '';
+  String _machineeName = 'VB-0001'; // Machine name set by admin
+
+  final UserService _userService = UserService();
 
   @override
   void initState() {
     super.initState();
     fetchTankData();
     fetchAlerts();
+    fetchUserMachineeName();
     // Auto-refresh alerts every 5 seconds
     _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted) return;
@@ -55,6 +60,21 @@ class _DashboardPageState extends State<DashboardPage> {
   void dispose() {
     _pollTimer?.cancel();
     super.dispose();
+  }
+
+  // ✅ Fetch user's machine name set by admin
+  Future<void> fetchUserMachineeName() async {
+    try {
+      final result = await _userService.getProfile();
+      if (result['success'] == true && result['data'] != null) {
+        final machine = result['data']['machine'] ?? 'VB-0001';
+        setState(() {
+          _machineeName = machine;
+        });
+      }
+    } catch (e) {
+      print('⚠️ Error fetching machine name: $e');
+    }
   }
 
   // ✅ Get base URL from centralized config
@@ -130,18 +150,24 @@ class _DashboardPageState extends State<DashboardPage> {
       ).timeout(const Duration(seconds: 8));
 
       try {
-        final places = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+        final places = await placemarkFromCoordinates(
+          pos.latitude,
+          pos.longitude,
+        );
         if (places.isNotEmpty) {
           final p = places.first;
           // Debug: print placemark fields (helpful during testing)
           // ignore: avoid_print
-          print('Reverse geocode placemark: subLocality=${p.subLocality}, subAdmin=${p.subAdministrativeArea}, locality=${p.locality}, name=${p.name}, thoroughfare=${p.thoroughfare}');
+          print(
+            'Reverse geocode placemark: subLocality=${p.subLocality}, subAdmin=${p.subAdministrativeArea}, locality=${p.locality}, name=${p.name}, thoroughfare=${p.thoroughfare}',
+          );
 
           // Prefer barangay (subLocality). Then try subAdministrativeArea, locality, name.
           String? barangay;
           if (p.subLocality != null && p.subLocality!.trim().isNotEmpty) {
             barangay = p.subLocality!.trim();
-          } else if (p.subAdministrativeArea != null && p.subAdministrativeArea!.trim().isNotEmpty) {
+          } else if (p.subAdministrativeArea != null &&
+              p.subAdministrativeArea!.trim().isNotEmpty) {
             barangay = p.subAdministrativeArea!.trim();
           } else if (p.locality != null && p.locality!.trim().isNotEmpty) {
             barangay = p.locality!.trim();
@@ -152,15 +178,19 @@ class _DashboardPageState extends State<DashboardPage> {
           if (barangay != null && barangay.isNotEmpty) return barangay;
 
           // If no single field is suitable, build a short address from available parts
-          final parts = [
-            p.subLocality,
-            p.subAdministrativeArea,
-            p.locality,
-            p.thoroughfare,
-            p.name,
-            p.administrativeArea,
-            p.country,
-          ].where((s) => s != null && s.trim().isNotEmpty).map((s) => s!.trim()).toList();
+          final parts =
+              [
+                    p.subLocality,
+                    p.subAdministrativeArea,
+                    p.locality,
+                    p.thoroughfare,
+                    p.name,
+                    p.administrativeArea,
+                    p.country,
+                  ]
+                  .where((s) => s != null && s.trim().isNotEmpty)
+                  .map((s) => s!.trim())
+                  .toList();
 
           if (parts.isNotEmpty) return parts.take(2).join(', ');
         }
@@ -298,8 +328,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 });
               }
             },
-            backgroundColor:
-                _isFabHovering ? AppColors.darkGreen : AppColors.primaryGreen,
+            backgroundColor: _isFabHovering
+                ? AppColors.darkGreen
+                : AppColors.primaryGreen,
             child: const Icon(Icons.location_on, color: Colors.white),
           ),
         ),
@@ -376,9 +407,11 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
 
                       MachineStatusCard(
-                        machineId: 'VB-0001',
+                        machineId: _machineeName,
                         initialLocation: machineProvider.location,
-                        detectedBarangay: _detectedBarangay.isNotEmpty ? _detectedBarangay : null,
+                        detectedBarangay: _detectedBarangay.isNotEmpty
+                            ? _detectedBarangay
+                            : null,
                         statusText: machineProvider.statusText,
                         statusColor: machineProvider.statusColor,
                         tankLevel: tankLevel,

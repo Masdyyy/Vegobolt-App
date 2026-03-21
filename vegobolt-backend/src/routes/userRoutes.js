@@ -28,5 +28,6 @@ router.delete('/account', authenticateToken, userController.deleteUserAccount);
 router.get('/', authenticateToken, userController.listUsers);
 router.delete('/:id', authenticateToken, userController.adminDeleteUser);
 router.put('/:id/active', authenticateToken, userController.setUserActive);
+router.put('/:id/machine', authenticateToken, userController.updateMachine);
 
 module.exports = router;

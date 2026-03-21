@@ -10,10 +10,13 @@ class AdminUserService {
     try {
       final token = await _secureStorage.read(key: 'auth_token');
       final uri = Uri.parse(ApiConfig.getUrl('/api/users'));
-      final response = await http.get(uri, headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token'
-      });
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
       final body = jsonDecode(response.body);
       if (response.statusCode == 200 && body['success'] == true) {
         final List items = body['data'] ?? [];
@@ -29,10 +32,13 @@ class AdminUserService {
     try {
       final token = await _secureStorage.read(key: 'auth_token');
       final uri = Uri.parse(ApiConfig.getUrl('/api/users/$id'));
-      final response = await http.delete(uri, headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token'
-      });
+      final response = await http.delete(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
       final body = jsonDecode(response.body);
       return response.statusCode == 200 && body['success'] == true;
     } catch (e) {
@@ -44,12 +50,33 @@ class AdminUserService {
     try {
       final token = await _secureStorage.read(key: 'auth_token');
       final uri = Uri.parse(ApiConfig.getUrl('/api/users/$id/active'));
-      final response = await http.put(uri,
-          headers: {
-            'Content-Type': 'application/json',
-            if (token != null) 'Authorization': 'Bearer $token'
-          },
-          body: jsonEncode({'active': active}));
+      final response = await http.put(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'active': active}),
+      );
+      final body = jsonDecode(response.body);
+      return response.statusCode == 200 && body['success'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateMachine(String id, Map<String, dynamic> data) async {
+    try {
+      final token = await _secureStorage.read(key: 'auth_token');
+      final uri = Uri.parse(ApiConfig.getUrl('/api/users/$id/machine'));
+      final response = await http.put(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(data),
+      );
       final body = jsonDecode(response.body);
       return response.statusCode == 200 && body['success'] == true;
     } catch (e) {

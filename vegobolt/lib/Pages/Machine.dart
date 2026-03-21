@@ -12,7 +12,6 @@ import '../utils/responsive_layout.dart';
 import '../services/maintenance_service.dart';
 import '../services/tank_service.dart';
 import 'dashboard.dart';
-import '../components/machine_status_card.dart';
 import 'alerts.dart';
 import 'maintenance.dart';
 import 'Settings.dart';
@@ -82,7 +81,8 @@ class _MachinePageState extends State<MachinePage> {
     final scheduled = <Map<String, dynamic>>[];
 
     for (final it in items) {
-      if ((it['status'] ?? 'Scheduled') != 'Resolved') {
+      final status = (it['status'] ?? 'Scheduled') as String;
+      if (status == 'Scheduled') {
         final parsed = it['scheduledDate'] != null
             ? DateTime.tryParse(it['scheduledDate'])
             : null;

@@ -21,6 +21,7 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
   final _formKey = GlobalKey<FormState>();
 
   String? _maintenanceType;
+  String? _customMaintenanceType;
   String? _machine = 'VB-0001';
   String? _priority;
   DateTime? _scheduledDate;
@@ -30,6 +31,7 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
     'Filter Replacement',
     'Battery Replacement',
     'General Inspection',
+    'Others',
   ];
 
   final List<String> _machines = ['VB-0001'];
@@ -40,7 +42,13 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
     super.initState();
     // If editing, populate fields with initial data
     if (widget.isEdit && widget.initialData != null) {
-      _maintenanceType = widget.initialData!['title'];
+      final initialTitle = widget.initialData!['title'] as String?;
+      if (initialTitle != null && _maintenanceTypes.contains(initialTitle)) {
+        _maintenanceType = initialTitle;
+      } else if (initialTitle != null && initialTitle.isNotEmpty) {
+        _maintenanceType = 'Others';
+        _customMaintenanceType = initialTitle;
+      }
       _machine = widget.initialData!['machineId'];
       _priority = widget.initialData!['priority'];
       _scheduledDate = widget.initialData!['scheduledDate'];
@@ -75,6 +83,21 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      final maintenanceTitle = _maintenanceType == 'Others'
+          ? _customMaintenanceType?.trim()
+          : _maintenanceType;
+
+      if (maintenanceTitle == null || maintenanceTitle.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a maintenance type'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+
       // Check if date is selected
       if (_scheduledDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -94,7 +117,7 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
       };
 
       widget.onAdd({
-        'title': _maintenanceType!,
+        'title': maintenanceTitle,
         'machineId': _machine!,
         'location': 'Barangay 171',
         'priority': _priority ?? 'Medium',
@@ -132,8 +155,24 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
                   value: _maintenanceType,
                   hint: 'Select maintenance type',
                   items: _maintenanceTypes,
-                  onChanged: (v) => setState(() => _maintenanceType = v),
+                  onChanged: (v) {
+                    setState(() {
+                      _maintenanceType = v;
+                      if (v != 'Others') {
+                        _customMaintenanceType = null;
+                      }
+                    });
+                  },
                 ),
+                if (_maintenanceType == 'Others') ...[
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    label: 'Specify Maintenance Type',
+                    hint: 'Enter maintenance type',
+                    initialValue: _customMaintenanceType,
+                    onChanged: (v) => _customMaintenanceType = v,
+                  ),
+                ],
                 const SizedBox(height: 16),
                 _buildDropdownField(
                   label: 'Machine',
@@ -223,6 +262,33 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
                 ),
               )
               .toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required String hint,
+    required String? initialValue,
+    required void Function(String) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 8),
+        TextFormField(
+          initialValue: initialValue,
+          onChanged: onChanged,
+          validator: (v) {
+            if (_maintenanceType == 'Others' &&
+                (v == null || v.trim().isEmpty)) {
+              return 'Required';
+            }
+            return null;
+          },
+          decoration: _inputDecoration(hint),
         ),
       ],
     );

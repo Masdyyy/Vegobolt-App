@@ -47,6 +47,27 @@ const setUserActive = async (req, res) => {
 };
 
 /**
+ * Admin: update user machine name
+ */
+const updateMachine = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { machine } = req.body;
+        if (!machine || machine.trim() === '') {
+            return res.status(400).json({ success: false, message: 'Machine name cannot be empty' });
+        }
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        user.machine = machine.trim();
+        await user.save();
+        res.status(200).json({ success: true, data: user });
+    } catch (error) {
+        console.error('Update machine error:', error);
+        res.status(500).json({ success: false, message: 'Error updating machine', error: error.message });
+    }
+};
+
+/**
  * Get user profile by Firebase UID
  */
 const getUserProfile = async (req, res) => {
@@ -152,5 +173,6 @@ module.exports = {
     deleteUserAccount,
     listUsers,
     adminDeleteUser,
-    setUserActive
+    setUserActive,
+    updateMachine
 };

@@ -5,6 +5,7 @@ import '../../components/add_maintenance_modal.dart';
 import '../../utils/colors.dart';
 import '../../services/admin_user_service.dart';
 import '../../services/maintenance_service.dart';
+import '../../services/alerts_repository.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -99,28 +100,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         PopupMenuItem(
           child: Row(
             children: const [
-              Icon(Icons.restart_alt, size: 18, color: AppColors.primaryGreen),
+              Icon(
+                Icons.edit_outlined,
+                size: 18,
+                color: AppColors.primaryGreen,
+              ),
               SizedBox(width: 8),
-              Text('Restart Station'),
+              Text('Edit Machine Name'),
             ],
           ),
           onTap: () {
             Future.delayed(Duration.zero, () {
-              _showMsg('Restarting $machine...');
-            });
-          },
-        ),
-        PopupMenuItem(
-          child: Row(
-            children: const [
-              Icon(Icons.power_settings_new, size: 18, color: Colors.red),
-              SizedBox(width: 8),
-              Text('Shutdown Station'),
-            ],
-          ),
-          onTap: () {
-            Future.delayed(Duration.zero, () {
-              _showMsg('Shutting down $machine...');
+              _showEditMachineNameDialog(dataIndex, machine);
             });
           },
         ),
@@ -200,6 +191,201 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  void _showEditMachineNameDialog(int dataIndex, String currentMachine) {
+    final controller = TextEditingController(text: currentMachine);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Machine Name'),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: 'Enter new machine name',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newMachine = controller.text.trim();
+              if (newMachine.isEmpty) {
+                _showMsg('Machine name cannot be empty');
+                return;
+              }
+              Navigator.pop(context);
+              _updateMachineName(dataIndex, newMachine);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+            ),
+            child: const Text('Update', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _updateMachineName(int dataIndex, String newMachine) async {
+    final id = _machineData[dataIndex]['id'];
+    if (id == null) {
+      setState(() {
+        _machineData[dataIndex]['machine'] = newMachine;
+      });
+      _showMsg('Machine name updated to $newMachine');
+      return;
+    }
+
+    // Call backend to update machine name
+    final success = await _adminService.updateMachine(id, {
+      'machine': newMachine,
+    });
+    if (success) {
+      setState(() {
+        _machineData[dataIndex]['machine'] = newMachine;
+      });
+      _showMsg('Machine name updated to $newMachine');
+    } else {
+      _showMsg('Failed to update machine name');
+    }
+  }
+
+  void _showAllAlerts() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          constraints: const BoxConstraints(maxHeight: 600),
+          decoration: BoxDecoration(
+            color: AppColors.getCardBackground(context),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'All Alerts',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.getTextPrimary(context),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Alerts List
+              Expanded(
+                child: ListView.builder(
+                  itemCount: sampleAlerts.length,
+                  itemBuilder: (context, index) {
+                    final alert = sampleAlerts[index];
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppColors.getTextLight(
+                              context,
+                            ).withOpacity(0.2),
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: (alert['color'] as Color).withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              alert['icon'] as IconData,
+                              color: alert['color'] as Color,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  alert['title'] as String,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.getTextPrimary(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${alert['machine']} • ${alert['location']}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.getTextSecondary(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  alert['time'] as String,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.getTextLight(context),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: (alert['color'] as Color).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              alert['status'] as String,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: alert['color'] as Color,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -212,11 +398,20 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
     final mapped = users.map((u) {
       final fullname = '${u['firstName'] ?? ''} ${u['lastName'] ?? ''}'.trim();
+      // Try to get location from multiple fields
+      final location =
+          u['address'] ??
+          u['location'] ??
+          u['barangay'] ??
+          u['city'] ??
+          'Unknown';
       return {
         'id': u['_id'] ?? u['id'],
-        'fullname': fullname.isEmpty ? (u['displayName'] ?? u['email'] ?? 'Unknown') : fullname,
+        'fullname': fullname.isEmpty
+            ? (u['displayName'] ?? u['email'] ?? 'Unknown')
+            : fullname,
         'machine': u['machine'] ?? 'VB-0000',
-        'location': u['address'] ?? 'Unknown',
+        'location': location,
         'status': u['isActive'] == true ? 'Active' : 'Inactive',
         'alerts': u['alerts'] ?? 0,
         'isDisabled': u['isActive'] == false,
@@ -464,100 +659,109 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                             ),
                             SizedBox(width: isSmallScreen ? 8 : 12),
                             Expanded(
-                              child: Container(
-                                padding: EdgeInsets.all(cardPadding),
-                                decoration: BoxDecoration(
-                                  color: AppColors.getCardBackground(context),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: AppColors.criticalRed.withOpacity(
-                                      0.2,
+                              child: GestureDetector(
+                                onTap: _showAllAlerts,
+                                child: Container(
+                                  padding: EdgeInsets.all(cardPadding),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.getCardBackground(context),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.criticalRed.withOpacity(
+                                        0.2,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.notifications_active,
-                                          color: AppColors.getTextSecondary(
-                                            context,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.notifications_active,
+                                            color: AppColors.getTextSecondary(
+                                              context,
+                                            ),
+                                            size: iconSize,
                                           ),
-                                          size: iconSize,
-                                        ),
-                                        SizedBox(width: isSmallScreen ? 4 : 8),
-                                        Expanded(
-                                          child: Text(
-                                            'Total Alerts',
-                                            style: TextStyle(
-                                              color: AppColors.getTextSecondary(
-                                                context,
+                                          SizedBox(
+                                            width: isSmallScreen ? 4 : 8,
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                              'Total Alerts',
+                                              style: TextStyle(
+                                                color:
+                                                    AppColors.getTextSecondary(
+                                                      context,
+                                                    ),
+                                                fontSize: titleFontSize,
+                                                fontWeight: FontWeight.w500,
                                               ),
-                                              fontSize: titleFontSize,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.visible,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: isSmallScreen ? 8 : 12),
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            '${_machineData.fold<int>(0, (sum, user) => sum + (user['alerts'] as int))}',
-                                            style: TextStyle(
-                                              fontSize: numberFontSize,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.getTextPrimary(
-                                                context,
-                                              ),
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        SizedBox(width: isSmallScreen ? 4 : 8),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: isSmallScreen ? 4 : 6,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.criticalRed
-                                                .withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(
-                                              4,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.visible,
                                             ),
                                           ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                '34.0%',
-                                                style: TextStyle(
-                                                  color: AppColors.criticalRed,
-                                                  fontSize: percentFontSize,
-                                                  fontWeight: FontWeight.bold,
+                                        ],
+                                      ),
+                                      SizedBox(height: isSmallScreen ? 8 : 12),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              '${_machineData.fold<int>(0, (sum, user) => sum + (user['alerts'] as int))}',
+                                              style: TextStyle(
+                                                fontSize: numberFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.getTextPrimary(
+                                                  context,
                                                 ),
                                               ),
-                                              const SizedBox(width: 2),
-                                              Icon(
-                                                Icons.arrow_downward,
-                                                color: AppColors.criticalRed,
-                                                size: badgeIconSize,
-                                              ),
-                                            ],
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                          SizedBox(
+                                            width: isSmallScreen ? 4 : 8,
+                                          ),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: isSmallScreen ? 4 : 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.criticalRed
+                                                  .withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  '34.0%',
+                                                  style: TextStyle(
+                                                    color:
+                                                        AppColors.criticalRed,
+                                                    fontSize: percentFontSize,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 2),
+                                                Icon(
+                                                  Icons.arrow_downward,
+                                                  color: AppColors.criticalRed,
+                                                  size: badgeIconSize,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -799,10 +1003,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                                       color:
                                                           data['isDisabled'] ==
                                                               true
-                                                          ? AppColors
-                                                                .textSecondary
-                                                          : AppColors
-                                                                .darkTextPrimary,
+                                                          ? AppColors.getTextSecondary(
+                                                              context,
+                                                            )
+                                                          : AppColors.getTextPrimary(
+                                                              context,
+                                                            ),
                                                       fontSize: cellFontSize,
                                                       fontWeight:
                                                           FontWeight.w600,

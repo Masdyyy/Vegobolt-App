@@ -70,9 +70,11 @@ class _MaintenancePageState extends State<MaintenancePage>
         'scheduledDate': scheduledDate,
       };
 
-      if ((it['status'] ?? 'Scheduled') == 'Resolved') {
+      final status = (it['status'] ?? 'Scheduled') as String;
+      if (status == 'Resolved' || status == 'Unresolved') {
         history.add({
           ...mapped,
+          'status': status,
           'resolvedDate': it['updatedAt'] ?? DateTime.now().toIso8601String(),
         });
       } else {
@@ -158,6 +160,29 @@ class _MaintenancePageState extends State<MaintenancePage>
         },
       ),
     );
+  }
+
+  void _markUnresolved(Map<String, dynamic> item) {
+    _maintenanceService.update(item['id'], {'status': 'Unresolved'}).then((ok) {
+      if (ok) {
+        setState(() {
+          scheduledItems.remove(item);
+          historyItems.insert(0, {
+            ...item,
+            'status': 'Unresolved',
+            'resolvedDate': DateTime.now().toIso8601String(),
+          });
+          _tabController.animateTo(1);
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Marked as Unresolved')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to mark as Unresolved')),
+        );
+      }
+    });
   }
 
   void _deleteItem(Map<String, dynamic> item) {
@@ -474,6 +499,7 @@ class _MaintenancePageState extends State<MaintenancePage>
           priority: item['priority'],
           priorityColor: item['priorityColor'],
           onEdit: () => _editItem(item),
+          onUnresolved: () => _markUnresolved(item),
           onResolve: () => _resolveItem(item),
           onDelete: () => _deleteItem(item),
           isHistory: false,
@@ -505,6 +531,7 @@ class _MaintenancePageState extends State<MaintenancePage>
           machineId: item['machineId'],
           location: item['location'],
           resolvedDate: item['resolvedDate'],
+          status: item['status'] ?? 'Resolved',
         );
       },
     );
@@ -518,6 +545,7 @@ class _MaintenancePageState extends State<MaintenancePage>
     required String priority,
     required Color priorityColor,
     required VoidCallback onEdit,
+    required VoidCallback onUnresolved,
     required VoidCallback onResolve,
     required VoidCallback onDelete,
     required bool isHistory,
@@ -554,6 +582,19 @@ class _MaintenancePageState extends State<MaintenancePage>
               ),
               Row(
                 children: [
+                  InkWell(
+                    onTap: onEdit,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.edit_outlined,
+                        color: AppColors.getTextLight(context),
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   InkWell(
                     onTap: onDelete,
                     borderRadius: BorderRadius.circular(20),
@@ -622,10 +663,10 @@ class _MaintenancePageState extends State<MaintenancePage>
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: onEdit,
+                  onPressed: onUnresolved,
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                      color: AppColors.getTextLight(context),
+                    side: const BorderSide(
+                      color: AppColors.criticalRed,
                       width: 1,
                     ),
                     shape: RoundedRectangleBorder(
@@ -633,10 +674,10 @@ class _MaintenancePageState extends State<MaintenancePage>
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: Text(
-                    'Edit',
+                  child: const Text(
+                    'Unresolved',
                     style: TextStyle(
-                      color: AppColors.darkGreen,
+                      color: AppColors.criticalRed,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -675,6 +716,7 @@ class _MaintenancePageState extends State<MaintenancePage>
     required String machineId,
     required String location,
     required String resolvedDate,
+    required String status,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -698,10 +740,20 @@ class _MaintenancePageState extends State<MaintenancePage>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withOpacity(0.1),
+              color:
+                  (status == 'Unresolved'
+                          ? AppColors.criticalRed
+                          : AppColors.primaryGreen)
+                      .withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.check, color: AppColors.primaryGreen, size: 20),
+            child: Icon(
+              status == 'Unresolved' ? Icons.error_outline : Icons.check,
+              color: status == 'Unresolved'
+                  ? AppColors.criticalRed
+                  : AppColors.primaryGreen,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -768,12 +820,19 @@ class _MaintenancePageState extends State<MaintenancePage>
             decoration: BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.primaryGreen, width: 1.5),
+              border: Border.all(
+                color: status == 'Unresolved'
+                    ? AppColors.criticalRed
+                    : AppColors.primaryGreen,
+                width: 1.5,
+              ),
             ),
             child: Text(
-              'Resolved',
+              status,
               style: TextStyle(
-                color: AppColors.primaryGreen,
+                color: status == 'Unresolved'
+                    ? AppColors.criticalRed
+                    : AppColors.primaryGreen,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
