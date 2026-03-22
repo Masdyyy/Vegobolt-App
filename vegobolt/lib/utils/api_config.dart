@@ -30,14 +30,14 @@ class ApiConfig {
     } else if (Platform.isAndroid) {
       // Android real device (use your PC's LAN IP)
       // TODO: Replace with your actual LAN IP address
-      return 'http://192.168.1.100:3000';
+      return 'http://10.61.95.120:3000';
     } else if (Platform.isIOS) {
       // iOS Simulator
       return 'http://localhost:3000';
     } else {
       // Physical devices on same WiFi network
       // TODO: Replace with your actual LAN IP address
-      return 'http://192.168.1.100:3000';
+      return 'http://10.61.95.120:3000';
     }
   }
 
