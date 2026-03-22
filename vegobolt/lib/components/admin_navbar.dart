@@ -23,6 +23,7 @@ class AdminNavBar extends StatelessWidget {
           icon: Icon(Icons.dashboard),
           label: "Dashboard",
         ),
+        BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
       ],
     );

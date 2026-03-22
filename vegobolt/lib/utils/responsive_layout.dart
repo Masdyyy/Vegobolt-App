@@ -1,5 +1,5 @@
-import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:vegobolt/utils/platform_utils.dart';
 
 /// Global state for sidebar expansion
 class SidebarState {
@@ -285,7 +285,7 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
 
   /// Get logo image based on platform and sidebar state (Windows desktop only)
   Widget _getLogoImage(ResponsiveHelper responsive) {
-    final isWindowsDesktop = Platform.isWindows && responsive.isDesktop;
+    final isWindowsDesktop = PlatformUtils.isWindows && responsive.isDesktop;
 
     if (isWindowsDesktop) {
       // Windows desktop: swap logos based on sidebar state

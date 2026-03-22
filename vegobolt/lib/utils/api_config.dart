@@ -1,5 +1,5 @@
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:vegobolt/utils/platform_utils.dart';
 
 /// API Configuration
 ///
@@ -27,11 +27,11 @@ class ApiConfig {
     if (kIsWeb) {
       // Web browser (Chrome, Edge, etc.)
       return 'http://localhost:3000';
-    } else if (Platform.isAndroid) {
+    } else if (PlatformUtils.isAndroid) {
       // Android real device (use your PC's LAN IP)
       // TODO: Replace with your actual LAN IP address
       return 'http://192.168.1.100:3000';
-    } else if (Platform.isIOS) {
+    } else if (PlatformUtils.isIOS) {
       // iOS Simulator
       return 'http://localhost:3000';
     } else {

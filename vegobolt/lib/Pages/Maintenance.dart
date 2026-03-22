@@ -11,8 +11,9 @@ import 'Settings.dart';
 
 class MaintenancePage extends StatefulWidget {
   final List<Map<String, dynamic>>? initialScheduledItems;
+  final List<Map<String, dynamic>>? initialHistoryItems;
 
-  const MaintenancePage({super.key, this.initialScheduledItems});
+  const MaintenancePage({super.key, this.initialScheduledItems, this.initialHistoryItems});
 
   @override
   State<MaintenancePage> createState() => _MaintenancePageState();
@@ -28,6 +29,8 @@ class _MaintenancePageState extends State<MaintenancePage>
 
   // History items
   List<Map<String, dynamic>> historyItems = [];
+  // History filter: All, Resolved, Unresolved, Canceled
+  String _historyFilter = 'All';
 
   final MaintenanceService _maintenanceService = MaintenanceService();
 
@@ -37,7 +40,12 @@ class _MaintenancePageState extends State<MaintenancePage>
     _tabController = TabController(length: 2, vsync: this);
     // Initialize with empty list then load from backend
     scheduledItems = [];
-    _loadMaintenance();
+    // If initial items passed (useful for tests), use them and skip load
+    scheduledItems = widget.initialScheduledItems ?? [];
+    historyItems = widget.initialHistoryItems ?? [];
+    if ((widget.initialScheduledItems == null) && (widget.initialHistoryItems == null)) {
+      _loadMaintenance();
+    }
   }
 
   Future<void> _loadMaintenance() async {
@@ -71,7 +79,7 @@ class _MaintenancePageState extends State<MaintenancePage>
       };
 
       final status = (it['status'] ?? 'Scheduled') as String;
-      if (status == 'Resolved' || status == 'Unresolved') {
+      if (status == 'Resolved' || status == 'Unresolved' || status == 'Canceled') {
         history.add({
           ...mapped,
           'status': status,
@@ -86,7 +94,7 @@ class _MaintenancePageState extends State<MaintenancePage>
       scheduledItems = scheduled;
       historyItems = history;
     });
-  }
+  } 
 
   @override
   void dispose() {
@@ -459,7 +467,45 @@ class _MaintenancePageState extends State<MaintenancePage>
                       Expanded(
                         child: TabBarView(
                           controller: _tabController,
-                          children: [_buildScheduledTab(), _buildHistoryTab()],
+                          children: [_buildScheduledTab(), Column(
+                            children: [
+                              // Filter row for history
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    const Text('Filter: '),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.getCardBackground(context),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: AppColors.getTextLight(context).withOpacity(0.2)),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: _historyFilter,
+                                          items: const [
+                                            DropdownMenuItem(value: 'All', child: Text('All')),
+                                            DropdownMenuItem(value: 'Resolved', child: Text('Resolved')),
+                                            DropdownMenuItem(value: 'Unresolved', child: Text('Unresolved')),
+                                            DropdownMenuItem(value: 'Canceled', child: Text('Canceled')),
+                                          ],
+                                          onChanged: (v) {
+                                            if (v == null) return;
+                                            setState(() => _historyFilter = v);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(child: _buildHistoryTab()),
+                            ],
+                          )],
                         ),
                       ),
                     ],
@@ -509,7 +555,12 @@ class _MaintenancePageState extends State<MaintenancePage>
   }
 
   Widget _buildHistoryTab() {
-    if (historyItems.isEmpty) {
+    final filtered = historyItems.where((h) {
+      if (_historyFilter == 'All') return true;
+      return (h['status'] ?? '').toString() == _historyFilter;
+    }).toList();
+
+    if (filtered.isEmpty) {
       return Center(
         child: Text(
           'No history records',
@@ -522,10 +573,10 @@ class _MaintenancePageState extends State<MaintenancePage>
     }
 
     return ListView.separated(
-      itemCount: historyItems.length,
+      itemCount: filtered.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final item = historyItems[index];
+        final item = filtered[index];
         return _buildHistoryCard(
           title: item['title'],
           machineId: item['machineId'],
@@ -718,13 +769,24 @@ class _MaintenancePageState extends State<MaintenancePage>
     required String resolvedDate,
     required String status,
   }) {
+    // Determine colors and icon based on status
+    final bool isUnresolved = status == 'Unresolved';
+    final bool isCanceled = status == 'Canceled';
+    final Color borderColor = isUnresolved
+        ? AppColors.criticalRed
+        : (isCanceled ? AppColors.warningYellow : AppColors.primaryGreen);
+    final Color iconColor = borderColor;
+    final IconData iconData = isUnresolved
+        ? Icons.error_outline
+        : (isCanceled ? Icons.cancel_outlined : Icons.check);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.getCardBackground(context),
         borderRadius: BorderRadius.circular(12),
         border: Border(
-          left: BorderSide(color: AppColors.primaryGreen, width: 4),
+          left: BorderSide(color: borderColor, width: 4),
         ),
         boxShadow: [
           BoxShadow(
@@ -740,18 +802,12 @@ class _MaintenancePageState extends State<MaintenancePage>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color:
-                  (status == 'Unresolved'
-                          ? AppColors.criticalRed
-                          : AppColors.primaryGreen)
-                      .withOpacity(0.1),
+              color: iconColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              status == 'Unresolved' ? Icons.error_outline : Icons.check,
-              color: status == 'Unresolved'
-                  ? AppColors.criticalRed
-                  : AppColors.primaryGreen,
+              iconData,
+              color: iconColor,
               size: 20,
             ),
           ),
@@ -821,18 +877,14 @@ class _MaintenancePageState extends State<MaintenancePage>
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: status == 'Unresolved'
-                    ? AppColors.criticalRed
-                    : AppColors.primaryGreen,
+                color: borderColor,
                 width: 1.5,
               ),
             ),
             child: Text(
               status,
               style: TextStyle(
-                color: status == 'Unresolved'
-                    ? AppColors.criticalRed
-                    : AppColors.primaryGreen,
+                color: borderColor,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),

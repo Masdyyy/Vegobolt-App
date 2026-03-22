@@ -16,14 +16,17 @@ class AdminSettingsPage extends StatefulWidget {
 
 class _AdminSettingsPageState extends State<AdminSettingsPage> {
   bool _enableNotifications = true;
-  final int _currentIndex = 1; // Settings tab
+  final int _currentIndex = 2; // Settings tab (after adding History tab)
 
   void _onNavTap(int index) {
     if (index == 0) {
       // Dashboard tab
       Navigator.pushReplacementNamed(context, '/admin-dashboard');
     }
-    // If index is 1 (Settings), we're already here, so do nothing
+    if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/admin-history');
+    }
+    // If index is 2 (Settings), we're already here, so do nothing
   }
 
   void _logout() async {
