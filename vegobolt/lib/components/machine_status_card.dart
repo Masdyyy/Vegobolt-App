@@ -167,62 +167,6 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
     });
   }
 
-  Widget _buildAlertBadge() {
-    if (widget.alertStatus == 'normal') {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey, width: 2),
-          color: Colors.transparent,
-        ),
-        child: const Text(
-          'Normal',
-          style: TextStyle(
-            color: Colors.grey,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
-    } else if (widget.alertStatus == 'warning') {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.amber, width: 2),
-          color: Colors.transparent,
-        ),
-        child: const Text(
-          'Warning',
-          style: TextStyle(
-            color: Colors.amber,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
-    } else if (widget.alertStatus == 'critical') {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.criticalRed, width: 2),
-          color: Colors.transparent,
-        ),
-        child: Text(
-          'Critical',
-          style: TextStyle(
-            color: AppColors.criticalRed,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
-    }
-    return const SizedBox.shrink();
-  }
-
   @override
   void dispose() {
     locationController.dispose();
@@ -248,46 +192,18 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row: Machine ID + Active Badge + Alert Status Badge
+          // Header Row: Machine ID only
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(
-                    widget.machineId,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.getTextPrimary(context),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Status Badge (Active/Offline)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: widget.statusText == 'Active'
-                          ? AppColors.primaryGreen
-                          : Colors.grey,
-                    ),
-                    child: Text(
-                      widget.statusText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
+              Text(
+                widget.machineId,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.getTextPrimary(context),
+                ),
               ),
-              // Alert Status Badge (Normal, Warning, or Critical)
-              _buildAlertBadge(),
             ],
           ),
           const SizedBox(height: 12),
@@ -420,43 +336,6 @@ class _MachineStatusCardState extends State<MachineStatusCard> {
           LinearProgressIndicator(
             value: widget.tankLevel.clamp(0.0, 1.0),
             color: AppColors.primaryGreen,
-            backgroundColor: Colors.grey.withOpacity(0.2),
-            minHeight: 8,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          const SizedBox(height: 14),
-          // Battery Status with Progress Bar
-          Row(
-            children: [
-              Icon(
-                Icons.battery_full,
-                color: AppColors.primaryGreen,
-                size: 20,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Battery:',
-                style: TextStyle(
-                  color: AppColors.getTextPrimary(context),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${(widget.batteryValue * 100).toStringAsFixed(0)}%',
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          LinearProgressIndicator(
-            value: widget.batteryValue.clamp(0.0, 1.0),
-            color: Colors.red,
             backgroundColor: Colors.grey.withOpacity(0.2),
             minHeight: 8,
             borderRadius: BorderRadius.circular(4),

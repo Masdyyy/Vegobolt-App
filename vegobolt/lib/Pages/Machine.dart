@@ -1023,84 +1023,9 @@ class _MachinePageState extends State<MachinePage> {
                     ],
                   ),
                 ),
-                // Warning status badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: _currentAlertStatus == 'critical'
-                          ? AppColors.criticalRed
-                          : _currentAlertStatus == 'warning'
-                          ? const Color(0xFFF59E0B)
-                          : AppColors.primaryGreen,
-                      width: 2,
-                    ),
-                  ),
-                  child: Text(
-                    _currentAlertStatus == 'critical'
-                        ? 'Warning'
-                        : _currentAlertStatus == 'warning'
-                        ? 'Warning'
-                        : 'Normal',
-                    style: TextStyle(
-                      color: _currentAlertStatus == 'critical'
-                          ? AppColors.criticalRed
-                          : _currentAlertStatus == 'warning'
-                          ? const Color(0xFFF59E0B)
-                          : AppColors.primaryGreen,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 20),
-            // MQTT Connection Status
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: _isMqttConnected
-                    ? AppColors.primaryGreen.withOpacity(0.1)
-                    : Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: _isMqttConnected
-                      ? AppColors.primaryGreen
-                      : Colors.orange,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _isMqttConnected ? Icons.cloud_done : Icons.cloud_off,
-                    size: 16,
-                    color: _isMqttConnected
-                        ? AppColors.primaryGreen
-                        : Colors.orange,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isMqttConnected ? 'MQTT Connected' : 'MQTT Connecting...',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _isMqttConnected
-                          ? AppColors.primaryGreen
-                          : Colors.orange,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
             // Tank control buttons
             Row(
               children: [
