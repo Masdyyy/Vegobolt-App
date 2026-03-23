@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
@@ -24,6 +25,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
     if (index == 1) {
+      // Navigate to History
+      Navigator.pushReplacementNamed(context, '/admin-history');
+    }
+    if (index == 2) {
       // Navigate to Settings
       Navigator.pushReplacementNamed(context, '/admin-settings');
     }
@@ -35,6 +40,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   final MaintenanceService _maintenanceService = MaintenanceService();
   final InviteCodeService _inviteCodeService = InviteCodeService();
 
+  // Maintenance lists
+  List<Map<String, dynamic>> _scheduledMaintenances = [];
+  List<Map<String, dynamic>> _maintenanceHistory = [];
+  bool _isLoadingMaintenance = false;
+  Timer? _maintenanceTimer;
   bool _isGeneratingSignupCode = false;
   String? _latestSignupCode;
   List<dynamic> _alerts = [];
@@ -188,6 +198,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           final created = await _maintenanceService.create(data);
           if (created != null) {
             _showMsg('Maintenance scheduled for $machine');
+            // Refresh maintenance lists shown on this dashboard
+            await _loadMaintenance();
           } else {
             _showMsg('Failed to schedule maintenance for $machine');
           }
@@ -528,6 +540,101 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void initState() {
     super.initState();
     _loadUsers();
+    _loadMaintenance();
+    // Auto-refresh maintenance every 60 seconds
+    _maintenanceTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      _loadMaintenance();
+    });
+  }
+
+  @override
+  void dispose() {
+    _maintenanceTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadMaintenance() async {
+    setState(() => _isLoadingMaintenance = true);
+    try {
+      // Fetch scheduled items
+      final scheduled = await _maintenanceService.list(status: 'Scheduled');
+
+      // Fetch all then derive history (resolved/canceled)
+      final all = await _maintenanceService.list();
+      final history = all.where((m) => (m['status'] ?? '').toString() != 'Scheduled').toList();
+
+      setState(() {
+        _scheduledMaintenances = scheduled.cast<Map<String, dynamic>>();
+        _maintenanceHistory = history.cast<Map<String, dynamic>>();
+      });
+    } finally {
+      if (mounted) setState(() => _isLoadingMaintenance = false);
+    }
+  }
+
+  String _formatDate(dynamic dateVal) {
+    try {
+      if (dateVal == null) return 'No date';
+      final dt = dateVal is DateTime ? dateVal : DateTime.parse(dateVal.toString());
+      final local = dt.toLocal();
+      return '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateVal.toString();
+    }
+  }
+
+  Future<void> _resolveMaintenance(String id) async {
+    final result = await _maintenanceService.resolve(id);
+    if (result != null) {
+      _showMsg('Marked maintenance as resolved');
+      await _loadMaintenance();
+    } else {
+      _showMsg('Failed to mark as resolved');
+    }
+  }
+
+  Future<void> _cancelMaintenance(String id) async {
+    final ok = await _maintenanceService.update(id, {'status': 'Canceled'});
+    if (ok) {
+      _showMsg('Maintenance canceled');
+      await _loadMaintenance();
+    } else {
+      _showMsg('Failed to cancel maintenance');
+    }
+  }
+
+  Future<void> _confirmResolve(String id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Resolve'),
+        content: const Text('Mark this maintenance as resolved?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm')),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _resolveMaintenance(id);
+    }
+  }
+
+  Future<void> _confirmCancel(String id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Cancel'),
+        content: const Text('Cancel this scheduled maintenance?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Yes')),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _cancelMaintenance(id);
+    }
     _loadAlerts();
   }
 
@@ -679,8 +786,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // Signup code generator (minimal)
+                  // Signup code generator (moved above Maintenance)
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -793,6 +899,111 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       ],
                     ),
                   ),
+
+                  // Maintenance panels: Scheduled (full width) with link to History
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.getCardBackground(context),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Scheduled Maintenance',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.getTextPrimary(context),
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pushReplacementNamed(context, '/admin-history'),
+                                      child: const Text('View History'),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.refresh),
+                                      tooltip: 'Refresh',
+                                      onPressed: _isLoadingMaintenance ? null : _loadMaintenance,
+                                    ),
+                                    if (_isLoadingMaintenance)
+                                      const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            if (_scheduledMaintenances.isEmpty && !_isLoadingMaintenance)
+                              Text(
+                                'No scheduled maintenance',
+                                style: TextStyle(color: AppColors.getTextSecondary(context)),
+                              )
+                            else
+                              Column(
+                                children: _scheduledMaintenances.take(6).map((m) {
+                                  final id = m['_id'] ?? m['id'] ?? '';
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: AppColors.getTextLight(context).withOpacity(0.08)),
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(m['title'] ?? '${m['machineId'] ?? ''} maintenance', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
+                                              const SizedBox(height: 4),
+                                              Text('${m['machineId'] ?? ''} • ${m['location'] ?? ''}', style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12)),
+                                              const SizedBox(height: 4),
+                                              Text(_formatDate(m['scheduledDate']), style: TextStyle(color: AppColors.getTextLight(context), fontSize: 11)),
+                                            ],
+                                          ),
+                                        ),
+                                        Column(
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.check, color: Colors.green),
+                                              tooltip: 'Mark Resolved',
+                                              onPressed: id == '' ? null : () => _confirmResolve(id.toString()),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.cancel, color: Colors.orange),
+                                              tooltip: 'Cancel',
+                                              onPressed: id == '' ? null : () => _confirmCancel(id.toString()),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+
+                  const SizedBox(height: 20),
 
                   const SizedBox(height: 20),
 

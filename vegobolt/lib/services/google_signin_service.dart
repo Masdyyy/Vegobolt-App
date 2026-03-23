@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'package:vegobolt/utils/platform_utils.dart';
 import '../utils/google_oauth.dart';
 
 class GoogleSignInService {
@@ -19,7 +19,7 @@ class GoogleSignInService {
   static const String redirectUri = 'http://localhost:8080/auth';
 
   late final GoogleSignIn? _googleSignIn =
-      (kIsWeb || (!kIsWeb && !Platform.isWindows))
+      (kIsWeb || (!kIsWeb && !PlatformUtils.isWindows))
       ? (kIsWeb
             ? GoogleSignIn(
                 scopes: <String>['email', 'profile'],
@@ -33,7 +33,7 @@ class GoogleSignInService {
 
   Future<String?> signInAndGetIdToken() async {
     // Use web-based OAuth for Windows
-    if (!kIsWeb && Platform.isWindows) {
+    if (!kIsWeb && PlatformUtils.isWindows) {
       return _signInWindows();
     }
 

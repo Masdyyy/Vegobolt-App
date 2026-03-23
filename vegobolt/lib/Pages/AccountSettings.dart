@@ -940,11 +940,14 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         ],
       ),
       bottomNavigationBar: AdminNavBar(
-        currentIndex: 1, // Settings tab
+        currentIndex: 2, // Settings tab (index changed after adding History)
         onTap: (index) {
           if (index == 0) {
             // Navigate to Admin Dashboard
             Navigator.pushReplacementNamed(context, '/admin-dashboard');
+          }
+          if (index == 1) {
+            Navigator.pushReplacementNamed(context, '/admin-history');
           }
         },
       ),
