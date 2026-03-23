@@ -38,7 +38,7 @@ class _DashboardPageState extends State<DashboardPage> {
   String _currentAlertStatus = 'normal'; // Track current alert status
   bool _isFabHovering = false;
   String _detectedBarangay = '';
-  String _machineeName = 'VB-0001'; // Machine name set by admin
+  String _machineeName = 'VB-0000'; // Machine name set by admin
 
   final UserService _userService = UserService();
 
@@ -67,7 +67,12 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final result = await _userService.getProfile();
       if (result['success'] == true && result['data'] != null) {
-        final machine = result['data']['machine'] ?? 'VB-0001';
+        final data = result['data'];
+        final user = (data is Map<String, dynamic>) ? data['user'] : null;
+        final machine =
+            (data is Map<String, dynamic> ? data['machine'] : null) ??
+            (user is Map<String, dynamic> ? user['machine'] : null) ??
+            'VB-0000';
         setState(() {
           _machineeName = machine;
         });

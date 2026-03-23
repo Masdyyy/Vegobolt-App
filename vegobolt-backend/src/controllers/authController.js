@@ -5,6 +5,7 @@ const { generateToken, verifyToken: verifyJWT } = require('../services/jwtServic
 const { generateVerificationToken, sendVerificationEmail } = require('../services/emailService');
 const connectDB = require('../config/mongodb');
 const { verifyGoogleIdToken } = require('../services/googleAuthService');
+const { getNextMachineCode } = require('../services/machineCodeService');
 
 /**
  * Register a new user with email and password
@@ -84,11 +85,13 @@ const register = async (req, res, next) => {
         // Create user in MongoDB
         let mongoUser;
         try {
+            const machineCode = await getNextMachineCode();
             mongoUser = await User.createUser({
                 email,
                 password: hashedPassword,
                 firstName,
                 lastName,
+                machine: machineCode,
                 inviteCodeUsed: trimmedInviteCode,
                 emailVerificationToken: verificationToken,
                 emailVerificationExpires: verificationExpires,
@@ -131,6 +134,7 @@ const register = async (req, res, next) => {
                     firstName: mongoUser.firstName,
                     lastName: mongoUser.lastName,
                     displayName: mongoUser.displayName,
+                    machine: mongoUser.machine,
                     isAdmin: mongoUser.isAdmin === true,
                     isEmailVerified: mongoUser.isEmailVerified,
                     createdAt: mongoUser.createdAt
@@ -302,12 +306,14 @@ const googleLogin = async (req, res) => {
             }
 
             try {
+                const machineCode = await getNextMachineCode();
                 user = await User.createUser({
                     email,
                     // store a non-usable password placeholder for social login
                     password: `google:${payload.sub}`,
                     firstName,
                     lastName,
+                    machine: machineCode,
                     profilePicture: picture,
                     inviteCodeUsed: trimmedInviteCode,
                     isEmailVerified: emailVerified,
@@ -350,6 +356,7 @@ const googleLogin = async (req, res) => {
                     lastName: user.lastName,
                     displayName: user.displayName,
                     profilePicture: user.profilePicture,
+                    machine: user.machine,
                     isAdmin: user.isAdmin === true,
                 },
                 token,

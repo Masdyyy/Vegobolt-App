@@ -10,6 +10,7 @@ import '../utils/colors.dart';
 import '../utils/navigation_helper.dart';
 import '../utils/responsive_layout.dart';
 import '../services/maintenance_service.dart';
+import '../services/user_service.dart';
 import '../services/tank_service.dart';
 import 'dashboard.dart';
 import 'alerts.dart';
@@ -26,6 +27,9 @@ class MachinePage extends StatefulWidget {
 
 class _MachinePageState extends State<MachinePage> {
   List<Map<String, dynamic>> scheduledMaintenanceItems = [];
+
+  String _machineId = 'VB-0000';
+  String _machineLocation = '-';
 
   // Live data (same approach as Dashboard)
   double tankLevel = 0.0;
@@ -48,11 +52,13 @@ class _MachinePageState extends State<MachinePage> {
   bool _isMqttConnected = false;
 
   final MaintenanceService _maintenanceService = MaintenanceService();
+  final UserService _userService = UserService();
 
   @override
   void initState() {
     super.initState();
     _initializeMqtt();
+    _loadUserMachine();
     fetchTankData();
     fetchAlerts();
     _loadMaintenanceData();
@@ -62,6 +68,31 @@ class _MachinePageState extends State<MachinePage> {
       fetchTankData();
       fetchAlerts();
     });
+  }
+
+  Future<void> _loadUserMachine() async {
+    try {
+      final result = await _userService.getProfile();
+      if (result['success'] == true && result['data'] != null) {
+        final data = result['data'];
+        final user = (data is Map<String, dynamic>) ? data['user'] : null;
+        final machine =
+            (data is Map<String, dynamic> ? data['machine'] : null) ??
+            (user is Map<String, dynamic> ? user['machine'] : null) ??
+            'VB-0000';
+        final location =
+            (user is Map<String, dynamic> ? user['address'] : null) ?? '-';
+        if (!mounted) return;
+        setState(() {
+          _machineId = machine.toString();
+          _machineLocation = location.toString().trim().isEmpty
+              ? '-'
+              : location.toString();
+        });
+      }
+    } catch (e) {
+      // ignore; keep defaults
+    }
   }
 
   @override
@@ -409,7 +440,7 @@ class _MachinePageState extends State<MachinePage> {
             ? [
                 {
                   'title': 'Tank Full',
-                  'machine': 'VB-0001',
+                  'machine': _machineId,
                   'location': '-',
                   'time': timeIso,
                   'status': 'Critical',
@@ -959,7 +990,7 @@ class _MachinePageState extends State<MachinePage> {
                           // Machine ID
                           Expanded(
                             child: Text(
-                              'VB-0001',
+                              _machineId,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -981,7 +1012,7 @@ class _MachinePageState extends State<MachinePage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Baranggay 171',
+                            _machineLocation,
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.getTextSecondary(context),
@@ -1132,9 +1163,7 @@ class _MachinePageState extends State<MachinePage> {
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          isOilTankOpen
-                              ? 'Open Oil Tank'
-                              : 'Close Oil Tank',
+                          isOilTankOpen ? 'Open Oil Tank' : 'Close Oil Tank',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

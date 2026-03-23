@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
 import '../utils/colors.dart';
 
 class AddMaintenanceModal extends StatefulWidget {
@@ -19,10 +21,11 @@ class AddMaintenanceModal extends StatefulWidget {
 
 class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
   final _formKey = GlobalKey<FormState>();
+  final _secureStorage = const FlutterSecureStorage();
 
   String? _maintenanceType;
   String? _customMaintenanceType;
-  String? _machine = 'VB-0001';
+  String? _machine;
   String? _priority;
   DateTime? _scheduledDate;
 
@@ -34,7 +37,7 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
     'Others',
   ];
 
-  final List<String> _machines = ['VB-0001'];
+  final List<String> _machines = [];
   final List<String> _priorities = ['High', 'Medium', 'Low'];
 
   @override
@@ -53,6 +56,53 @@ class _AddMaintenanceModalState extends State<AddMaintenanceModal> {
       _priority = widget.initialData!['priority'];
       _scheduledDate = widget.initialData!['scheduledDate'];
     }
+
+    final initialMachine = (_machine ?? '').toString().trim();
+    if (initialMachine.isNotEmpty && !_machines.contains(initialMachine)) {
+      _machines.add(initialMachine);
+    }
+    if (_machines.isEmpty) {
+      _machines.add('VB-0000');
+    }
+    _machine ??= _machines.first;
+
+    _primeMachineOptions();
+  }
+
+  Future<void> _primeMachineOptions() async {
+    final machines = <String>[];
+
+    final initialMachine = (_machine ?? '').toString().trim();
+    if (initialMachine.isNotEmpty) machines.add(initialMachine);
+
+    try {
+      final raw = await _secureStorage.read(key: 'user_data');
+      if (raw != null && raw.trim().isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        final machine = (decoded is Map<String, dynamic>)
+            ? decoded['machine']
+            : null;
+        final machineStr = (machine ?? '').toString().trim();
+        if (machineStr.isNotEmpty && !machines.contains(machineStr)) {
+          machines.add(machineStr);
+        }
+      }
+    } catch (_) {
+      // ignore storage/parse errors
+    }
+
+    if (machines.isEmpty) machines.add('VB-0000');
+
+    if (!mounted) return;
+    setState(() {
+      _machines
+        ..clear()
+        ..addAll(machines);
+      _machine ??= _machines.first;
+      if (_machine != null && !_machines.contains(_machine)) {
+        _machines.insert(0, _machine!);
+      }
+    });
   }
 
   Future<void> _pickDate() async {
