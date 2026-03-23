@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "description": "Backend for Vegobolt Mobile App using Firebase and MongoDB",
   "main": "index.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
     "backfill:machine": "node backfill-machine-codes.js",
-    "backfill:machine:dry": "node backfill-machine-codes.js --dry-run",
+    "backfill:machine:dry": "node backfill-machine-codes.js --dry-run"
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.2",
