@@ -13,9 +13,9 @@ import 'Pages/ResetPassword.dart';
 import 'Pages/signup.dart';
 import 'Pages/HelpSupport.dart';
 import 'Pages/AccountSettings.dart';
-import 'Pages/admin/admin_dashboard.dart';
-import 'Pages/admin/admin_history.dart';
-import 'Pages/admin/admin_settings.dart';
+import 'Pages/Admin/admin_dashboard.dart';
+import 'Pages/Admin/admin_history.dart';
+import 'Pages/Admin/admin_settings.dart';
 import 'utils/theme_provider.dart';
 import 'providers/machine_provider.dart';
 

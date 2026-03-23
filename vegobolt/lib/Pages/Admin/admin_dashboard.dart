@@ -23,17 +23,19 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int _currentIndex = 0;
 
   void _onNavTap(int index) {
-    setState(() => _currentIndex = index);
+    if (index == 0) {
+      setState(() => _currentIndex = index);
+      _loadUsers();
+      return;
+    }
     if (index == 1) {
-      // Navigate to History
       Navigator.pushReplacementNamed(context, '/admin-history');
+      return;
     }
     if (index == 2) {
-      // Navigate to Settings
       Navigator.pushReplacementNamed(context, '/admin-settings');
+      return;
     }
-    // When switching tabs, reload users to reflect changes
-    _loadUsers();
   }
 
   final AdminUserService _adminService = AdminUserService();
@@ -42,7 +44,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   // Maintenance lists
   List<Map<String, dynamic>> _scheduledMaintenances = [];
-  List<Map<String, dynamic>> _maintenanceHistory = [];
   bool _isLoadingMaintenance = false;
   Timer? _maintenanceTimer;
   bool _isGeneratingSignupCode = false;
@@ -554,18 +555,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Future<void> _loadMaintenance() async {
-    setState(() => _isLoadingMaintenance = true);
+    if (mounted) setState(() => _isLoadingMaintenance = true);
     try {
       // Fetch scheduled items
       final scheduled = await _maintenanceService.list(status: 'Scheduled');
 
-      // Fetch all then derive history (resolved/canceled)
-      final all = await _maintenanceService.list();
-      final history = all.where((m) => (m['status'] ?? '').toString() != 'Scheduled').toList();
-
+      if (!mounted) return;
       setState(() {
         _scheduledMaintenances = scheduled.cast<Map<String, dynamic>>();
-        _maintenanceHistory = history.cast<Map<String, dynamic>>();
       });
     } finally {
       if (mounted) setState(() => _isLoadingMaintenance = false);
@@ -980,12 +977,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                         Column(
                                           children: [
                                             IconButton(
-                                              icon: const Icon(Icons.check, color: Colors.green),
+                                              icon: const Icon(
+                                                Icons.check,
+                                                color: AppColors.primaryGreen,
+                                              ),
                                               tooltip: 'Mark Resolved',
                                               onPressed: id == '' ? null : () => _confirmResolve(id.toString()),
                                             ),
                                             IconButton(
-                                              icon: const Icon(Icons.cancel, color: Colors.orange),
+                                              icon: const Icon(
+                                                Icons.cancel,
+                                                color: AppColors.warningYellow,
+                                              ),
                                               tooltip: 'Cancel',
                                               onPressed: id == '' ? null : () => _confirmCancel(id.toString()),
                                             ),
@@ -1005,8 +1008,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
                   const SizedBox(height: 20),
 
-                  const SizedBox(height: 20),
-
                   // Statistics Cards
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -1020,6 +1021,28 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       final iconSize = isSmallScreen ? 16.0 : 20.0;
                       final badgeIconSize = isSmallScreen ? 10.0 : 12.0;
                       final cardPadding = isSmallScreen ? 12.0 : 16.0;
+
+                      final total = _machineData.length;
+                      final activeAccounts = _machineData
+                          .where((user) => user['isDisabled'] != true)
+                          .length;
+                      final activeMachines = _machineData
+                          .where(
+                            (machine) =>
+                                machine['status']?.toString().toLowerCase() ==
+                                'active',
+                          )
+                          .length;
+                      final totalAlerts = _machineData.fold<int>(
+                        0,
+                        (sum, user) =>
+                            sum + (((user['alerts'] as int?) ?? 0)),
+                      );
+
+                      final activeAccountsPercent =
+                          total == 0 ? 0 : (activeAccounts / total) * 100;
+                      final activeMachinesPercent =
+                          total == 0 ? 0 : (activeMachines / total) * 100;
 
                       return IntrinsicHeight(
                         child: Row(
@@ -1073,7 +1096,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                       children: [
                                         Flexible(
                                           child: Text(
-                                            '${_machineData.where((user) => user['isDisabled'] != true).length}',
+                                            '$activeAccounts',
                                             style: TextStyle(
                                               fontSize: numberFontSize,
                                               fontWeight: FontWeight.bold,
@@ -1101,7 +1124,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Text(
-                                                '${(((_machineData.where((user) => user['isDisabled'] != true).length) / _machineData.length) * 100).toStringAsFixed(0)}%',
+                                                '${activeAccountsPercent.toStringAsFixed(0)}%',
                                                 style: TextStyle(
                                                   color: AppColors.primaryGreen,
                                                   fontSize: percentFontSize,
@@ -1178,7 +1201,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                         children: [
                                           Flexible(
                                             child: Text(
-                                              '${_machineData.fold<int>(0, (sum, user) => sum + (user['alerts'] as int))}',
+                                              '$totalAlerts',
                                               style: TextStyle(
                                                 fontSize: numberFontSize,
                                                 fontWeight: FontWeight.bold,
@@ -1280,7 +1303,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                       children: [
                                         Flexible(
                                           child: Text(
-                                            '${_machineData.where((machine) => machine['status']?.toString().toLowerCase() == 'active').length}',
+                                            '$activeMachines',
                                             style: TextStyle(
                                               fontSize: numberFontSize,
                                               fontWeight: FontWeight.bold,
@@ -1308,7 +1331,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Text(
-                                                '${(((_machineData.where((machine) => machine['status']?.toString().toLowerCase() == 'active').length) / _machineData.length) * 100).toStringAsFixed(0)}%',
+                                                '${activeMachinesPercent.toStringAsFixed(0)}%',
                                                 style: TextStyle(
                                                   color: AppColors.primaryGreen,
                                                   fontSize: percentFontSize,
