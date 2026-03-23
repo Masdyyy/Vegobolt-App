@@ -1,5 +1,5 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:vegobolt/utils/platform_utils.dart';
 
 /// API Configuration
 ///
@@ -27,17 +27,15 @@ class ApiConfig {
     if (kIsWeb) {
       // Web browser (Chrome, Edge, etc.)
       return 'http://localhost:3000';
-    } else if (PlatformUtils.isAndroid) {
+    } else if (Platform.isAndroid) {
       // Android real device (use your PC's LAN IP)
-      // TODO: Replace with your actual LAN IP address
-      return 'http://192.168.1.100:3000';
-    } else if (PlatformUtils.isIOS) {
+      return 'http://192.168.100.8:3000';
+    } else if (Platform.isIOS) {
       // iOS Simulator
       return 'http://localhost:3000';
     } else {
       // Physical devices on same WiFi network
-      // TODO: Replace with your actual LAN IP address
-      return 'http://192.168.1.100:3000';
+      return 'http://192.168.100.8:3000';
     }
   }
 

@@ -1117,12 +1117,13 @@ class _MachinePageState extends State<MachinePage> {
                         backgroundColor: isOilTankOpen
                             ? AppColors.primaryGreen
                             : isDark
-                            ? Colors.grey[700]
-                            : const Color(0xFFE5E7EB),
+                            ? AppColors.primaryGreen.withValues(alpha: 0.7)
+                            : AppColors.primaryGreen.withValues(alpha: 0.5),
                         foregroundColor: isOilTankOpen
                             ? Colors.white
                             : AppColors.getTextSecondary(context),
                         elevation: 0,
+                        overlayColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -1132,8 +1133,8 @@ class _MachinePageState extends State<MachinePage> {
                         fit: BoxFit.scaleDown,
                         child: Text(
                           isOilTankOpen
-                              ? 'Oil Tank - Open'
-                              : 'Oil Tank - Closed',
+                              ? 'Open Oil Tank'
+                              : 'Close Oil Tank',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -1191,12 +1192,13 @@ class _MachinePageState extends State<MachinePage> {
                         backgroundColor: isDieselTankOpen
                             ? const Color(0xFFFFD700)
                             : isDark
-                            ? Colors.grey[700]
-                            : const Color(0xFFE5E7EB),
+                            ? const Color(0xFFFFD700).withValues(alpha: 0.7)
+                            : const Color(0xFFFFD700).withValues(alpha: 0.5),
                         foregroundColor: isDieselTankOpen
                             ? Colors.white
                             : AppColors.getTextSecondary(context),
                         elevation: 0,
+                        overlayColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -1206,8 +1208,8 @@ class _MachinePageState extends State<MachinePage> {
                         fit: BoxFit.scaleDown,
                         child: Text(
                           isDieselTankOpen
-                              ? 'Diesel Tank - Open'
-                              : 'Diesel Tank - Closed',
+                              ? 'Open Diesel Tank'
+                              : 'Close Diesel Tank',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
